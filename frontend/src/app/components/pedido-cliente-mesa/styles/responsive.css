@@ -1,0 +1,115 @@
+/* Otimizações específicas para mobile (telas pequenas) */
+@media (max-width: 767px) {
+    /* Tamanhos de fonte otimizados para legibilidade mobile */
+    .produto-nome {
+        font-size: 0.95rem;
+        line-height: 1.3;
+    }
+
+    .produto-descricao {
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+
+    .produto-preco {
+        font-size: 0.95rem;
+    }
+
+    .categoria-titulo {
+        font-size: 1rem;
+    }
+
+    .cliente-nome {
+        font-size: 1rem;
+    }
+
+    /* Input fields com tamanho mínimo para evitar zoom no iOS */
+    input, select, textarea {
+        font-size: max(1rem, 16px);
+    }
+}
+
+/* Responsivo para tablets e desktop */
+@media (min-width: 768px) {
+    .pedido-cliente-container {
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .produtos-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-carrinho-flutuante {
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 400px;
+        right: auto;
+    }
+
+    .btn-carrinho-flutuante:active {
+        transform: translateX(-50%) scale(0.98);
+    }
+
+    .modal-overlay {
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-produto {
+        max-width: 500px;
+        border-radius: 24px;
+        max-height: 80vh;
+    }
+
+    .modal-carrinho {
+        max-width: 500px;
+        max-height: 80vh;
+        border-radius: 24px;
+        margin: auto;
+        overflow: hidden;
+    }
+
+    .footer-nav {
+        max-width: 600px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Carrinho em desktop/tablet */
+    .carrinho-header {
+        padding: 1.5rem;
+    }
+
+    .carrinho-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .carrinho-content {
+        padding: 1.5rem;
+    }
+
+    .carrinho-cliente-info {
+        padding: 1rem;
+    }
+
+    .carrinho-item {
+        padding: 1rem;
+    }
+
+    .btn-qty-mini {
+        width: 40px;
+        height: 40px;
+    }
+
+    .carrinho-footer {
+        padding: 1.5rem;
+    }
+
+    .btn-enviar-pedido {
+        padding: 1.25rem;
+        font-size: 1.1rem;
+    }
+}

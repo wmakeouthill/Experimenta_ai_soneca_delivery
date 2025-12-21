@@ -1,0 +1,145 @@
+@if (aberto()) {
+  <div class="modal-overlay" (click)="fecharOverlay($event)">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Configurar Animação</h3>
+      <p class="modal-description">
+        As alterações são aplicadas imediatamente. Clique em "Salvar Configurações" para persistir no sistema.
+      </p>
+
+      <div class="config-section">
+        <div class="config-item">
+          <label class="toggle-label">
+            <span class="toggle-text">Ativar animação</span>
+            <div class="toggle-switch">
+              <input
+                type="checkbox"
+                [checked]="animacaoAtivada()"
+                (change)="animacaoAtivada.set($any($event.target).checked)"
+              />
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+        </div>
+
+        <div class="config-item">
+          <label>
+            Intervalo entre animações (segundos):
+            <input
+              type="number"
+              min="10"
+              max="300"
+              [value]="intervaloAnimacao()"
+              (input)="intervaloAnimacao.set(+$any($event.target).value)"
+              [disabled]="!animacaoAtivada()"
+            />
+          </label>
+        </div>
+
+        <div class="config-item">
+          <label>
+            Duração da animação (segundos):
+            <input
+              type="number"
+              min="2"
+              max="30"
+              [value]="duracaoAnimacao()"
+              (input)="duracaoAnimacao.set(+$any($event.target).value)"
+              [disabled]="!animacaoAtivada()"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h4>Vídeos da Animação</h4>
+        <p class="section-description">
+          Adicione até 2 vídeos que serão exibidos durante a animação. Os vídeos serão reproduzidos em sequência.
+        </p>
+
+        <div class="video-upload-container">
+          <div class="video-upload-item">
+            <label class="video-upload-label">Vídeo 1</label>
+            @if (video1Url()) {
+              <div class="video-preview-container">
+                <video [src]="video1Url()!" controls class="video-preview"></video>
+                <button
+                  type="button"
+                  class="btn-remover-video"
+                  (click)="removerVideo1()"
+                  aria-label="Remover vídeo 1"
+                >
+                  ✕
+                </button>
+              </div>
+            } @else {
+              <div class="video-upload-placeholder">
+                <div class="placeholder-icon">🎬</div>
+                <p class="placeholder-text">Clique para adicionar vídeo</p>
+                <p class="placeholder-hint">Máximo: 100MB</p>
+                @if (carregandoVideo1()) {
+                  <div class="loading-overlay">
+                    <div class="spinner"></div>
+                    <p>Processando vídeo...</p>
+                  </div>
+                }
+                <input
+                  type="file"
+                  accept="video/*"
+                  class="video-input"
+                  (change)="onVideo1Selected($event)"
+                  [disabled]="carregandoVideo1()"
+                />
+              </div>
+            }
+          </div>
+
+          <div class="video-upload-item">
+            <label class="video-upload-label">Vídeo 2</label>
+            @if (video2Url()) {
+              <div class="video-preview-container">
+                <video [src]="video2Url()!" controls class="video-preview"></video>
+                <button
+                  type="button"
+                  class="btn-remover-video"
+                  (click)="removerVideo2()"
+                  aria-label="Remover vídeo 2"
+                >
+                  ✕
+                </button>
+              </div>
+            } @else {
+              <div class="video-upload-placeholder">
+                <div class="placeholder-icon">🎬</div>
+                <p class="placeholder-text">Clique para adicionar vídeo</p>
+                <p class="placeholder-hint">Máximo: 100MB</p>
+                @if (carregandoVideo2()) {
+                  <div class="loading-overlay">
+                    <div class="spinner"></div>
+                    <p>Processando vídeo...</p>
+                  </div>
+                }
+                <input
+                  type="file"
+                  accept="video/*"
+                  class="video-input"
+                  (change)="onVideo2Selected($event)"
+                  [disabled]="carregandoVideo2()"
+                />
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-buttons">
+        <button type="button" class="btn-salvar" (click)="salvar()">
+          Salvar Configurações
+        </button>
+        <button type="button" class="btn-cancelar" (click)="fechar()">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

@@ -1,0 +1,177 @@
+<div class="administracao-container">
+  <header class="administracao-header">
+    <div class="administracao-header-content">
+      <h1 class="administracao-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.png" alt="Experimenta aí" class="administracao-logo" />
+        Administração
+      </h1>
+      <div class="header-actions">
+        <button class="btn-header" routerLink="/gestao-mesas">
+          🍽️ Administrar Mesas
+        </button>
+        <button class="btn-header btn-primary" (click)="abrirModalCriar()">
+          ➕ Novo Usuário
+        </button>
+        <button class="btn-voltar" routerLink="/" aria-label="Voltar para home">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (erro()) {
+    <div class="error-message">
+      {{ erro() }}
+    </div>
+  }
+
+  <!-- Seção de Configuração de Impressora -->
+  <app-config-impressora />
+
+  @if (estaCarregando()) {
+    <div class="loading">Carregando...</div>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (usuario of usuarios(); track usuario.id) {
+            <tr>
+              <td>{{ usuario.nome }}</td>
+              <td>{{ usuario.email }}</td>
+              <td>
+                <span class="badge" [class.badge-admin]="usuario.role === 'ADMINISTRADOR'">
+                  {{ usuario.descricaoRole }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [class.badge-ativo]="usuario.ativo" [class.badge-inativo]="!usuario.ativo">
+                  {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="btn-edit" (click)="abrirModalEditar(usuario)">
+                    Editar
+                  </button>
+                  <button
+                    class="btn-toggle"
+                    (click)="alternarStatus(usuario)"
+                    [class.btn-ativar]="!usuario.ativo"
+                    [class.btn-desativar]="usuario.ativo"
+                  >
+                    {{ usuario.ativo ? 'Desativar' : 'Ativar' }}
+                  </button>
+                  <button class="btn-delete" (click)="excluirUsuario(usuario.id)">
+                    Excluir
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty">Nenhum usuário encontrado</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (mostrarModal()) {
+    <div class="modal-overlay" (click)="fecharModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ isEditando() ? 'Editar Usuário' : 'Novo Usuário' }}</h2>
+          <button class="btn-close" (click)="fecharModal()">×</button>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="salvar()">
+          <div class="form-group">
+            <label for="nome">Nome</label>
+            <input
+              id="nome"
+              type="text"
+              formControlName="nome"
+              [class.invalid]="nome?.invalid && nome?.touched"
+            />
+            @if (nome?.invalid && nome?.touched) {
+              <span class="error-text">
+                @if (nome?.errors?.['required']) {
+                  Nome é obrigatório
+                } @else if (nome?.errors?.['minlength']) {
+                  Nome deve ter no mínimo 3 caracteres
+                }
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              [class.invalid]="email?.invalid && email?.touched"
+              [readonly]="isEditando()"
+            />
+            @if (email?.invalid && email?.touched) {
+              <span class="error-text">
+                @if (email?.errors?.['required']) {
+                  Email é obrigatório
+                } @else if (email?.errors?.['email']) {
+                  Email inválido
+                }
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="senha">{{ isEditando() ? 'Nova Senha (deixe em branco para manter)' : 'Senha' }}</label>
+            <input
+              id="senha"
+              type="password"
+              formControlName="senha"
+              [class.invalid]="senha?.invalid && senha?.touched"
+            />
+            @if (senha?.invalid && senha?.touched) {
+              <span class="error-text">
+                @if (senha?.errors?.['required']) {
+                  Senha é obrigatória
+                } @else if (senha?.errors?.['minlength']) {
+                  Senha deve ter no mínimo 6 caracteres
+                }
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" formControlName="role">
+              <option value="OPERADOR">Operador</option>
+              <option value="ADMINISTRADOR">Administrador</option>
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="fecharModal()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="form.invalid">
+              {{ isEditando() ? 'Atualizar' : 'Criar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

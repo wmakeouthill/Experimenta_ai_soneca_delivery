@@ -1,0 +1,18 @@
+<section class="chart-card">
+  <header>
+    <div>
+      <h3>Meios de pagamento</h3>
+      <p>Entenda a composição dos recebimentos e planeje campanhas</p>
+    </div>
+    <span class="chip">Pagamentos</span>
+  </header>
+
+  <div class="chart-wrapper">
+    @if (dados().length === 0) {
+      <p class="chart-empty">Sem dados para este período.</p>
+    } @else {
+      <canvas #canvas aria-label="Meios de pagamento"></canvas>
+    }
+  </div>
+</section>
+

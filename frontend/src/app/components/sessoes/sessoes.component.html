@@ -1,0 +1,286 @@
+<div class="sessoes-container">
+  <header class="sessoes-header">
+    <div class="sessoes-header-content">
+      <h1 class="sessoes-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.webp" alt="Experimenta aí" class="sessoes-logo" />
+        Gestão de Sessões de Trabalho
+      </h1>
+      <div class="header-actions">
+        <button class="btn-header btn-primary" (click)="iniciarSessao()">
+          🚀 Iniciar Nova Sessão
+        </button>
+        <button class="btn-header btn-historico" routerLink="/historico-sessoes">
+          📊 Histórico de Sessões
+        </button>
+        <button class="btn-voltar" routerLink="/" aria-label="Voltar para home">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="sessoes-layout">
+    <!-- Sidebar de Filtros -->
+    <aside class="sidebar-filtros">
+      <div class="filtros-container">
+        <h2 class="filtros-titulo">🔍 Filtros</h2>
+
+        <!-- Busca -->
+        <div class="filtro-grupo">
+          <label class="filtro-label">Buscar</label>
+          <input
+            type="text"
+            class="filtro-input"
+            placeholder="Número, nome..."
+            [value]="pesquisaTexto()"
+            (input)="pesquisar($any($event.target).value)"
+          />
+        </div>
+
+        <!-- Filtro por Data -->
+        <div class="filtro-grupo">
+          <label class="filtro-label">Data</label>
+          <input
+            type="date"
+            class="filtro-input"
+            [value]="dataFiltro() || ''"
+            (change)="filtrarPorData($any($event.target).value || null)"
+          />
+        </div>
+
+        <!-- Limpar Filtros -->
+        <div class="filtro-grupo">
+          <button class="btn-filtro-limpar" (click)="limparFiltros()">
+            🗑️ Limpar Filtros
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="sessoes-main">
+      @if (estaCarregando()) {
+        <div class="estado-carregando">
+          <div class="spinner"></div>
+          <p>Carregando sessões...</p>
+        </div>
+      }
+
+      @if (estado() === 'erro') {
+        <div class="estado-erro">
+          <p class="erro-mensagem">{{ erro() }}</p>
+          <button class="btn-recarregar" (click)="recarregar()">
+            Tentar novamente
+          </button>
+        </div>
+      }
+
+      @if (estado() === 'sucesso') {
+        <!-- Informações de Resultado -->
+        <div class="resultado-info">
+          <p class="resultado-texto">
+            Mostrando {{ sessoesPaginadas().itens.length }} de {{ sessoesPaginadas().totalItens }} sessões
+          </p>
+        </div>
+
+        @if (sessoesPaginadas().totalItens === 0) {
+          <div class="estado-vazio">
+            <p class="vazio-mensagem">Nenhuma sessão encontrada.</p>
+            <button class="btn-primary" (click)="iniciarSessao()">
+              🚀 Criar Primeira Sessão
+            </button>
+          </div>
+        } @else {
+          <!-- Lista de Sessões -->
+          <div #sessoesSection class="sessoes-lista">
+            @for (sessao of sessoesPaginadas().itens; track sessao.id) {
+              <article class="sessao-card" [class.sessao-aberta]="sessao.status === StatusSessao.ABERTA"
+                       [class.sessao-pausada]="sessao.status === StatusSessao.PAUSADA"
+                       [class.sessao-finalizada]="sessao.status === StatusSessao.FINALIZADA">
+                <div class="sessao-card-content">
+                  <div class="sessao-info-principal">
+                    <h3 class="sessao-nome">{{ sessao.nome }}</h3>
+                    <span class="sessao-status-badge" [class.status-aberta]="sessao.status === StatusSessao.ABERTA"
+                          [class.status-pausada]="sessao.status === StatusSessao.PAUSADA"
+                          [class.status-finalizada]="sessao.status === StatusSessao.FINALIZADA">
+                      {{ sessao.status }}
+                    </span>
+                  </div>
+
+                  <div class="sessao-info-linha">
+                    <span class="info-item">
+                      <span class="info-label">Iniciada:</span>
+                      <span class="info-value">{{ formatarDataHora(sessao.dataInicioCompleta) }}</span>
+                    </span>
+                    @if (sessao.dataFim) {
+                      <span class="info-item">
+                        <span class="info-label">Finalizada:</span>
+                        <span class="info-value">{{ formatarDataHora(sessao.dataFim) }}</span>
+                      </span>
+                    }
+                    <span class="info-item">
+                      <span class="info-label">Usuário:</span>
+                      <span class="info-value">{{ obterNomeUsuario(sessao.usuarioId) }}</span>
+                    </span>
+                  </div>
+
+                  <div class="sessao-card-acoes">
+                    @if (sessao.status === StatusSessao.ABERTA) {
+                      <button class="btn-acao btn-pausar" (click)="pausarSessao(sessao)">
+                        ⏸️ Pausar
+                      </button>
+                      <button class="btn-acao btn-finalizar" (click)="finalizarSessao(sessao)">
+                        ✅ Finalizar
+                      </button>
+                    }
+                    @if (sessao.status === StatusSessao.PAUSADA) {
+                      <button class="btn-acao btn-retomar" (click)="retomarSessao(sessao)">
+                        ▶️ Retomar
+                      </button>
+                      <button class="btn-acao btn-finalizar" (click)="finalizarSessao(sessao)">
+                        ✅ Finalizar
+                      </button>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+
+          <!-- Paginação -->
+          @if (sessoesPaginadas().totalPaginas > 1) {
+            <div class="paginacao">
+              <button
+                class="btn-paginacao"
+                [disabled]="sessoesPaginadas().paginaAtual === 1"
+                (click)="irParaPagina(sessoesPaginadas().paginaAtual - 1)"
+              >
+                ← Anterior
+              </button>
+              
+              <div class="paginacao-numeros">
+                @for (pagina of gerarNumerosPagina(); track pagina) {
+                  <button
+                    class="btn-pagina"
+                    [class.active]="pagina === sessoesPaginadas().paginaAtual"
+                    [class.disabled]="pagina === '...'"
+                    (click)="pagina !== '...' && irParaPagina(+pagina)"
+                  >
+                    {{ pagina }}
+                  </button>
+                }
+              </div>
+              
+              <button
+                class="btn-paginacao"
+                [disabled]="sessoesPaginadas().paginaAtual === sessoesPaginadas().totalPaginas"
+                (click)="irParaPagina(sessoesPaginadas().paginaAtual + 1)"
+              >
+                Próxima →
+              </button>
+            </div>
+          }
+        }
+      }
+    </main>
+  </div>
+</div>
+
+<!-- Modal de Abertura de Caixa -->
+@if (mostrarModalAbertura()) {
+  <div class="modal-overlay" (click)="fecharModalAbertura()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-titulo">
+          💵 Abertura de Caixa
+        </h2>
+        <button class="modal-fechar" (click)="fecharModalAbertura()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-descricao">
+          Informe o valor em dinheiro disponível no caixa para iniciar a sessão.
+        </p>
+        <div class="form-grupo">
+          <label class="form-label">Valor de Abertura *</label>
+          <input
+            type="number"
+            class="form-input"
+            placeholder="0,00"
+            step="0.01"
+            min="0"
+            [value]="valorAbertura()"
+            (input)="valorAbertura.set(+$any($event.target).value)"
+            autofocus
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="fecharModalAbertura()">
+          Cancelar
+        </button>
+        <button
+          class="btn-confirmar btn-primary"
+          [disabled]="valorAbertura() === null || valorAbertura()! < 0"
+          (click)="confirmarAbertura()"
+        >
+          🚀 Iniciar Sessão
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de Fechamento de Caixa -->
+@if (mostrarModalFechamento()) {
+  <div class="modal-overlay" (click)="fecharModalFechamento()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-titulo">
+          🔒 Fechamento de Caixa
+        </h2>
+        <button class="modal-fechar" (click)="fecharModalFechamento()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-descricao">
+          Informe o valor em dinheiro contado no caixa para finalizar a sessão.
+        </p>
+        @if (sessaoParaFinalizar()?.valorAbertura !== undefined) {
+          <div class="info-caixa">
+            <span class="info-label">Valor de Abertura:</span>
+            <span class="info-valor">R$ {{ sessaoParaFinalizar()?.valorAbertura?.toFixed(2) || '0,00' }}</span>
+          </div>
+        }
+        <div class="form-grupo">
+          <label class="form-label">Valor de Fechamento *</label>
+          <input
+            type="number"
+            class="form-input"
+            placeholder="0,00"
+            step="0.01"
+            min="0"
+            [value]="valorFechamento()"
+            (input)="valorFechamento.set(+$any($event.target).value)"
+            autofocus
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="fecharModalFechamento()">
+          Cancelar
+        </button>
+        <button
+          class="btn-confirmar btn-finalizar"
+          [disabled]="valorFechamento() === null || valorFechamento()! < 0"
+          (click)="confirmarFechamento()"
+        >
+          ✅ Finalizar Sessão
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

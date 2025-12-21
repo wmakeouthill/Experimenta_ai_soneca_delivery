@@ -1,0 +1,26 @@
+<div [class]="cardClass()" [attr.data-pedido-id]="pedido().id">
+  <div class="card-content">
+    <div [class]="'nome-cliente ' + (isModoGestor() ? 'com-numero' : 'sem-numero')">
+      {{ nomeClienteLimitado() }}
+    </div>
+    @if (isModoGestor() && isPreparando()) {
+      <button
+        type="button"
+        class="btn-acao btn-pronto"
+        (click)="handleMarcarComoPronto()"
+      >
+        Pronto
+      </button>
+    }
+    @if (isModoGestor() && isPronto()) {
+      <button
+        type="button"
+        class="btn-acao btn-remover"
+        (click)="handleRemover()"
+      >
+        Remover
+      </button>
+    }
+  </div>
+</div>
+

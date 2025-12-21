@@ -1,0 +1,392 @@
+<div class="historico-container">
+  <header class="historico-header">
+    <div class="historico-header-content">
+      <h1 class="historico-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.png" alt="Experimenta aí" class="historico-logo" />
+        Histórico de Sessões
+      </h1>
+      <div class="header-actions">
+        <button class="btn-voltar" routerLink="/" aria-label="Voltar para home">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="historico-layout">
+    <!-- Sidebar de Seleção de Sessão -->
+    <aside class="sidebar-sessoes">
+      <div class="sessoes-container">
+        <h2 class="sessoes-titulo">📋 Sessões</h2>
+
+        <!-- Filtro por Data -->
+        <div class="filtro-grupo">
+          <label class="filtro-label">Buscar por Data</label>
+          <input
+            type="date"
+            class="filtro-input"
+            [value]="dataFiltroSessoes() || ''"
+            (change)="filtrarSessoesPorData($any($event.target).value || null)"
+          />
+        </div>
+
+        @if (estaCarregando() && sessoes().length === 0) {
+          <div class="estado-carregando">
+            <div class="spinner"></div>
+            <p>Carregando sessões...</p>
+          </div>
+        }
+
+        @if (estado() === 'erro' && sessoes().length === 0) {
+          <div class="estado-erro">
+            <p class="erro-mensagem">{{ erro() }}</p>
+            <button class="btn-recarregar" (click)="recarregar()">
+              Tentar novamente
+            </button>
+          </div>
+        }
+
+        @if (sessoesPaginadas().totalItens === 0 && !estaCarregando() && estado() !== 'erro') {
+          <div class="estado-vazio">
+            <p class="vazio-mensagem">Nenhuma sessão encontrada.</p>
+          </div>
+        }
+
+        @if (sessoesPaginadas().totalItens > 0) {
+          <div class="sessoes-lista">
+            @for (sessao of sessoesPaginadas().itens; track sessao.id) {
+              <button
+                class="sessao-item"
+                [class.selected]="sessaoSelecionada()?.id === sessao.id"
+                (click)="selecionarSessao(sessao)"
+              >
+                <div class="sessao-item-header">
+                  <h3 class="sessao-item-nome">{{ sessao.nome }}</h3>
+                  <span class="sessao-item-status" [class]="'status-' + sessao.status.toLowerCase()">
+                    {{ sessao.status }}
+                  </span>
+                </div>
+                <p class="sessao-item-data">{{ formatarData(sessao.dataInicio) }}</p>
+                @if (sessao.dataFim) {
+                  <p class="sessao-item-data-fim">Até: {{ formatarData(sessao.dataFim) }}</p>
+                }
+              </button>
+            }
+          </div>
+
+          <!-- Paginação de Sessões -->
+          @if (sessoesPaginadas().totalPaginas > 1) {
+            <div class="paginacao">
+              <button
+                class="btn-pagina"
+                [disabled]="sessoesPaginadas().paginaAtual === 1"
+                (click)="irParaPaginaSessoes(sessoesPaginadas().paginaAtual - 1)"
+              >
+                ‹
+              </button>
+              @for (num of gerarNumerosPaginaSessoes(); track num) {
+                @if (num === '...') {
+                  <span class="pagina-ellipsis">...</span>
+                } @else {
+                  <button
+                    class="btn-pagina"
+                    [class.active]="num === sessoesPaginadas().paginaAtual"
+                    (click)="irParaPaginaSessoes(+num)"
+                  >
+                    {{ num }}
+                  </button>
+                }
+              }
+              <button
+                class="btn-pagina"
+                [disabled]="sessoesPaginadas().paginaAtual === sessoesPaginadas().totalPaginas"
+                (click)="irParaPaginaSessoes(sessoesPaginadas().paginaAtual + 1)"
+              >
+                ›
+              </button>
+            </div>
+          }
+        }
+
+        @if (temSessaoSelecionada()) {
+          <button class="btn-limpar-selecao" (click)="limparSelecao()">
+            🗑️ Limpar Seleção
+          </button>
+        }
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="historico-conteudo">
+      @if (!temSessaoSelecionada()) {
+        <div class="estado-selecao">
+          <div class="selecao-mensagem">
+            <h2>📊 Selecione uma Sessão</h2>
+            <p>Escolha uma sessão no painel lateral para visualizar o histórico de pedidos e relatórios.</p>
+          </div>
+        </div>
+      }
+
+      @if (temSessaoSelecionada()) {
+        @if (estaCarregando()) {
+          <div class="estado-carregando">
+            <div class="spinner"></div>
+            <p>Carregando pedidos...</p>
+          </div>
+        }
+
+        @if (estado() === 'erro') {
+          <div class="estado-erro">
+            <p class="erro-mensagem">{{ erro() }}</p>
+            <button class="btn-recarregar" (click)="recarregar()">
+              Tentar novamente
+            </button>
+          </div>
+        }
+
+        @if (estado() === 'sucesso') {
+          <!-- Informações da Sessão Selecionada -->
+          <div class="sessao-info-card">
+            <h2 class="sessao-info-titulo">{{ sessaoSelecionada()!.nome }}</h2>
+            <div class="sessao-info-detalhes">
+              <div class="info-item">
+                <span class="info-label">Status:</span>
+                <span class="info-value status-badge" [class]="'status-' + sessaoSelecionada()!.status.toLowerCase()">
+                  {{ sessaoSelecionada()!.status }}
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Início:</span>
+                <span class="info-value">{{ formatarData(sessaoSelecionada()!.dataInicio) }}</span>
+              </div>
+              @if (sessaoSelecionada()!.dataFim) {
+                <div class="info-item">
+                  <span class="info-label">Fim:</span>
+                  <span class="info-value">{{ formatarData(sessaoSelecionada()!.dataFim!) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Cards de Resumo -->
+          <div class="resumo-cards">
+            <div class="resumo-card total-pedidos">
+              <div class="resumo-card-header">
+                <h3>📦 Total de Pedidos</h3>
+              </div>
+              <div class="resumo-card-value">
+                {{ resumoFaturamento().totalPedidos }}
+              </div>
+            </div>
+
+            <div class="resumo-card total-faturamento">
+              <div class="resumo-card-header">
+                <h3>💰 Total Faturamento</h3>
+              </div>
+              <div class="resumo-card-value">
+                {{ formatarMoeda(resumoFaturamento().totalFaturamento) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Métodos de Pagamento -->
+          @if (resumoFaturamento().porMeioPagamento.length > 0) {
+            <div class="meios-pagamento-card">
+              <h3 class="meios-pagamento-titulo">💳 Faturamento por Método de Pagamento</h3>
+              <div class="meios-pagamento-lista">
+                @for (item of resumoFaturamento().porMeioPagamento; track item.meio) {
+                  <div class="meio-pagamento-item">
+                    <span class="meio-pagamento-nome">{{ obterNomeMeioPagamento(item.meio) }}</span>
+                    <span class="meio-pagamento-valor">{{ formatarMoeda(item.valor) }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Lista de Pedidos -->
+          @if (temPedidos()) {
+            <div #pedidosSecao class="pedidos-secao">
+              <div class="pedidos-secao-header">
+                <h3 class="pedidos-secao-titulo">📋 Pedidos da Sessão</h3>
+                <!-- Busca de Pedidos -->
+                <div class="pedidos-busca">
+                  <input
+                    type="text"
+                    class="pedidos-busca-input"
+                    placeholder="Buscar por cliente ou item..."
+                    [value]="pesquisaPedidos()"
+                    (input)="pesquisarPedidos($any($event.target).value)"
+                  />
+                </div>
+              </div>
+              <div class="pedidos-lista">
+                @for (pedido of pedidosPaginados().itens; track pedido.id) {
+                  <article class="pedido-card">
+                    <div class="pedido-header">
+                      <div class="pedido-info-principal">
+                        <h4 class="pedido-numero">Pedido #{{ pedido.numeroPedido }}</h4>
+                        <p class="pedido-cliente-data">
+                          <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome) }}</span>
+                          <span class="pedido-separador"> - </span>
+                          <span class="pedido-data">{{ formatarDataHora(pedido.dataPedido) }}</span>
+                        </p>
+                      </div>
+                      <div class="pedido-status-badge" [class]="'badge-' + pedido.status.toLowerCase()">
+                        {{ pedido.status }}
+                      </div>
+                    </div>
+
+                    <div class="pedido-itens">
+                      <ul class="itens-lista">
+                        @for (item of pedido.itens; track item.produtoId) {
+                          <li class="item-lista">
+                            <div class="item-linha-principal">
+                              <span class="item-quantidade">{{ item.quantidade }}x</span>
+                              <span class="item-nome">{{ item.produtoNome }}</span>
+                              <span class="item-preco">{{ formatarMoeda(item.subtotal) }}</span>
+                            </div>
+                            @if (item.adicionais && item.adicionais.length > 0) {
+                              <div class="item-adicionais">
+                                @for (ad of item.adicionais; track ad.adicionalId) {
+                                  <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.adicionalNome }}</span>
+                                }
+                              </div>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    </div>
+
+                    @if (pedido.observacoes && pedido.observacoes.trim()) {
+                      <div class="pedido-observacoes">
+                        <strong class="observacoes-titulo">Observações:</strong>
+                        <p class="observacoes-texto">{{ pedido.observacoes }}</p>
+                      </div>
+                    }
+
+                    @if (pedido.meiosPagamento && pedido.meiosPagamento.length > 0) {
+                      <div class="pedido-pagamentos">
+                        <strong class="pagamentos-titulo">Pagamento:</strong>
+                        <div class="pagamentos-lista">
+                          @for (mp of pedido.meiosPagamento; track mp.meioPagamento) {
+                            <span class="pagamento-item">
+                              {{ obterNomeMeioPagamento(mp.meioPagamento) }}: {{ formatarMoeda(mp.valor) }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <div class="pedido-footer">
+                      <div class="pedido-total">
+                        <strong>Total: {{ formatarMoeda(pedido.valorTotal) }}</strong>
+                      </div>
+                      @if (isAdministrador()) {
+                        <button
+                          class="btn-cancelar-pedido"
+                          (click)="abrirModalConfirmacaoExclusao(pedido)"
+                          title="Excluir pedido"
+                        >
+                          🗑️ Cancelar
+                        </button>
+                      }
+                    </div>
+                  </article>
+                }
+              </div>
+
+              <!-- Paginação de Pedidos -->
+              @if (pedidosPaginados().totalPaginas > 1) {
+                <div class="paginacao">
+                  <button
+                    class="btn-pagina"
+                    [disabled]="pedidosPaginados().paginaAtual === 1"
+                    (click)="irParaPaginaPedidos(pedidosPaginados().paginaAtual - 1)"
+                  >
+                    ‹
+                  </button>
+                  @for (num of gerarNumerosPaginaPedidos(); track num) {
+                    @if (num === '...') {
+                      <span class="pagina-ellipsis">...</span>
+                    } @else {
+                      <button
+                        class="btn-pagina"
+                        [class.active]="num === pedidosPaginados().paginaAtual"
+                        (click)="irParaPaginaPedidos(+num)"
+                      >
+                        {{ num }}
+                      </button>
+                    }
+                  }
+                  <button
+                    class="btn-pagina"
+                    [disabled]="pedidosPaginados().paginaAtual === pedidosPaginados().totalPaginas"
+                    (click)="irParaPaginaPedidos(pedidosPaginados().paginaAtual + 1)"
+                  >
+                    ›
+                  </button>
+                </div>
+              }
+
+              @if (pedidosPaginados().totalItens === 0) {
+                <div class="estado-vazio">
+                  <p class="vazio-mensagem">Nenhum pedido encontrado com os filtros aplicados.</p>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="estado-vazio">
+              <p class="vazio-mensagem">Nenhum pedido encontrado para esta sessão.</p>
+            </div>
+          }
+        }
+      }
+    </main>
+  </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+@if (mostrarModalExclusao()) {
+  <div class="modal-overlay" (click)="fecharModalExclusao()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-titulo">⚠️ Confirmar Exclusão de Pedido</h3>
+        <button class="modal-fechar" (click)="fecharModalExclusao()" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-mensagem">
+          Você está prestes a <strong>excluir permanentemente</strong> o pedido
+          <strong>#{{ pedidoParaExcluir()?.numeroPedido }}</strong>.
+        </p>
+        <p class="modal-aviso">
+          Esta ação não pode ser desfeita. Para confirmar, digite exatamente:
+        </p>
+        <div class="modal-texto-confirmacao">
+          <strong>"{{ textoEsperado }}"</strong>
+        </div>
+        <input
+          type="text"
+          class="modal-input"
+          placeholder="Digite o texto de confirmação..."
+          [value]="textoConfirmacao()"
+          (input)="textoConfirmacao.set($any($event.target).value)"
+          autofocus
+        />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal btn-cancelar" (click)="fecharModalExclusao()">
+          Cancelar
+        </button>
+        <button
+          class="btn-modal btn-confirmar"
+          [disabled]="!podeConfirmarExclusao()"
+          (click)="confirmarExclusao()"
+        >
+          Excluir Pedido
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

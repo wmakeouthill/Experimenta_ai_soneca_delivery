@@ -1,0 +1,204 @@
+<div class="relatorio-financeiro-container">
+  <header class="relatorio-financeiro-header">
+    <div class="relatorio-financeiro-header-content">
+      <h1 class="relatorio-financeiro-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.webp" alt="Experimenta aí" class="relatorio-financeiro-logo" />
+        Relatório Financeiro
+      </h1>
+      <div class="header-actions">
+        <button class="btn-header" (click)="recarregar()">🔄 Recarregar</button>
+        <button class="btn-voltar" routerLink="/relatorios" aria-label="Voltar para relatórios">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="relatorio-financeiro-content">
+    <section class="filtros-section">
+      <div class="filtro-data-wrapper">
+        <label for="dataFiltro">Data:</label>
+        <input
+          id="dataFiltro"
+          type="date"
+          [value]="dataFiltroInput()"
+          (change)="alterarData($event)"
+        />
+      </div>
+    </section>
+
+    @if (estaCarregando()) {
+      <div class="estado estado--loading">Carregando relatório financeiro...</div>
+    }
+
+    @if (erro()) {
+      <div class="estado estado--erro">{{ erro() }}</div>
+    }
+
+    @if (!estaCarregando() && !erro() && !possuiDados()) {
+      <div class="estado estado--vazio">
+        Nenhum pedido encontrado para a data selecionada.
+      </div>
+    }
+
+    @if (!estaCarregando() && !erro() && possuiDados()) {
+      <section class="cards-metricas">
+        <article class="card-metrica card-metrica--principal">
+          <p class="card-metrica-label">Total de Vendas</p>
+          <strong class="card-metrica-valor">{{ formatarMoeda(resumoFinanceiro().totalVendas) }}</strong>
+        </article>
+        <article class="card-metrica card-metrica--caixa">
+          <p class="card-metrica-label">Dinheiro no Caixa</p>
+          <strong class="card-metrica-valor">{{ formatarMoeda(resumoFinanceiro().dinheiroNoCaixa) }}</strong>
+        </article>
+        <article class="card-metrica">
+          <p class="card-metrica-label">Total de Pedidos</p>
+          <strong class="card-metrica-valor">{{ resumoFinanceiro().totalPedidos }}</strong>
+        </article>
+        <article class="card-metrica">
+          <p class="card-metrica-label">Ticket Médio</p>
+          <strong class="card-metrica-valor">{{ formatarMoeda(resumoFinanceiro().ticketMedio) }}</strong>
+        </article>
+        <article class="card-metrica">
+          <p class="card-metrica-label">Total PIX</p>
+          <strong class="card-metrica-valor">{{ formatarMoeda(resumoFinanceiro().totalPix) }}</strong>
+        </article>
+        <article class="card-metrica">
+          <p class="card-metrica-label">Total Cartão</p>
+          <strong class="card-metrica-valor">{{ formatarMoeda(resumoFinanceiro().totalCartao) }}</strong>
+        </article>
+      </section>
+
+      @if (resumoPorMeioPagamento().length > 0) {
+        <section class="tabela-resumo-pagamento">
+          <h2 class="tabela-titulo">Resumo por Método de Pagamento</h2>
+          <div class="tabela-wrapper">
+            <table class="tabela tabela-compacta">
+              <thead>
+                <tr>
+                  <th class="coluna-indicador">Indicador</th>
+                  @for (meio of metodosPagamentoOrdenados; track meio) {
+                    <th class="text-right">{{ formatarMeioPagamento(meio) }}</th>
+                  }
+                  <th class="text-right coluna-total">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="linha-indicador"><strong>Valor Total</strong></td>
+                  @for (meio of metodosPagamentoOrdenados; track meio) {
+                    <td class="text-right">{{ formatarMoeda(obterValorPorMeioPagamento(meio)) }}</td>
+                  }
+                  <td class="text-right coluna-total"><strong>{{ formatarMoeda(resumoFinanceiro().totalVendas) }}</strong></td>
+                </tr>
+                <tr>
+                  <td class="linha-indicador"><strong>Quantidade de Pedidos</strong></td>
+                  @for (meio of metodosPagamentoOrdenados; track meio) {
+                    <td class="text-right">{{ obterQuantidadePorMeioPagamento(meio) }}</td>
+                  }
+                  <td class="text-right coluna-total"><strong>{{ resumoFinanceiro().totalPedidos }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      <section #tabelaPedidos class="tabela-pedidos">
+        <h2 class="tabela-titulo">Pedidos do Dia</h2>
+        <div class="tabela-wrapper">
+          <table class="tabela tabela-pedidos-detalhada">
+            <thead>
+              <tr>
+                <th>Nº Pedido</th>
+                <th>Cliente</th>
+                <th>Usuário</th>
+                <th>Data/Hora</th>
+                <th>Status</th>
+                <th>Itens</th>
+                <th>Métodos de Pagamento</th>
+                <th class="text-right">Valor Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pedido of pedidos().itens; track pedido.id) {
+                <tr>
+                  <td class="numero-pedido">{{ pedido.numeroPedido }}</td>
+                  <td>{{ pedido.clienteNome }}</td>
+                  <td>{{ obterNomeUsuario(pedido.usuarioId) }}</td>
+                  <td>{{ formatarData(pedido.dataPedido) }}</td>
+                  <td>
+                    <span [class]="'badge-status ' + obterClasseStatus(pedido.status)">
+                      {{ formatarStatus(pedido.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    <app-tooltip-itens [itens]="pedido.itens"></app-tooltip-itens>
+                  </td>
+                  <td>
+                    @if (pedido.meiosPagamento && pedido.meiosPagamento.length > 0) {
+                      @if (pedido.meiosPagamento.length === 1) {
+                        <div class="meio-pagamento-item">
+                          <span class="meio-pagamento-nome">{{ formatarMeioPagamento(pedido.meiosPagamento[0].meioPagamento) }}</span>
+                          <span class="meio-pagamento-valor">{{ formatarMoeda(pedido.meiosPagamento[0].valor) }}</span>
+                        </div>
+                      } @else {
+                        <app-tooltip-meios-pagamento [meiosPagamento]="pedido.meiosPagamento"></app-tooltip-meios-pagamento>
+                      }
+                    } @else {
+                      <span class="sem-meio-pagamento">-</span>
+                    }
+                  </td>
+                  <td class="text-right valor-total-pedido">
+                    <strong>{{ formatarMoeda(pedido.valorTotal) }}</strong>
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="tabela-total">
+                <td colspan="7"><strong>Total Geral</strong></td>
+                <td class="text-right"><strong>{{ formatarMoeda(resumoFinanceiro().totalVendas) }}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        @if (pedidos().totalPaginas > 1) {
+          <div class="paginacao">
+            <button
+              class="btn-paginacao"
+              [disabled]="pedidos().paginaAtual === 1"
+              (click)="irParaPagina(pedidos().paginaAtual - 1)"
+            >
+              ← Anterior
+            </button>
+
+            <div class="paginacao-numeros">
+              @for (pagina of gerarNumerosPagina(); track pagina) {
+                <button
+                  class="btn-pagina"
+                  [class.active]="pagina === pedidos().paginaAtual"
+                  [class.disabled]="pagina === '...'"
+                  (click)="pagina !== '...' && irParaPagina(+pagina)"
+                >
+                  {{ pagina }}
+                </button>
+              }
+            </div>
+
+            <button
+              class="btn-paginacao"
+              [disabled]="pedidos().paginaAtual === pedidos().totalPaginas"
+              (click)="irParaPagina(pedidos().paginaAtual + 1)"
+            >
+              Próxima →
+            </button>
+          </div>
+        }
+      </section>
+    }
+  </div>
+</div>
+

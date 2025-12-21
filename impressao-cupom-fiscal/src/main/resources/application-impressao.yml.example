@@ -1,0 +1,39 @@
+# Configuração de Impressão de Cupom Fiscal
+# 
+# ⚠️ IMPORTANTE: Este arquivo é apenas um EXEMPLO de referência!
+# 
+# Para usar estas configurações, você deve ADICIONAR este conteúdo ao arquivo:
+# sistema-orquestrador/src/main/resources/application-secrets.yml
+# 
+# NÃO crie um arquivo separado - adicione estas configurações ao application-secrets.yml existente!
+# 
+# Alternativa: Você também pode definir como variáveis de ambiente no IntelliJ ou sistema operacional
+
+impressao:
+  # Configuração para EPSON TM-T20
+  epson:
+    tm-t20:
+      device: /dev/usb/lp0  # Caminho do dispositivo no Linux
+      # device: COM3  # Caminho do dispositivo no Windows
+      modo-teste: true  # Se true, salva em arquivo .prn ao invés de imprimir
+  
+  # Configuração para DARUMA DR-800
+  daruma:
+    "800":
+      device: /dev/usb/lp1  # Caminho do dispositivo no Linux
+      # device: COM4  # Caminho do dispositivo no Windows
+      modo-teste: true  # Se true, salva em arquivo .prn ao invés de imprimir
+  
+  # Configuração para impressoras genéricas ESC/POS
+  generica:
+    device: /dev/usb/lp2  # Caminho do dispositivo no Linux
+    # device: COM5  # Caminho do dispositivo no Windows
+    modo-teste: true  # Se true, salva em arquivo .prn ao invés de imprimir
+
+# Configurações do estabelecimento (usadas no cupom fiscal)
+estabelecimento:
+  nome: "experimenta-ai-do-soneca"
+  endereco: "Rua Exemplo, 123 - Centro"
+  telefone: "(11) 1234-5678"
+  cnpj: "12345678000190"
+

@@ -1,0 +1,246 @@
+# ============================================
+# Secrets e Credenciais
+# ============================================
+**/application-secrets.yml
+**/application-secrets.properties
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.*
+# Permitir .env.example para documentação (sem credenciais reais)
+!.env.example
+!**/.env.example
+**/secrets/
+**/*secret*
+**/*password*
+**/*credential*
+**/*credentials*
+
+# Chaves e tokens (arquivos com padrões específicos)
+**/*.private.key
+**/*.private-key
+**/*.api.key
+**/*.api-key
+**/*.token
+**/*_key
+**/*_KEY
+**/*_SECRET
+**/*_TOKEN
+**/*_PASSWORD
+**/*_PASS
+
+# Arquivos de configuração que podem conter credenciais hardcoded
+**/application-local.yml
+**/application-local.properties
+**/application-prod.yml
+**/application-prod.properties
+**/application-dev.yml
+**/application-dev.properties
+wmakeouthill.github.io/
+
+# Certificados e Chaves
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+
+# Arquivos de configuração de IDEs com credenciais
+.idea/dataSources.local.xml
+.idea/dataSources.xml
+.idea/dbnavigator.xml
+.idea/sqldialects.xml
+.idea/db/*.xml
+**/dataSources.local.xml
+**/dataSources.xml
+**/dbnavigator.xml
+**/sqldialects.xml
+
+# Arquivos de backup que podem conter credenciais
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+**/logs/
+*.log.*
+
+# ============================================
+# Maven
+# ============================================
+target/
+**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ============================================
+# Node.js / npm / yarn
+# ============================================
+node_modules/
+**/node_modules/
+node/
+**/node/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+.pnp/
+.pnp.js
+.yarn-integrity
+# NOTA: package-lock.json e yarn.lock DEVEM ser commitados
+
+# ============================================
+# Frontend Builds (Angular / React)
+# ============================================
+dist/
+**/dist/
+build/
+**/build/
+.cache/
+.angular/
+.parcel-cache/
+.next/
+.nuxt/
+.output/
+.turbo/
+
+# ============================================
+# Executáveis e Binários
+# ============================================
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+*.app
+**/*.exe
+
+# ============================================
+# Compiled Files
+# ============================================
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# ============================================
+# IDEs
+# ============================================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ============================================
+# Sistema Operacional
+# ============================================
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# Java / JVM
+# ============================================
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# ============================================
+# Spring Boot
+# ============================================
+# Nota: application-local.yml e application-local.properties já estão na seção de Secrets
+
+# ============================================
+# Documentação Markdown
+# ============================================
+# Ignora todos os arquivos .md exceto README.md
+*.md
+**/*.md
+!README.md
+!**/README.md
+
+# ============================================
+# Arquivos Temporários
+# ============================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.tmp/
+temp/
+
+# ============================================
+# Coverage Reports
+# ============================================
+coverage/
+**/coverage/
+*.lcov
+.nyc_output/
+
+# ============================================
+# Arquivos de Build Específicos
+# ============================================
+# Electron
+out/
+app/dist/
+
+# Build scripts temporários
+*.ps1.bak
+*.sh.bak
+

@@ -1,0 +1,25 @@
+@if (isModoGestor()) {
+  <div [class]="'form-container ' + (isAnimating() ? 'escondido' : '')">
+    <form (ngSubmit)="handleSubmit()" class="form-adicionar">
+      <input
+        type="text"
+        [value]="nomeCliente()"
+        (input)="nomeCliente.set($any($event.target).value)"
+        placeholder="Digite o nome do cliente..."
+        class="input-nome"
+        [disabled]="loading()"
+      />
+      <button
+        type="submit"
+        class="btn-adicionar"
+        [disabled]="loading()"
+      >
+        {{ loading() ? 'Adicionando...' : '➕ Adicionar Pedido' }}
+      </button>
+    </form>
+    @if (error()) {
+      <div class="error-message">{{ error() }}</div>
+    }
+  </div>
+}
+

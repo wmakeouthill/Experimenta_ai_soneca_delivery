@@ -1,0 +1,50 @@
+<div class="gerenciar-sessao-container">
+  <div class="sessao-header">
+    <h3 class="sessao-titulo">📅 Sessão de Trabalho</h3>
+  </div>
+
+  @if (carregando()) {
+    <div class="sessao-loading">Carregando...</div>
+  } @else if (erro()) {
+    <div class="sessao-erro">{{ erro() }}</div>
+  } @else if (temSessaoAtiva()) {
+    <div class="sessao-info">
+      <div class="sessao-nome">{{ sessaoAtiva()!.nome }}</div>
+      <div class="sessao-status">
+        Status: <span class="status-badge" [class.status-aberta]="sessaoAtiva()!.status === StatusSessao.ABERTA"
+                     [class.status-pausada]="sessaoAtiva()!.status === StatusSessao.PAUSADA">
+          {{ sessaoAtiva()!.status }}
+        </span>
+      </div>
+      <div class="sessao-data">
+        Iniciada em: {{ formatarData(sessaoAtiva()!.dataInicioCompleta) }}
+      </div>
+    </div>
+
+    <div class="sessao-acoes">
+      @if (podePausar()) {
+        <button class="btn-sessao btn-pausar" (click)="pausar()" [disabled]="carregando()">
+          ⏸️ Pausar
+        </button>
+      }
+      @if (podeRetomar()) {
+        <button class="btn-sessao btn-retomar" (click)="retomar()" [disabled]="carregando()">
+          ▶️ Retomar
+        </button>
+      }
+      @if (podeFinalizar()) {
+        <button class="btn-sessao btn-finalizar" (click)="finalizar()" [disabled]="carregando()">
+          ✅ Finalizar
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="sessao-vazia">
+      <p>Nenhuma sessão ativa</p>
+      <button class="btn-sessao btn-iniciar" (click)="iniciar()" [disabled]="carregando()">
+        🚀 Iniciar Sessão
+      </button>
+    </div>
+  }
+</div>
+

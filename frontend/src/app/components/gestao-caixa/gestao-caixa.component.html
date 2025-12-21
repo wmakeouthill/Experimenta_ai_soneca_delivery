@@ -1,0 +1,551 @@
+<div class="caixa-container">
+  <header class="caixa-header">
+    <div class="caixa-header-content">
+      <h1 class="caixa-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.png" alt="Experimenta aí" class="caixa-logo" />
+        💵 Gestão de Caixa
+      </h1>
+
+      <div class="header-right">
+        <!-- Cards de Diferenças no Header -->
+        @if (resumoCaixa()) {
+          <div class="header-diferencas">
+            <!-- Diferença da Sessão Atual -->
+            @if (resumoCaixa()?.valorFechamento !== null && resumoCaixa()?.valorFechamento !== undefined) {
+              <div class="card-diferenca-header" [class.positiva]="(calcularDiferencaAtual()) >= 0" [class.negativa]="(calcularDiferencaAtual()) < 0">
+                <span class="card-dif-label">📊 Atual</span>
+                <span class="card-dif-valor">{{ formatarMoedaComSinal(calcularDiferencaAtual()) }}</span>
+              </div>
+            } @else {
+              <div class="card-diferenca-header neutro">
+                <span class="card-dif-label">📊 Atual</span>
+                <span class="card-dif-valor">-</span>
+              </div>
+            }
+
+            <!-- Diferença da Sessão Anterior -->
+            @if (resumoCaixa()?.diferencaSessaoAnterior !== null && resumoCaixa()?.diferencaSessaoAnterior !== undefined) {
+              <div class="card-diferenca-header" [class.positiva]="(resumoCaixa()?.diferencaSessaoAnterior ?? 0) >= 0" [class.negativa]="(resumoCaixa()?.diferencaSessaoAnterior ?? 0) < 0">
+                <span class="card-dif-label">⏮️ Anterior</span>
+                <span class="card-dif-valor">{{ formatarMoedaComSinal(resumoCaixa()?.diferencaSessaoAnterior) }}</span>
+              </div>
+            } @else {
+              <div class="card-diferenca-header neutro">
+                <span class="card-dif-label">⏮️ Anterior</span>
+                <span class="card-dif-valor">-</span>
+              </div>
+            }
+
+            <!-- Diferença Global -->
+            <div class="card-diferenca-header card-global" [class.positiva]="(resumoCaixa()?.diferencaGlobal ?? 0) >= 0" [class.negativa]="(resumoCaixa()?.diferencaGlobal ?? 0) < 0">
+              <span class="card-dif-label">🌍 Global</span>
+              <span class="card-dif-valor">{{ formatarMoedaComSinal(resumoCaixa()?.diferencaGlobal) }}</span>
+            </div>
+          </div>
+        }
+
+        <div class="header-actions">
+          <button class="btn-voltar" routerLink="/" aria-label="Voltar para home">
+            ← Voltar
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="caixa-layout">
+    <!-- Sidebar de Sessões -->
+    <aside class="sidebar-sessoes">
+      <div class="sessoes-container">
+        <h2 class="sessoes-titulo">📅 Sessões</h2>
+
+        @if (estaCarregando() && sessoes().length === 0) {
+          <div class="estado-carregando-sidebar">
+            <div class="spinner-small"></div>
+            <p>Carregando...</p>
+          </div>
+        }
+
+        @if (estado() === 'erro' && sessoes().length === 0) {
+          <div class="estado-erro-sidebar">
+            <p>{{ erro() }}</p>
+            <button class="btn-recarregar-small" (click)="recarregar()">Tentar novamente</button>
+          </div>
+        }
+
+        @if (sessoes().length === 0 && estado() === 'sucesso') {
+          <div class="estado-vazio-sidebar">
+            <p>Nenhuma sessão encontrada.</p>
+          </div>
+        }
+
+        <div class="sessoes-lista">
+          @for (sessao of sessoes(); track sessao.id) {
+            <button
+              class="sessao-item"
+              [class.sessao-selecionada]="sessaoSelecionada()?.id === sessao.id"
+              [class.sessao-aberta]="sessao.status === StatusSessao.ABERTA"
+              [class.sessao-pausada]="sessao.status === StatusSessao.PAUSADA"
+              [class.sessao-finalizada]="sessao.status === StatusSessao.FINALIZADA"
+              (click)="selecionarSessao(sessao)"
+            >
+              <div class="sessao-item-info">
+                <span class="sessao-item-nome">{{ sessao.nome }}</span>
+              </div>
+              <span class="sessao-item-status" [class]="'status-' + sessao.status.toLowerCase()">
+                {{ sessao.status }}
+              </span>
+            </button>
+          }
+        </div>
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="caixa-main">
+      @if (!temSessaoSelecionada()) {
+        <div class="estado-inicial">
+          <div class="estado-inicial-icone">💰</div>
+          <h2>Selecione uma Sessão</h2>
+          <p>Escolha uma sessão de trabalho na lista ao lado para visualizar os dados do caixa.</p>
+        </div>
+      }
+
+      @if (temSessaoSelecionada() && estaCarregando()) {
+        <div class="estado-carregando">
+          <div class="spinner"></div>
+          <p>Carregando dados do caixa...</p>
+        </div>
+      }
+
+      @if (temSessaoSelecionada() && estado() === 'erro') {
+        <div class="estado-erro">
+          <p class="erro-mensagem">{{ erro() }}</p>
+          <button class="btn-recarregar" (click)="recarregar()">Tentar novamente</button>
+        </div>
+      }
+
+      @if (temSessaoSelecionada() && estado() === 'sucesso' && resumoCaixa()) {
+        <!-- Header Compacto da Sessão -->
+        <div class="sessao-header-compacto">
+          <div class="sessao-info-compacto">
+            <span class="sessao-nome-compacto">{{ resumoCaixa()?.nomeSessao }}</span>
+            <span class="sessao-status-compacto" [class]="'status-' + sessaoSelecionada()?.status?.toLowerCase()">
+              {{ sessaoSelecionada()?.status }}
+            </span>
+          </div>
+          <button class="btn-limpar-compacto" (click)="limparSelecao()">✕</button>
+        </div>
+
+        <!-- Cards de Resumo Compactos -->
+        <div class="resumo-cards-compacto">
+          <div class="card-compacto card-abertura">
+            <span class="card-label-compacto">🔓 Abertura</span>
+            <span class="card-valor-compacto">{{ formatarMoeda(resumoCaixa()?.valorAbertura) }}</span>
+          </div>
+
+          <div class="card-compacto card-vendas">
+            <span class="card-label-compacto">💵 Vendas ({{ resumoCaixa()?.quantidadeVendasDinheiro }})</span>
+            <span class="card-valor-compacto">{{ formatarMoeda(resumoCaixa()?.totalVendasDinheiro) }}</span>
+          </div>
+
+          <div class="card-compacto card-suprimentos">
+            <span class="card-label-compacto">📥 Suprimentos</span>
+            <span class="card-valor-compacto valor-positivo">+{{ formatarMoeda(resumoCaixa()?.totalSuprimentos) }}</span>
+          </div>
+
+          <div class="card-compacto card-sangrias">
+            <span class="card-label-compacto">📤 Sangrias</span>
+            <span class="card-valor-compacto valor-negativo">-{{ formatarMoeda(resumoCaixa()?.totalSangrias) }}</span>
+          </div>
+
+          <div class="card-compacto card-esperado">
+            <span class="card-label-compacto">🎯 Saldo Esperado</span>
+            <span class="card-valor-compacto">{{ formatarMoeda(calcularSaldoEsperado()) }}</span>
+          </div>
+
+          @if (resumoCaixa()?.valorFechamento !== null && resumoCaixa()?.valorFechamento !== undefined) {
+            <div class="card-compacto card-fechamento">
+              <span class="card-label-compacto">🔒 Fechamento</span>
+              <span class="card-valor-compacto">{{ formatarMoeda(resumoCaixa()?.valorFechamento) }}</span>
+            </div>
+
+            <div class="card-compacto card-diferenca" [class.diferenca-positiva]="(resumoCaixa()?.diferenca ?? 0) >= 0" [class.diferenca-negativa]="(resumoCaixa()?.diferenca ?? 0) < 0">
+              <span class="card-label-compacto">📊 Diferença</span>
+              <span class="card-valor-compacto">{{ formatarMoeda(resumoCaixa()?.diferenca) }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Ações do Caixa -->
+        @if (sessaoEstaAberta()) {
+          <div class="caixa-acoes-compacto">
+            <button class="btn-acao-compacto btn-sangria" (click)="abrirModalSangria()">
+              📤 Sangria
+            </button>
+            <button class="btn-acao-compacto btn-suprimento" (click)="abrirModalSuprimento()">
+              📥 Suprimento
+            </button>
+            <button class="btn-acao-compacto btn-estatisticas" (click)="estatisticasComposable.abrirModal()">
+              📊 Estatísticas
+            </button>
+          </div>
+        }
+
+        @if (!sessaoEstaAberta() && temSessaoSelecionada()) {
+          <div class="caixa-acoes-compacto">
+            <button class="btn-acao-compacto btn-estatisticas" (click)="estatisticasComposable.abrirModal()">
+              📊 Estatísticas
+            </button>
+          </div>
+        }
+
+        <!-- Tabela de Movimentações (estilo relatório financeiro) -->
+        <section #tabelaCaixa class="tabela-caixa-section">
+          <h2 class="tabela-titulo">Movimentações em Dinheiro</h2>
+
+          @if (itensPaginados().totalItens === 0) {
+            <div class="tabela-vazia">
+              <p>Nenhuma movimentação em dinheiro registrada nesta sessão.</p>
+            </div>
+          }
+
+          @if (itensPaginados().totalItens > 0) {
+            <div class="tabela-wrapper">
+              <table class="tabela tabela-caixa">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Usuário</th>
+                    <th>Data/Hora</th>
+                    <th class="text-right">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of itensPaginados().itens; track item.id) {
+                    <tr [class]="obterClasseTipo(item.tipo)">
+                      <td>
+                        <span class="badge-tipo" [class]="'badge-' + item.tipo.toLowerCase()">
+                          {{ item.tipoDescricao }}
+                        </span>
+                      </td>
+                      <td>
+                        @if (item.tipo === TipoItemCaixa.VENDA_DINHEIRO) {
+                          <span class="item-descricao">
+                            <strong>#{{ item.numeroPedido }}</strong> - {{ item.clienteNome }}
+                          </span>
+                        } @else {
+                          <span class="item-descricao">{{ item.descricao || '-' }}</span>
+                        }
+                      </td>
+                      <td>
+                        <span class="item-usuario">{{ obterNomeUsuario(item.usuarioId) }}</span>
+                      </td>
+                      <td>{{ formatarDataHora(item.dataHora) }}</td>
+                      <td class="text-right">
+                        <span class="item-valor" [class.valor-positivo]="item.valor > 0" [class.valor-negativo]="item.valor < 0">
+                          {{ item.valor >= 0 ? '+' : '' }}{{ formatarMoeda(item.valor) }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="tabela-total">
+                    <td colspan="4"><strong>Total em Dinheiro</strong></td>
+                    <td class="text-right"><strong>{{ formatarMoeda(calcularTotalDinheiro()) }}</strong></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <!-- Paginação -->
+            @if (itensPaginados().totalPaginas > 1) {
+              <div class="paginacao">
+                <button
+                  class="btn-paginacao"
+                  [disabled]="itensPaginados().paginaAtual === 1"
+                  (click)="irParaPagina(itensPaginados().paginaAtual - 1)"
+                >
+                  ← Anterior
+                </button>
+
+                <div class="paginacao-numeros">
+                  @for (pagina of gerarNumerosPagina(); track pagina) {
+                    <button
+                      class="btn-pagina"
+                      [class.active]="pagina === itensPaginados().paginaAtual"
+                      [class.disabled]="pagina === '...'"
+                      (click)="pagina !== '...' && irParaPagina(+pagina)"
+                    >
+                      {{ pagina }}
+                    </button>
+                  }
+                </div>
+
+                <button
+                  class="btn-paginacao"
+                  [disabled]="itensPaginados().paginaAtual === itensPaginados().totalPaginas"
+                  (click)="irParaPagina(itensPaginados().paginaAtual + 1)"
+                >
+                  Próxima →
+                </button>
+              </div>
+            }
+          }
+        </section>
+      }
+    </main>
+  </div>
+</div>
+
+<!-- Modal de Movimentação -->
+@if (mostrarModalMovimentacao()) {
+  <div class="modal-overlay" (click)="fecharModalMovimentacao()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-titulo">
+          {{ tipoMovimentacao() === 'sangria' ? '📤 Registrar Sangria' : '📥 Registrar Suprimento' }}
+        </h2>
+        <button class="modal-fechar" (click)="fecharModalMovimentacao()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grupo">
+          <label class="form-label">Valor *</label>
+          <input
+            type="number"
+            class="form-input"
+            placeholder="0,00"
+            step="0.01"
+            min="0.01"
+            [value]="valorMovimentacao()"
+            (input)="valorMovimentacao.set(+$any($event.target).value)"
+          />
+        </div>
+
+        <div class="form-grupo">
+          <label class="form-label">Descrição *</label>
+          <div class="descricao-autocomplete" #descricaoDropdown>
+            <div class="input-com-icone">
+              <input
+                type="text"
+                class="form-input input-descricao"
+                placeholder="Digite o motivo da movimentação..."
+                [value]="descricaoMovimentacao()"
+                (input)="onDescricaoInput($any($event.target).value)"
+                (focus)="onDescricaoFocus()"
+                autocomplete="off"
+              />
+              <span
+                class="icone-dropdown"
+                [class.aberto]="sugestoesComposable.mostrarSugestoes()"
+                (click)="toggleSugestoes(); $event.stopPropagation()"
+              >
+                ▼
+              </span>
+            </div>
+
+            @if (sugestoesComposable.mostrarSugestoes() && sugestoesComposable.todasDescricoes().length > 0) {
+              <div class="sugestoes-dropdown">
+                <div class="sugestoes-header">
+                  <span class="sugestoes-titulo">📋 Descrições anteriores</span>
+                  <span class="sugestoes-contador">{{ sugestoesComposable.descricoesFiltradas().length }} encontrada(s)</span>
+                </div>
+
+                @if (sugestoesComposable.descricoesFiltradas().length > 0) {
+                  <ul class="sugestoes-lista">
+                    @for (sugestao of sugestoesComposable.descricoesPaginadas(); track sugestao.descricao) {
+                      <li
+                        class="sugestao-item"
+                        [class.sugestao-popular]="sugestao.popular"
+                        (click)="selecionarSugestao(sugestao.descricao)"
+                      >
+                        <span class="sugestao-icone">{{ sugestao.popular ? '🔥' : '↩' }}</span>
+                        <span class="sugestao-texto">{{ sugestao.descricao }}</span>
+                        @if (sugestao.popular) {
+                          <span class="sugestao-badge" title="Usada {{ sugestao.quantidade }} vezes">
+                            {{ sugestao.quantidade }}x
+                          </span>
+                        }
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <div class="sugestoes-vazio">
+                    <span>🔍 Nenhuma descrição encontrada para "{{ descricaoMovimentacao() }}"</span>
+                  </div>
+                }
+
+                @if (sugestoesComposable.totalPaginas() > 1) {
+                  <div class="sugestoes-paginacao">
+                    <button
+                      class="btn-paginar"
+                      [disabled]="sugestoesComposable.paginaAtual() <= 1"
+                      (click)="sugestoesComposable.paginaAnterior(); $event.stopPropagation()"
+                      title="Página anterior"
+                    >
+                      ‹
+                    </button>
+                    <span class="pagina-info">
+                      {{ sugestoesComposable.paginaAtual() }} de {{ sugestoesComposable.totalPaginas() }}
+                    </span>
+                    <button
+                      class="btn-paginar"
+                      [disabled]="!sugestoesComposable.temMaisPaginas()"
+                      (click)="sugestoesComposable.proximaPagina(); $event.stopPropagation()"
+                      title="Próxima página"
+                    >
+                      ›
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <small class="form-hint">
+            @if (sugestoesComposable.carregando()) {
+              <span class="hint-loading">⏳ Carregando sugestões...</span>
+            } @else if (descricaoMovimentacao().trim() && !sugestoesComposable.descricaoExiste()) {
+              <span class="hint-nova">✨ Nova descrição será salva para uso futuro</span>
+            } @else if (sugestoesComposable.todasDescricoes().length > 0) {
+              <span class="hint-info">💡 Clique na seta ou digite para ver sugestões</span>
+            }
+          </small>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="fecharModalMovimentacao()">
+          Cancelar
+        </button>
+        <button
+          class="btn-confirmar"
+          [class.btn-sangria]="tipoMovimentacao() === 'sangria'"
+          [class.btn-suprimento]="tipoMovimentacao() === 'suprimento'"
+          [disabled]="!formularioMovimentacaoValido()"
+          (click)="confirmarMovimentacao()"
+        >
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de Estatísticas -->
+@if (estatisticasComposable.mostrarModal()) {
+  <div class="modal-overlay" (click)="estatisticasComposable.fecharModal()">
+    <div class="modal-content modal-estatisticas" (click)="$event.stopPropagation()">
+      <div class="modal-header modal-header-estatisticas">
+        <h2>📊 Estatísticas de Movimentações</h2>
+        <button class="btn-fechar-modal" (click)="estatisticasComposable.fecharModal()">✕</button>
+      </div>
+
+      <div class="modal-body modal-body-estatisticas">
+        @if (estatisticasComposable.carregando()) {
+          <div class="estatisticas-carregando">
+            <div class="spinner"></div>
+            <p>Carregando estatísticas...</p>
+          </div>
+        }
+
+        @if (estatisticasComposable.erro()) {
+          <div class="estatisticas-erro">
+            <p>{{ estatisticasComposable.erro() }}</p>
+            <button class="btn-recarregar" (click)="estatisticasComposable.carregarEstatisticas()">
+              Tentar novamente
+            </button>
+          </div>
+        }
+
+        @if (!estatisticasComposable.carregando() && !estatisticasComposable.erro()) {
+          <div class="graficos-container">
+            <!-- Gráfico de Sangrias -->
+            <div class="grafico-section grafico-sangrias">
+              <div class="grafico-header">
+                <h3>📤 Sangrias (Retiradas)</h3>
+                <div class="grafico-totais">
+                  <span class="total-qtd">{{ estatisticasComposable.totalSangrias() }} retiradas</span>
+                  <span class="total-valor">{{ formatarMoeda(estatisticasComposable.valorTotalSangrias()) }}</span>
+                </div>
+              </div>
+
+              @if (estatisticasComposable.sangrias().length === 0) {
+                <div class="grafico-vazio">
+                  <span>📭 Nenhuma sangria registrada</span>
+                </div>
+              } @else {
+                <div class="grafico-barras-vertical">
+                  @for (item of estatisticasComposable.sangrias(); track item.descricao) {
+                    <div class="barra-vertical-item" [title]="item.descricao + ' - ' + item.quantidade + 'x - ' + formatarMoeda(item.valorTotal)">
+                      <div class="barra-vertical-container">
+                        <div
+                          class="barra-vertical barra-sangria"
+                          [style.height.%]="estatisticasComposable.calcularLarguraBarra(item.quantidade, estatisticasComposable.maxQuantidadeSangria())"
+                        >
+                        </div>
+                      </div>
+                      <div class="barra-vertical-info">
+                        <span class="barra-vertical-qtd">{{ item.quantidade }}x</span>
+                        <span class="barra-vertical-valor">{{ formatarMoeda(item.valorTotal) }}</span>
+                      </div>
+                      <div class="barra-vertical-label">
+                        {{ item.descricao }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Gráfico de Suprimentos -->
+            <div class="grafico-section grafico-suprimentos">
+              <div class="grafico-header">
+                <h3>📥 Suprimentos (Entradas)</h3>
+                <div class="grafico-totais">
+                  <span class="total-qtd">{{ estatisticasComposable.totalSuprimentos() }} entradas</span>
+                  <span class="total-valor">{{ formatarMoeda(estatisticasComposable.valorTotalSuprimentos()) }}</span>
+                </div>
+              </div>
+
+              @if (estatisticasComposable.suprimentos().length === 0) {
+                <div class="grafico-vazio">
+                  <span>📭 Nenhum suprimento registrado</span>
+                </div>
+              } @else {
+                <div class="grafico-barras-vertical">
+                  @for (item of estatisticasComposable.suprimentos(); track item.descricao) {
+                    <div class="barra-vertical-item" [title]="item.descricao + ' - ' + item.quantidade + 'x - ' + formatarMoeda(item.valorTotal)">
+                      <div class="barra-vertical-container">
+                        <div
+                          class="barra-vertical barra-suprimento"
+                          [style.height.%]="estatisticasComposable.calcularLarguraBarra(item.quantidade, estatisticasComposable.maxQuantidadeSuprimento())"
+                        >
+                        </div>
+                      </div>
+                      <div class="barra-vertical-info">
+                        <span class="barra-vertical-qtd">{{ item.quantidade }}x</span>
+                        <span class="barra-vertical-valor">{{ formatarMoeda(item.valorTotal) }}</span>
+                      </div>
+                      <div class="barra-vertical-label">
+                        {{ item.descricao }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer modal-footer-estatisticas">
+        <button class="btn-fechar" (click)="estatisticasComposable.fecharModal()">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+}

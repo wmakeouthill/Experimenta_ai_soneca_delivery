@@ -1,0 +1,66 @@
+<h3>Meios de Pagamento <span class="obrigatorio">*</span></h3>
+<div class="meios-pagamento-container">
+  <div class="meio-pagamento-input-group">
+    <select
+      class="form-input form-select"
+      [value]="meioPagamentoSelecionado() || ''"
+      (change)="meioPagamentoSelecionado.set($any($event.target).value || null); onMeioPagamentoSelecionado()"
+    >
+      <option value="">Selecione...</option>
+      <option [value]="MeioPagamento.PIX">PIX</option>
+      <option [value]="MeioPagamento.CARTAO_CREDITO">Cartão de Crédito</option>
+      <option [value]="MeioPagamento.CARTAO_DEBITO">Cartão de Débito</option>
+      <option [value]="MeioPagamento.VALE_REFEICAO">Vale Refeição</option>
+      <option [value]="MeioPagamento.DINHEIRO">Dinheiro</option>
+    </select>
+    <input
+      type="number"
+      class="form-input input-valor-meio-pagamento"
+      placeholder="Valor"
+      step="0.01"
+      min="0.01"
+      inputmode="decimal"
+      [value]="valorMeioPagamento()"
+      (input)="valorMeioPagamento.set(parseValorMeioPagamento($any($event.target).value))"
+      (focus)="onInputFocus()"
+      (blur)="onInputBlur()"
+      [max]="valorRestante()"
+    />
+    <button
+      type="button"
+      class="btn-adicionar-meio-pagamento"
+      (click)="adicionarMeioPagamento()"
+      [disabled]="!meioPagamentoSelecionado() || valorMeioPagamento() <= 0 || valorMeioPagamento() > valorRestante()"
+    >
+      ➕
+    </button>
+  </div>
+  <div class="valor-total-info">
+    <span class="valor-label">Total: {{ formatarPreco(valorTotal()) }}</span>
+    <span class="separador">-</span>
+    <span class="valor-restante" [class.completo]="valorRestante() <= 0">
+      Restante: {{ formatarPreco(valorRestante()) }}
+    </span>
+  </div>
+  @if (meiosPagamento().length > 0) {
+    <div class="meios-pagamento-lista">
+      @for (meioPagamento of meiosPagamento(); track $index) {
+        <div class="meio-pagamento-item">
+          <span class="meio-pagamento-nome">{{ formatarNomeMeioPagamento(meioPagamento.meioPagamento) }}</span>
+          <span class="meio-pagamento-valor">{{ formatarPreco(meioPagamento.valor) }}</span>
+          <button
+            type="button"
+            class="btn-remover-meio-pagamento"
+            (click)="removerMeioPagamento($index)"
+          >
+            🗑️
+          </button>
+        </div>
+      }
+    </div>
+  }
+  @if (meiosPagamento().length === 0) {
+    <p class="meio-pagamento-hint">Adicione pelo menos um meio de pagamento</p>
+  }
+</div>
+

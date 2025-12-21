@@ -1,0 +1,159 @@
+<div class="success-screen">
+    <!-- Header com botão voltar -->
+    <div class="success-header">
+        <button class="btn-minimizar-status" (click)="continuarNavegando.emit()">
+            <span class="btn-minimizar-icon">‹</span>
+            <span>Continuar navegando</span>
+        </button>
+    </div>
+
+    <div class="success-content">
+        @if (sucesso().pedidoCancelado()) {
+            <!-- Pedido cancelado/rejeitado -->
+            <div class="success-card cancelado">
+                <div class="success-icon cancelado">❌</div>
+                <h2>Pedido Cancelado</h2>
+                <p class="success-main">Infelizmente seu pedido foi cancelado.</p>
+                @if (sucesso().statusPedido()?.motivoCancelamento) {
+                    <p class="motivo-cancelamento">
+                        Motivo: {{ sucesso().statusPedido()?.motivoCancelamento }}
+                    </p>
+                }
+            </div>
+        } @else {
+            <!-- Pedido em andamento -->
+            <div class="success-card">
+                <div class="success-icon-wrapper">
+                    <div class="success-icon" [class.pulsing]="!sucesso().pedidoFinalizado()">
+                        @if (sucesso().pedidoFinalizado()) {
+                            🎉
+                        } @else if (sucesso().passoAtual() === 2) {
+                            @if (sucesso().statusAtual() === 'ACEITO') {
+                                ⏳
+                            } @else {
+                                👨‍🍳
+                            }
+                        } @else {
+                            🍽️
+                        }
+                    </div>
+                </div>
+
+                @if (sucesso().numeroPedido()) {
+                    <div class="numero-pedido-badge">
+                        Pedido #{{ sucesso().numeroPedido() }}
+                    </div>
+                }
+
+                <h2 class="success-titulo">{{ sucesso().statusDescricao() }}</h2>
+
+                <div class="success-mesa-info">
+                    <span class="mesa-icon">📍</span>
+                    <span>Mesa {{ mesaNumero() }}</span>
+                </div>
+            </div>
+
+            <!-- Timeline de status -->
+            <div class="success-timeline">
+                <!-- Passo 1: Pedido enviado (sempre completo) -->
+                <div class="timeline-step completed">
+                    <div class="timeline-marker">
+                        <span class="timeline-icon">✓</span>
+                    </div>
+                    <div class="timeline-content">
+                        <span class="timeline-label">Pedido enviado</span>
+                    </div>
+                </div>
+
+                <!-- Passo 2: Aguardando confirmação -->
+                <div class="timeline-step"
+                     [class.completed]="sucesso().passoAtual() > 1"
+                     [class.active]="sucesso().passoAtual() === 1">
+                    <div class="timeline-marker">
+                        @if (sucesso().passoAtual() > 1) {
+                            <span class="timeline-icon">✓</span>
+                        } @else {
+                            <span class="timeline-icon waiting">⏳</span>
+                        }
+                    </div>
+                    <div class="timeline-content">
+                        <span class="timeline-label">Confirmação</span>
+                        @if (sucesso().passoAtual() === 1) {
+                            <span class="timeline-sublabel">Aguardando atendente</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Passo 3: Em preparação -->
+                <div class="timeline-step"
+                     [class.completed]="sucesso().passoAtual() > 2"
+                     [class.active]="sucesso().passoAtual() === 2"
+                     [class.pending]="sucesso().passoAtual() < 2">
+                    <div class="timeline-marker">
+                        @if (sucesso().passoAtual() > 2) {
+                            <span class="timeline-icon">✓</span>
+                        } @else if (sucesso().passoAtual() === 2) {
+                            @if (sucesso().statusAtual() === 'ACEITO') {
+                                <span class="timeline-icon waiting">⏳</span>
+                            } @else {
+                                <span class="timeline-icon cooking">👨‍🍳</span>
+                            }
+                        } @else {
+                            <span class="timeline-icon pending">○</span>
+                        }
+                    </div>
+                    <div class="timeline-content">
+                        <span class="timeline-label">Preparação</span>
+                        @if (sucesso().passoAtual() === 2) {
+                            @if (sucesso().statusAtual() === 'ACEITO') {
+                                <span class="timeline-sublabel">Pedido confirmado. Aguardando iniciar preparo</span>
+                            } @else {
+                                <span class="timeline-sublabel">Seu pedido está sendo preparado</span>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Passo 4: Pronto -->
+                <div class="timeline-step"
+                     [class.completed]="sucesso().passoAtual() >= 3"
+                     [class.pending]="sucesso().passoAtual() < 3">
+                    <div class="timeline-marker">
+                        @if (sucesso().passoAtual() >= 3) {
+                            <span class="timeline-icon done">🎉</span>
+                        } @else {
+                            <span class="timeline-icon pending">○</span>
+                        }
+                    </div>
+                    <div class="timeline-content">
+                        <span class="timeline-label">Pronto!</span>
+                        @if (sucesso().passoAtual() >= 3) {
+                            <span class="timeline-sublabel">Iremos servir em breve</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info adicional -->
+            @if (!sucesso().pedidoFinalizado()) {
+                <div class="success-tempo">
+                    <span class="tempo-icon">⏱️</span>
+                    <span>{{ sucesso().formatarTempoEspera() }}</span>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Ações -->
+    <div class="success-actions">
+        @if (sucesso().pedidoTerminado()) {
+            <button class="btn-novo-pedido" (click)="novoPedido.emit()">
+                🛒 Fazer Novo Pedido
+            </button>
+        } @else {
+            <p class="aguardando-finalizacao">
+                Você pode continuar navegando enquanto aguarda
+            </p>
+        }
+    </div>
+</div>

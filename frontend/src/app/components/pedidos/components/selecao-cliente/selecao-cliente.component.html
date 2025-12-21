@@ -1,0 +1,88 @@
+@if (!clienteSelecionado()) {
+  <div class="cliente-opcoes-layout">
+    <div class="cliente-lista-coluna">
+      <div class="cliente-busca">
+        <input
+          type="text"
+          class="input-busca"
+          placeholder="Buscar cliente por nome ou telefone..."
+          (input)="buscarClientes($any($event.target).value)"
+        />
+      </div>
+      
+      <div class="clientes-lista" #listaClientes [style.gap]="gapCalculado()">
+        @for (cliente of clientesPaginados(); track cliente.id) {
+          <button class="cliente-item" (click)="selecionarCliente(cliente)">
+            <div class="cliente-info">
+              <strong>{{ cliente.nome }}</strong>
+              <span>{{ cliente.telefone }}</span>
+            </div>
+          </button>
+        }
+        @if (clientesPaginados().length === 0) {
+          <div class="cliente-sem-resultado">
+            <p>Nenhum cliente encontrado</p>
+          </div>
+        }
+      </div>
+      
+      @if (totalPaginasClientes() > 1) {
+        <div class="clientes-paginacao">
+          <button 
+            class="btn-pagina" 
+            (click)="paginaAnteriorClientes()"
+            [disabled]="paginaClientes() === 1"
+          >
+            ← Anterior
+          </button>
+          <span class="pagina-info">
+            Página {{ paginaClientes() }} de {{ totalPaginasClientes() }}
+          </span>
+          <button 
+            class="btn-pagina" 
+            (click)="proximaPaginaClientes()"
+            [disabled]="paginaClientes() === totalPaginasClientes()"
+          >
+            Próxima →
+          </button>
+        </div>
+      }
+    </div>
+    
+    <div class="cliente-form-coluna">
+      <div class="cliente-novo">
+        <h4>Cadastrar Novo Cliente</h4>
+        <form [formGroup]="clienteForm" (ngSubmit)="criarCliente()">
+          <div class="form-group">
+            <label>Nome *</label>
+            <input type="text" formControlName="nome" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label>Telefone *</label>
+            <input type="text" formControlName="telefone" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" formControlName="email" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label>CPF (Opcional)</label>
+            <input type="text" formControlName="cpf" class="form-input" />
+          </div>
+          <button type="submit" class="btn-primary" [disabled]="clienteForm.invalid">
+            Cadastrar Cliente
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="cliente-selecionado">
+    <div class="cliente-info-linha">
+      <strong>{{ clienteSelecionado()!.nome }}</strong>
+      <span>{{ clienteSelecionado()!.telefone }}</span>
+    </div>
+    <button class="btn-trocar" (click)="trocarCliente()">Trocar</button>
+  </div>
+}
+

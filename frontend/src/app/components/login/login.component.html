@@ -1,0 +1,68 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <img src="/assets/experimenta_ai_banner_circular.webp" alt="Experimenta aí" class="login-logo" />
+      <h1 class="login-titulo">Experimenta aí</h1>
+      <p class="login-subtitulo">Sistema de Gestão para Lanchonetes</p>
+    </div>
+    
+    @if (erro()) {
+      <div class="error-message">
+        {{ erro() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="emailOuUsuario">Email ou Nome de Usuário</label>
+        <input
+          id="emailOuUsuario"
+          type="text"
+          formControlName="emailOuUsuario"
+          placeholder="Digite seu email ou nome de usuário"
+          [class.invalid]="emailOuUsuario?.invalid && emailOuUsuario?.touched"
+        />
+        @if (emailOuUsuario?.invalid && emailOuUsuario?.touched) {
+          <span class="error-text">
+            @if (emailOuUsuario?.errors?.['required']) {
+              Email ou nome de usuário é obrigatório
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input
+          id="senha"
+          type="password"
+          formControlName="senha"
+          placeholder="Digite sua senha"
+          [class.invalid]="senha?.invalid && senha?.touched"
+        />
+        @if (senha?.invalid && senha?.touched) {
+          <span class="error-text">
+            @if (senha?.errors?.['required']) {
+              Senha é obrigatória
+            } @else if (senha?.errors?.['minlength']) {
+              Senha deve ter no mínimo 6 caracteres
+            }
+          </span>
+        }
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="form.invalid || estaCarregando()"
+        class="btn-primary"
+      >
+        @if (estaCarregando()) {
+          Entrando...
+        } @else {
+          Entrar
+        }
+      </button>
+    </form>
+  </div>
+</div>
+

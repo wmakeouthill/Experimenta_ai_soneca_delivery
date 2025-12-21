@@ -1,0 +1,44 @@
+<header [class]="'header ' + (isAnimating() ? 'animating' : '')">
+  <div class="logo-container">
+    @if (!isAnimating()) {
+      <img
+        src="assets/experimenta_ai_banner_circular.png"
+        alt="Experimenta aí"
+        class="logo-imagem"
+      />
+    }
+  </div>
+  <h2 [class]="'titulo-fila ' + (isAnimating() ? 'escondido' : '')">
+    Fila de Pedidos
+  </h2>
+  <button
+    type="button"
+    [class]="'btn-animacao-manual ' + (isAnimating() ? 'escondido' : '')"
+    (click)="handleAnimacaoManual()"
+    [disabled]="isAnimating()"
+    title="Reproduzir animação manualmente"
+  >
+    ✨ Animar
+  </button>
+  @if (podeConfigurarAnimacao()) {
+    <button
+      type="button"
+      [class]="'btn-config-animacao ' + (isAnimating() ? 'escondido' : '')"
+      (click)="handleAbrirConfig()"
+      title="Configurar animação"
+    >
+      ⚙️ Configurar Animação
+    </button>
+  }
+  @if (isModoGestor()) {
+    <button
+      type="button"
+      [class]="'btn-trocar-modo ' + (isAnimating() ? 'escondido' : '')"
+      (click)="handleTrocarModo()"
+      title="Trocar modo de acesso"
+    >
+      🔄 Trocar Modo
+    </button>
+  }
+</header>
+

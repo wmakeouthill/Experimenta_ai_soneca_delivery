@@ -1,0 +1,29 @@
+# Dockerfile para desenvolvimento do frontend Angular
+# Usando node:20 (não alpine) para evitar problemas com dependências nativas do rollup
+FROM node:20
+
+WORKDIR /app/frontend
+
+# Instalar dependências globais úteis para desenvolvimento
+RUN npm install -g @angular/cli@17
+
+# Copiar package files primeiro (para cache)
+COPY frontend/package*.json ./
+
+# Instalar dependências (sem --legacy-peer-deps para garantir compatibilidade)
+RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+
+# Copiar código fonte (será sobrescrito por volumes no docker-compose)
+COPY frontend/ .
+
+# Script de entrada que garante dependências instaladas mesmo com volumes
+# Converter line endings para LF (remover CRLF do Windows)
+COPY docker-entrypoint.dev.frontend.sh /docker-entrypoint.dev.frontend.sh
+RUN tr -d '\r' < /docker-entrypoint.dev.frontend.sh > /docker-entrypoint.dev.frontend.sh.tmp && \
+    mv /docker-entrypoint.dev.frontend.sh.tmp /docker-entrypoint.dev.frontend.sh && \
+    chmod +x /docker-entrypoint.dev.frontend.sh
+
+# Expor porta do Angular dev server
+EXPOSE 4200
+
+ENTRYPOINT ["/bin/bash", "/docker-entrypoint.dev.frontend.sh"]

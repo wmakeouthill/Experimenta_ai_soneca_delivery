@@ -1,0 +1,414 @@
+.formulario-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.formulario-sidebar {
+  width: 900px;
+  max-width: 95vw;
+  background: white;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.formulario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  flex-shrink: 0;
+}
+
+.formulario-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.btn-fechar {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn-fechar:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.formulario-conteudo {
+  padding: 0.75rem 1.5rem;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.formulario-secao {
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.formulario-secao:not(:first-child) {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.formulario-secao:first-child {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+/* Quando há cliente selecionado, remove completamente o flex: 1 */
+.formulario-secao:first-child.cliente-selecionado {
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  flex-basis: auto !important;
+  height: auto !important;
+  max-height: fit-content !important;
+  overflow: visible !important;
+  min-height: 0 !important;
+}
+
+.formulario-secao:first-child.cliente-selecionado > *:not(h3) {
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  flex-basis: auto !important;
+  height: auto !important;
+  max-height: fit-content !important;
+  overflow: visible !important;
+  min-height: 0 !important;
+}
+
+/* Quando há produtos, remove completamente o flex: 1 da primeira seção */
+.formulario-conteudo:has(.formulario-secao:has(app-selecao-produtos)) > .formulario-secao:first-child {
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  flex-basis: auto !important;
+  height: auto !important;
+  max-height: fit-content !important;
+  overflow: visible !important;
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.formulario-secao:first-child > h3 {
+  flex-shrink: 0;
+}
+
+.formulario-secao:first-child > *:not(h3) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Quando há produtos, o componente interno da primeira seção não deve ter flex: 1 */
+.formulario-conteudo:has(.formulario-secao:has(app-selecao-produtos)) > .formulario-secao:first-child > *:not(h3) {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: fit-content !important;
+  overflow: visible !important;
+}
+
+/* Quando o componente de seleção de cliente tem cliente selecionado, não deve crescer */
+.formulario-secao:first-child > app-selecao-cliente:has(.cliente-selecionado) {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: fit-content !important;
+  overflow: visible !important;
+}
+
+/* Quando há produtos, a seção de cliente não ocupa todo o espaço - regra mais específica */
+.formulario-conteudo:has(.formulario-secao:has(app-selecao-produtos)) > .formulario-secao:first-child {
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  flex-basis: auto !important;
+  overflow: visible !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: fit-content !important;
+  align-items: stretch !important;
+}
+
+/* Garante que quando há cliente selecionado dentro da seção, ela não cresce */
+.formulario-secao:first-child:has(app-selecao-cliente:has(.cliente-selecionado)) {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  max-height: fit-content !important;
+  overflow: visible !important;
+}
+
+/* Quando há produtos, o componente interno da seção de cliente não deve ter flex: 1 */
+.formulario-conteudo:has(.formulario-secao:has(app-selecao-produtos)) .formulario-secao:first-child > *:not(h3) {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: fit-content !important;
+}
+
+/* Layout de duas colunas: produtos e itens */
+.produtos-itens-layout {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Seção de produtos - ocupa espaço restante */
+.formulario-secao:has(app-selecao-produtos) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+.produtos-coluna {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Seção de itens do pedido - sempre visível à direita */
+.itens-coluna {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: hidden;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Remove margem extra quando há cliente selecionado */
+.formulario-conteudo:has(.formulario-secao:has(app-selecao-produtos)) .formulario-secao:first-child {
+  margin-bottom: 0;
+}
+
+/* Seção de itens do pedido no layout de duas colunas */
+.itens-coluna {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.formulario-secao h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 0.25rem 0;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid #4CAF50;
+}
+
+.formulario-secao:has(app-selecao-produtos) h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.formulario-rodape {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding-top: 0.2rem;
+}
+
+.formulario-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+
+.formulario-coluna {
+  display: flex;
+  flex-direction: column;
+}
+
+.formulario-coluna .formulario-secao {
+  margin-bottom: 0;
+}
+
+.formulario-coluna .formulario-secao h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.3rem;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 0.6rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.formulario-acoes {
+  padding-top: 0.75rem;
+  border-top: 2px solid #e0e0e0;
+  margin-top: 0;
+  flex-shrink: 0;
+  padding-bottom: 0.5rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.btn-criar {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1rem;
+}
+
+.btn-criar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .formulario-sidebar {
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .formulario-colunas {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+
+  .produtos-itens-layout {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .formulario-conteudo {
+    padding: 0.4rem 0.75rem;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .formulario-header {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .formulario-header h2 {
+    font-size: 1rem;
+  }
+
+  .produtos-coluna {
+    min-height: 120px;
+    max-height: 50vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .itens-coluna {
+    min-height: 60px;
+    max-height: 20vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .formulario-rodape {
+    padding-top: 0.3rem;
+    flex-shrink: 0;
+  }
+
+  .formulario-secao h3 {
+    font-size: 0.85rem;
+    margin-bottom: 0.2rem;
+    padding-bottom: 0.15rem;
+  }
+
+  .formulario-coluna .formulario-secao h3 {
+    font-size: 0.8rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .form-textarea {
+    min-height: 50px;
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+
+  .btn-criar {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .formulario-acoes {
+    padding-top: 0.4rem;
+  }
+}
+

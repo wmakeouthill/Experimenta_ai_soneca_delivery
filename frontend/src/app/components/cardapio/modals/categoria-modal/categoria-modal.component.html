@@ -1,0 +1,66 @@
+<app-base-modal
+  [aberto]="aberto()"
+  [titulo]="obterTitulo()"
+  [tamanho]="'pequeno'"
+  (onFechar)="fechar()"
+>
+  <form (ngSubmit)="salvar()">
+    <div class="formulario-grupo">
+      <label class="formulario-label" for="nome">
+        Nome <span class="obrigatorio">*</span>
+      </label>
+      <input
+        id="nome"
+        type="text"
+        class="formulario-input"
+        [class.erro]="formulario.temErro('nome')"
+        [formControl]="formulario.form.controls['nome']"
+        placeholder="Ex: Lanches, Bebidas..."
+        maxlength="100"
+      />
+      @if (formulario.temErro('nome')) {
+        <span class="formulario-erro">
+          {{ formulario.obterMensagemErro('nome') }}
+        </span>
+      }
+    </div>
+
+    <div class="formulario-grupo">
+      <label class="formulario-label" for="descricao">
+        Descrição
+      </label>
+      <textarea
+        id="descricao"
+        class="formulario-input formulario-textarea"
+        [formControl]="formulario.form.controls['descricao']"
+        placeholder="Descrição opcional da categoria"
+        rows="3"
+        maxlength="500"
+      ></textarea>
+    </div>
+  </form>
+
+  <div footer class="modal-footer-acoes">
+    <button
+      type="button"
+      class="btn btn-secundario"
+      (click)="fechar()"
+      [disabled]="formulario.enviando()"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="salvar()"
+      [disabled]="!formulario.podeEnviar()"
+    >
+      @if (formulario.enviando()) {
+        <span class="spinner-inline"></span> Salvando...
+      } @else {
+        💾 Salvar
+      }
+    </button>
+  </div>
+</app-base-modal>
+

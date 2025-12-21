@@ -1,0 +1,337 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: visible;
+}
+
+.produtos-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: visible;
+}
+
+.produtos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0;
+  margin-top: 0.5rem;
+  padding-top: 0;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.produtos-header h3 {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.produtos-filtros {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+}
+
+.filtro-categoria {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  min-width: 150px;
+  flex-shrink: 0;
+}
+
+.filtro-categoria:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.input-pesquisa-produto {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: border-color 0.3s ease;
+  flex: 1;
+  min-width: 0;
+}
+
+.input-pesquisa-produto:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.produtos-grid-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+  min-height: 0;
+  overflow-y: scroll;
+  overflow-x: visible;
+  padding: 0.5rem;
+  padding-right: 0.75rem;
+  padding-bottom: 0.75rem;
+  align-items: stretch;
+  align-content: start;
+  margin-top: 0.4rem;
+  margin-right: -0.25rem;
+  flex: 1;
+  grid-auto-rows: 55px;
+}
+
+/* Estiliza a barra de scroll */
+.produtos-grid-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.produtos-grid-form::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.produtos-grid-form::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.produtos-grid-form::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+.produto-item-form {
+  padding: 0 !important;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  text-align: left;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 55px;
+  min-height: 55px;
+  max-height: 55px;
+  box-sizing: border-box;
+}
+
+.produto-item-form.indisponivel {
+  opacity: 0.7;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.produto-item-form:hover:not(.indisponivel) {
+  background: #f5f5f5;
+  border-color: #4CAF50;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
+}
+
+.produto-item-form.indisponivel:hover {
+  background: #ffebee;
+  border-color: #c62828;
+  box-shadow: 0 2px 8px rgba(198, 40, 40, 0.4);
+  transform: scale(1.02);
+  cursor: not-allowed;
+}
+
+.produto-indisponivel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(198, 40, 40, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.produto-indisponivel-texto {
+  background: #c62828;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(198, 40, 40, 0.3);
+}
+
+.produto-foto-mini {
+  width: 55px;
+  flex: 0 0 55px;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 6px 0 0 6px;
+  display: block;
+}
+
+.produto-foto-placeholder-mini {
+  width: 55px;
+  flex: 0 0 55px;
+  height: 100%;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  border-radius: 6px 0 0 6px;
+  opacity: 0.5;
+}
+
+.produto-info-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  flex: 1;
+  padding: 0.25rem 0.4rem;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.produto-nome-form {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  word-wrap: break-word;
+  word-break: break-word;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  max-height: 2.4em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.produto-preco-form {
+  color: #2e7d32;
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin: 0;
+  padding: 0;
+  flex: 0;
+}
+
+.produto-sem-resultado {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  :host {
+    overflow: auto;
+    min-height: 120px;
+  }
+
+  .produtos-container {
+    overflow: visible;
+  }
+
+  .produtos-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+    margin-bottom: 0;
+  }
+
+  .produtos-header h3 {
+    display: none;
+  }
+
+  .produtos-filtros {
+    flex-direction: row;
+    width: 100%;
+    gap: 0.3rem;
+  }
+
+  .filtro-categoria {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 90px;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .input-pesquisa-produto {
+    flex: 1;
+    min-width: 0;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .produtos-grid-form {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.3rem;
+    padding: 0.2rem;
+    padding-bottom: 0.4rem;
+    padding-right: 0.2rem;
+    min-height: 100px;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 0.3rem;
+    margin-right: 0;
+    grid-auto-rows: 48px;
+  }
+
+  .produto-item-form {
+    height: 48px;
+    min-height: 48px;
+    max-height: 48px;
+  }
+
+  .produto-foto-mini,
+  .produto-foto-placeholder-mini {
+    width: 48px;
+    flex: 0 0 48px;
+    height: 100%;
+  }
+
+  .produto-info-form {
+    padding: 0.15rem 0.25rem;
+    gap: 0.1rem;
+  }
+
+  .produto-nome-form {
+    font-size: 0.65rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .produto-preco-form {
+    font-size: 0.7rem;
+  }
+}
+

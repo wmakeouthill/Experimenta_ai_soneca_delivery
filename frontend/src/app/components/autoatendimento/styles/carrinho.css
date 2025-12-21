@@ -1,0 +1,196 @@
+/* ========== CARRINHO CONTAINER ========== */
+.carrinho-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+/* ========== CARRINHO VAZIO ========== */
+.carrinho-vazio {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
+}
+
+.carrinho-vazio-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.carrinho-vazio p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.btn-ver-cardapio {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.875rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-ver-cardapio:hover {
+    background: var(--primary-hover);
+}
+
+/* ========== ITENS DO CARRINHO ========== */
+.carrinho-itens {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.carrinho-item {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 0.875rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.item-info {
+    flex: 1;
+}
+
+.item-info h3 {
+    font-size: 1rem;
+    margin: 0 0 0.25rem;
+    color: var(--text-primary);
+}
+
+.item-adicionais {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-bottom: 0.25rem;
+}
+
+.adicional-tag {
+    background: #fff5f2;
+    color: var(--primary-color);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.item-obs {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-style: italic;
+}
+
+.item-controles {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-quantidade {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--background);
+    border-radius: 20px;
+    padding: 0.25rem;
+}
+
+.item-quantidade button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.item-quantidade button:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.item-quantidade span {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.item-preco {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* ========== IDENTIFICAÇÃO CLIENTE ========== */
+.identificacao-cliente {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 0.875rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.identificacao-cliente label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.identificacao-cliente input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+}
+
+.identificacao-cliente input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* ========== RESUMO CARRINHO ========== */
+.carrinho-resumo {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.resumo-linha {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+.resumo-linha.total {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    border-top: 2px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}

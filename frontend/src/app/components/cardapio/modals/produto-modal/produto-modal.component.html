@@ -1,0 +1,185 @@
+<app-base-modal
+  [aberto]="aberto()"
+  [titulo]="obterTitulo()"
+  [tamanho]="'grande'"
+  (onFechar)="fechar()"
+>
+  <form (ngSubmit)="salvar()">
+    <div class="formulario-grupo">
+      <app-image-upload
+        [imagemAtual]="produto()?.foto || null"
+        [tamanhoMaximoMB]="5"
+        [larguraMaxima]="800"
+        [alturaMaxima]="800"
+        label="Foto do Produto"
+        (onImagemSelecionada)="onImagemSelecionada($event)"
+        (onErro)="onErroImagem($event)"
+      />
+    </div>
+
+    <div class="formulario-grupo">
+      <label class="formulario-label" for="nome">
+        Nome <span class="obrigatorio">*</span>
+      </label>
+      <input
+        id="nome"
+        type="text"
+        class="formulario-input"
+        [class.erro]="formulario.temErro('nome')"
+        [formControl]="formulario.form.controls['nome']"
+        placeholder="Ex: X-Burger, Coca-Cola..."
+        maxlength="100"
+      />
+      @if (formulario.temErro('nome')) {
+        <span class="formulario-erro">
+          {{ formulario.obterMensagemErro('nome') }}
+        </span>
+      }
+    </div>
+
+    <div class="formulario-grupo">
+      <label class="formulario-label" for="categoria">
+        Categoria <span class="obrigatorio">*</span>
+      </label>
+      <select
+        id="categoria"
+        class="formulario-input formulario-select"
+        [class.erro]="formulario.temErro('categoria')"
+        [formControl]="formulario.form.controls['categoria']"
+      >
+        <option value="">Selecione uma categoria</option>
+        @for (categoria of categoriasLista(); track categoria.id) {
+          <option [value]="categoria.nome">{{ categoria.nome }}</option>
+        }
+      </select>
+      @if (formulario.temErro('categoria')) {
+        <span class="formulario-erro">
+          {{ formulario.obterMensagemErro('categoria') }}
+        </span>
+      }
+      @if (categoriasLista().length === 0) {
+        <p class="formulario-hint">
+          Nenhuma categoria disponível. Crie uma categoria primeiro.
+        </p>
+      }
+    </div>
+
+    <div class="formulario-grupo">
+      <label class="formulario-label" for="preco">
+        Preço <span class="obrigatorio">*</span>
+      </label>
+      <div class="input-moeda-wrapper">
+        <span class="input-moeda-prefix">R$</span>
+        <input
+          id="preco"
+          type="text"
+          class="formulario-input input-moeda"
+          [class.erro]="formulario.temErro('preco')"
+          [formControl]="formulario.form.controls['preco']"
+          placeholder="0,00"
+          (blur)="formatarPreco($event)"
+          maxlength="10"
+        />
+      </div>
+      @if (formulario.temErro('preco')) {
+        <span class="formulario-erro">
+          {{ formulario.obterMensagemErro('preco') }}
+        </span>
+      }
+    </div>
+
+    <div class="formulario-grupo">
+      <label class="formulario-label" for="descricao">
+        Descrição
+      </label>
+      <textarea
+        id="descricao"
+        class="formulario-input formulario-textarea"
+        [formControl]="formulario.form.controls['descricao']"
+        placeholder="Descrição do produto (opcional)"
+        rows="3"
+        maxlength="500"
+      ></textarea>
+    </div>
+
+    @if (ehEdicao()) {
+      <div class="formulario-grupo">
+        <label class="formulario-checkbox-label">
+          <input
+            type="checkbox"
+            class="formulario-checkbox"
+            [formControl]="formulario.form.controls['disponivel']"
+          />
+          <span>Produto disponível</span>
+        </label>
+      </div>
+    }
+
+    <!-- Seção de Adicionais -->
+    @if (adicionaisDisponiveis().length > 0) {
+      <div class="formulario-grupo adicionais-secao">
+        <label class="formulario-label">
+          🍕 Adicionais Disponíveis
+        </label>
+        <p class="formulario-hint">
+          Selecione os adicionais que podem ser escolhidos para este produto
+        </p>
+        <div class="adicionais-lista">
+          @for (adicional of adicionaisDisponiveis(); track adicional.id) {
+            <label
+              class="adicional-item"
+              [class.selecionado]="isAdicionalSelecionado(adicional.id)"
+            >
+              <input
+                type="checkbox"
+                [checked]="isAdicionalSelecionado(adicional.id)"
+                (change)="toggleAdicional(adicional.id)"
+              />
+              <span class="adicional-info">
+                <span class="adicional-nome">{{ adicional.nome }}</span>
+                @if (adicional.categoria) {
+                  <span class="adicional-categoria">{{ adicional.categoria }}</span>
+                }
+              </span>
+              <span class="adicional-preco">+ R$ {{ adicional.preco | number:'1.2-2' }}</span>
+            </label>
+          }
+        </div>
+      </div>
+    }
+  </form>
+
+  <div footer class="modal-footer-acoes">
+    @if (ehEdicao()) {
+      <button
+        type="button"
+        class="btn btn-excluir"
+        (click)="excluirProduto()"
+        [disabled]="formulario.enviando()"
+      >
+        🗑️ Excluir
+      </button>
+    }
+    <button
+      type="button"
+      class="btn btn-secundario"
+      (click)="fechar()"
+      [disabled]="formulario.enviando()"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="salvar()"
+      [disabled]="!formulario.podeEnviar()"
+    >
+      @if (formulario.enviando()) {
+        <span class="spinner-inline"></span> Salvando...
+      } @else {
+        💾 {{ ehEdicao() ? 'Atualizar' : 'Criar' }}
+      }
+    </button>
+  </div>
+</app-base-modal>
+

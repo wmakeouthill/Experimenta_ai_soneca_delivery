@@ -1,0 +1,51 @@
+/* Cards de Resumo */
+.resumo-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.resumo-card {
+  background: white;
+  border-radius: 10px;
+  padding: 0.55rem 1.1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resumo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.resumo-card.total-pedidos {
+  border-left: 4px solid #2196F3;
+}
+
+.resumo-card.total-faturamento {
+  border-left: 4px solid #4CAF50;
+}
+
+.resumo-card-header {
+  flex: 1;
+}
+
+.resumo-card-header h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  margin: 0;
+}
+
+.resumo-card-value {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #333;
+  white-space: nowrap;
+}
+

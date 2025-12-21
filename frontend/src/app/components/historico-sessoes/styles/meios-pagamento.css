@@ -1,0 +1,45 @@
+/* Métodos de Pagamento */
+.meios-pagamento-card {
+  background: white;
+  border-radius: 12px;
+  padding: 0.6rem 1.1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.meios-pagamento-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+}
+
+.meios-pagamento-lista {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.meio-pagamento-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border-left: 3px solid #FF6B35;
+  white-space: nowrap;
+}
+
+.meio-pagamento-nome {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.meio-pagamento-valor {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4CAF50;
+}
+

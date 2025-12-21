@@ -1,0 +1,126 @@
+<app-base-modal
+  [aberto]="aberto()"
+  [titulo]="ehEdicao() ? 'Editar Adicional' : 'Novo Adicional'"
+  [tamanho]="'medio'"
+  (onFechar)="fechar()"
+>
+  <form (ngSubmit)="salvar()">
+    <div class="formulario-grupo">
+      <label class="formulario-label" for="nome">
+        Nome <span class="obrigatorio">*</span>
+      </label>
+      <input
+        id="nome"
+        type="text"
+        class="formulario-input"
+        [class.erro]="formulario.temErro('nome')"
+        [formControl]="formulario.form.controls['nome']"
+        placeholder="Ex: Carne Extra, Bacon, Onion Rings..."
+        maxlength="100"
+      />
+      @if (formulario.temErro('nome')) {
+        <span class="formulario-erro">
+          {{ formulario.obterMensagemErro('nome') }}
+        </span>
+      }
+    </div>
+
+    <div class="formulario-row">
+      <div class="formulario-grupo formulario-grupo-half">
+        <label class="formulario-label" for="preco">
+          Preço <span class="obrigatorio">*</span>
+        </label>
+        <div class="input-prefixo-wrapper">
+          <span class="input-prefixo">R$</span>
+          <input
+            id="preco"
+            type="text"
+            class="formulario-input input-com-prefixo"
+            [class.erro]="formulario.temErro('preco')"
+            [formControl]="formulario.form.controls['preco']"
+            placeholder="0,00"
+            (input)="formatarPreco($event)"
+          />
+        </div>
+        @if (formulario.temErro('preco')) {
+          <span class="formulario-erro">
+            {{ formulario.obterMensagemErro('preco') }}
+          </span>
+        }
+      </div>
+
+      <div class="formulario-grupo formulario-grupo-half">
+        <label class="formulario-label" for="categoria">
+          Categoria
+        </label>
+        <select
+          id="categoria"
+          class="formulario-input"
+          [formControl]="formulario.form.controls['categoria']"
+        >
+          <option value="">Selecione uma categoria</option>
+          @for (cat of categoriasSugeridas; track cat) {
+            <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="formulario-grupo">
+      <label class="formulario-label" for="descricao">
+        Descrição
+      </label>
+      <textarea
+        id="descricao"
+        class="formulario-input formulario-textarea"
+        [formControl]="formulario.form.controls['descricao']"
+        placeholder="Descrição opcional do adicional"
+        rows="2"
+        maxlength="500"
+      ></textarea>
+    </div>
+
+    @if (ehEdicao()) {
+      <div class="formulario-grupo">
+        <label class="formulario-label">
+          Disponibilidade
+        </label>
+        <div class="toggle-wrapper">
+          <label class="toggle">
+            <input
+              type="checkbox"
+              [formControl]="formulario.form.controls['disponivel']"
+            />
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">
+            {{ formulario.form.controls['disponivel'].value ? 'Disponível' : 'Indisponível' }}
+          </span>
+        </div>
+      </div>
+    }
+  </form>
+
+  <div footer class="modal-footer-acoes">
+    <button
+      type="button"
+      class="btn btn-secundario"
+      (click)="fechar()"
+      [disabled]="formulario.enviando()"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="salvar()"
+      [disabled]="!formulario.podeEnviar()"
+    >
+      @if (formulario.enviando()) {
+        <span class="spinner-inline"></span> Salvando...
+      } @else {
+        💾 Salvar
+      }
+    </button>
+  </div>
+</app-base-modal>

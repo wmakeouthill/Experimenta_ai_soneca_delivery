@@ -1,0 +1,18 @@
+<section class="chart-card">
+  <header>
+    <div>
+      <h3>Picos por horário</h3>
+      <p>Descubra quando as sessões vendem mais ao longo do dia</p>
+    </div>
+    <span class="chip">Turnos</span>
+  </header>
+
+  <div class="chart-wrapper">
+    @if (dados().length === 0) {
+      <p class="chart-empty">Sem dados para este período.</p>
+    } @else {
+      <canvas #canvas aria-label="Distribuição por horário"></canvas>
+    }
+  </div>
+</section>
+

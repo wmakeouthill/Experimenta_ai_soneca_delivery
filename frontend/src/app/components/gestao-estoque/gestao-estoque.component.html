@@ -1,0 +1,434 @@
+<div class="estoque-container">
+  <header class="estoque-header">
+    <div class="estoque-header-content">
+      <h1 class="estoque-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.png" alt="Experimenta aí" class="estoque-logo" />
+        Gestão de Estoque
+      </h1>
+      <div class="header-actions">
+        <button class="btn-adicionar" (click)="abrirModalCriar()">
+          ➕ Novo Item
+        </button>
+        <button class="btn-header" (click)="store.recarregar()">🔄 Recarregar</button>
+        <button class="btn-voltar" routerLink="/" aria-label="Voltar para home">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mensagem de sucesso -->
+  @if (mensagemSucesso()) {
+    <div class="mensagem-sucesso">
+      ✅ {{ mensagemSucesso() }}
+    </div>
+  }
+
+  <!-- Erro -->
+  @if (store.erro()) {
+    <div class="mensagem-erro">
+      ⚠️ {{ store.erro() }}
+    </div>
+  }
+
+  <div class="estoque-content">
+    <!-- Filtros -->
+    <section class="filtros-section">
+      <div class="filtro-busca">
+        <input
+          type="text"
+          placeholder="Buscar por nome..."
+          [value]="termoBusca()"
+          (input)="atualizarTermoBusca($event)"
+          (keyup.enter)="aplicarFiltro()"
+          class="input-busca"
+        />
+        <button class="btn-filtro" (click)="aplicarFiltro()">🔍 Buscar</button>
+        @if (termoBusca()) {
+          <button class="btn-limpar" (click)="limparFiltro()">✖ Limpar</button>
+        }
+        <span class="contador-resultados">{{ store.totalElementos() }} item(ns) encontrado(s)</span>
+      </div>
+      <div class="filtro-toggle">
+        <label class="toggle-label">
+          <input
+            type="checkbox"
+            [checked]="store.apenasAtivos()"
+            (change)="store.alternarApenasAtivos()"
+          />
+          <span>Mostrar apenas ativos</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Legenda de cores -->
+    <section class="legenda-section">
+      <div class="legenda-titulo">Legenda de Status:</div>
+      <div class="legenda-items">
+        <span class="legenda-item legenda-ok" title="Quantidade acima de 2x o mínimo">
+          <span class="legenda-cor"></span>
+          OK
+        </span>
+        <span class="legenda-item legenda-medio" title="Quantidade entre 1x e 2x o mínimo">
+          <span class="legenda-cor"></span>
+          Médio
+        </span>
+        <span class="legenda-item legenda-baixo" title="Quantidade igual ou abaixo do mínimo">
+          <span class="legenda-cor"></span>
+          Baixo
+        </span>
+        <span class="legenda-item legenda-critico" title="Quantidade abaixo de 50% do mínimo">
+          <span class="legenda-cor"></span>
+          Crítico
+        </span>
+        <span class="legenda-item legenda-sem-estoque" title="Quantidade igual a zero">
+          <span class="legenda-cor"></span>
+          Sem Estoque
+        </span>
+        <span class="legenda-item legenda-inativo" title="Item desativado no sistema">
+          <span class="legenda-cor"></span>
+          Inativo
+        </span>
+      </div>
+      @if (store.filtroStatus()) {
+        <button class="btn-limpar-filtro" (click)="filtrarPorStatus(null)">
+          ✖ Limpar Filtro
+        </button>
+      }
+    </section>
+
+    <!-- Cards de Estatísticas -->
+    <section class="cards-estatisticas">
+      <button
+        class="card-stat card-total"
+        [class.ativo]="store.filtroStatus() === null"
+        (click)="filtrarPorStatus(null)"
+        title="Total de itens cadastrados no estoque"
+      >
+        <div class="card-numero">{{ store.estatisticas().total }}</div>
+        <div class="card-label">Total</div>
+      </button>
+      <button
+        class="card-stat card-ativos"
+        [class.ativo]="store.filtroStatus() === 'ativos'"
+        (click)="filtrarPorStatus('ativos')"
+        title="Itens ativos e disponíveis para uso"
+      >
+        <div class="card-numero">{{ store.estatisticas().ativos }}</div>
+        <div class="card-label">Ativos</div>
+      </button>
+      <button
+        class="card-stat card-inativos"
+        [class.ativo]="store.filtroStatus() === 'inativos'"
+        (click)="filtrarPorStatus('inativos')"
+        title="Itens desativados no sistema"
+      >
+        <div class="card-numero">{{ store.estatisticas().inativos }}</div>
+        <div class="card-label">Inativos</div>
+      </button>
+      <button
+        class="card-stat card-ok"
+        [class.ativo]="store.filtroStatus() === 'estoqueAlto'"
+        (click)="filtrarPorStatus('estoqueAlto')"
+        title="Quantidade acima de 2x a quantidade mínima"
+      >
+        <div class="card-numero">{{ store.estatisticas().estoqueAlto }}</div>
+        <div class="card-label">Estoque Alto</div>
+      </button>
+      <button
+        class="card-stat card-medio"
+        [class.ativo]="store.filtroStatus() === 'estoqueMedio'"
+        (click)="filtrarPorStatus('estoqueMedio')"
+        title="Quantidade entre 1x e 2x a quantidade mínima"
+      >
+        <div class="card-numero">{{ store.estatisticas().estoqueMedio }}</div>
+        <div class="card-label">Estoque Médio</div>
+      </button>
+      <button
+        class="card-stat card-baixo"
+        [class.ativo]="store.filtroStatus() === 'estoqueBaixo'"
+        (click)="filtrarPorStatus('estoqueBaixo')"
+        title="Quantidade igual ou abaixo da quantidade mínima configurada"
+      >
+        <div class="card-numero">{{ store.estatisticas().estoqueBaixo }}</div>
+        <div class="card-label">Estoque Baixo</div>
+      </button>
+      <button
+        class="card-stat card-critico"
+        [class.ativo]="store.filtroStatus() === 'estoqueCritico'"
+        (click)="filtrarPorStatus('estoqueCritico')"
+        title="Quantidade abaixo de 50% da quantidade mínima - reposição urgente!"
+      >
+        <div class="card-numero">{{ store.estatisticas().estoqueCritico }}</div>
+        <div class="card-label">Crítico</div>
+      </button>
+      <button
+        class="card-stat card-sem-estoque"
+        [class.ativo]="store.filtroStatus() === 'semEstoque'"
+        (click)="filtrarPorStatus('semEstoque')"
+        title="Quantidade igual a zero - item indisponível!"
+      >
+        <div class="card-numero">{{ store.estatisticas().semEstoque }}</div>
+        <div class="card-label">Sem Estoque</div>
+      </button>
+    </section>    <!-- Carregando -->
+    @if (store.estaCarregando()) {
+      <div class="estado-carregando">
+        <div class="spinner"></div>
+        <span>Carregando itens...</span>
+      </div>
+    }
+
+    <!-- Tabela -->
+    @if (!store.estaCarregando() && store.temItens()) {
+      <section class="tabela-section">
+        <div class="tabela-wrapper">
+          <table class="tabela-estoque tabela-compacta">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Quantidade</th>
+                <th>Qtd. Mín.</th>
+                <th>Unidade</th>
+                <th>Preço</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.itens(); track item.id) {
+                <tr [class]="'row-' + getClasseEstoque(item)">
+                  <td class="col-nome">
+                    <span class="nome-item">{{ item.nome }}</span>
+                    @if (item.descricao) {
+                      <span class="descricao-item">{{ item.descricao }}</span>
+                    }
+                  </td>
+                  <td class="col-quantidade">{{ formatarQuantidade(item.quantidade, item.unidadeMedida) }}</td>
+                  <td class="col-quantidade-min">{{ formatarQuantidade(item.quantidadeMinima, item.unidadeMedida) }}</td>
+                  <td class="col-unidade">{{ item.unidadeMedidaDescricao }}</td>
+                  <td class="col-preco">{{ formatarMoeda(item.precoUnitario) }}</td>
+                  <td class="col-status">
+                    <span class="badge-status" [class]="getClasseEstoque(item)">
+                      {{ getTextoStatus(item) }}
+                    </span>
+                  </td>
+                  <td class="col-acoes">
+                    <button class="btn-acao btn-editar" (click)="abrirModalEditar(item)" title="Editar">
+                      ✏️
+                    </button>
+                    <button class="btn-acao btn-excluir" (click)="confirmarExclusao(item)" title="Excluir">
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        @if (store.totalPaginas() > 1) {
+          <div class="paginacao">
+            <button
+              class="btn-pagina"
+              [disabled]="store.paginaAtual() === 0"
+              (click)="irParaPagina(store.paginaAtual() - 1)"
+            >
+              ← Anterior
+            </button>
+
+            @for (pagina of gerarNumerosPagina(); track $index) {
+              @if (pagina === '...') {
+                <span class="pagina-ellipsis">...</span>
+              } @else {
+                <button
+                  class="btn-pagina-numero"
+                  [class.ativa]="pagina === store.paginaAtual()"
+                  (click)="irParaPagina(+pagina)"
+                >
+                  {{ +pagina + 1 }}
+                </button>
+              }
+            }
+
+            <button
+              class="btn-pagina"
+              [disabled]="store.paginaAtual() >= store.totalPaginas() - 1"
+              (click)="irParaPagina(store.paginaAtual() + 1)"
+            >
+              Próxima →
+            </button>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Sem itens -->
+    @if (!store.estaCarregando() && !store.temItens()) {
+      <div class="estado-vazio">
+        <span class="icone-vazio">📦</span>
+        <p>Nenhum item de estoque encontrado.</p>
+        <button class="btn-adicionar-vazio" (click)="abrirModalCriar()">
+          ➕ Cadastrar primeiro item
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal de Criar/Editar -->
+@if (mostrarModal()) {
+  <div class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>{{ modoFormulario() === 'criar' ? 'Novo Item de Estoque' : 'Editar Item' }}</h2>
+        <button class="btn-fechar-modal" (click)="fecharModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="nome">Nome *</label>
+          <input
+            type="text"
+            id="nome"
+            [value]="formulario().nome"
+            (input)="atualizarNome($event)"
+            placeholder="Nome do item"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="descricao">Descrição</label>
+          <textarea
+            id="descricao"
+            [value]="formulario().descricao"
+            (input)="atualizarDescricao($event)"
+            placeholder="Descrição do item"
+            rows="2"
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quantidade">Quantidade</label>
+            <input
+              type="number"
+              id="quantidade"
+              [value]="formulario().quantidade"
+              (input)="atualizarQuantidade($event)"
+              step="0.001"
+              min="0"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="quantidadeMinima">Quantidade Mínima</label>
+            <input
+              type="number"
+              id="quantidadeMinima"
+              [value]="formulario().quantidadeMinima"
+              (input)="atualizarQuantidadeMinima($event)"
+              step="0.001"
+              min="0"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="unidadeMedida">Unidade *</label>
+            <select
+              id="unidadeMedida"
+              [value]="formulario().unidadeMedida"
+              (change)="atualizarUnidadeMedida($event)"
+            >
+              @for (unidade of unidadesMedida; track unidade.value) {
+                <option [value]="unidade.value">{{ unidade.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="precoUnitario">Preço Unitário (R$)</label>
+            <input
+              type="number"
+              id="precoUnitario"
+              [value]="formulario().precoUnitario"
+              (input)="atualizarPrecoUnitario($event)"
+              step="0.01"
+              min="0"
+              placeholder="0,00"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="fornecedor">Fornecedor</label>
+            <input
+              type="text"
+              id="fornecedor"
+              [value]="formulario().fornecedor"
+              (input)="atualizarFornecedor($event)"
+              placeholder="Nome do fornecedor"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="codigoBarras">Código de Barras</label>
+          <input
+            type="text"
+            id="codigoBarras"
+            [value]="formulario().codigoBarras"
+            (input)="atualizarCodigoBarras($event)"
+            placeholder="Código de barras"
+          />
+        </div>
+
+        @if (modoFormulario() === 'editar') {
+          <div class="form-group form-checkbox">
+            <label>
+              <input
+                type="checkbox"
+                [checked]="formulario().ativo"
+                (change)="atualizarAtivo($event)"
+              />
+              Item ativo
+            </label>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="fecharModal()">Cancelar</button>
+        <button
+          class="btn-salvar"
+          (click)="salvarItem()"
+          [disabled]="!formulario().nome.trim() || store.estaCarregando()"
+        >
+          {{ modoFormulario() === 'criar' ? 'Criar Item' : 'Salvar Alterações' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de Confirmação de Exclusão -->
+@if (mostrarConfirmacaoExclusao()) {
+  <div class="modal-overlay" (click)="cancelarExclusao()">
+    <div class="modal-content modal-confirmacao" (click)="pararPropagacao($event)">
+      <div class="modal-header modal-header-danger">
+        <h2>⚠️ Confirmar Exclusão</h2>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir o item <strong>{{ itemParaExcluir()?.nome }}</strong>?</p>
+        <p class="aviso-exclusao">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="cancelarExclusao()">Cancelar</button>
+        <button class="btn-excluir-confirmar" (click)="executarExclusao()">Excluir</button>
+      </div>
+    </div>
+  </div>
+}

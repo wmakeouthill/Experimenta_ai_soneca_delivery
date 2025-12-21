@@ -1,0 +1,58 @@
+:host {
+  display: block;
+}
+
+.chart-card {
+  background: #1d1e2a;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: nowrap;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #f8fafc;
+}
+
+p {
+  margin: 0.25rem 0 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.chip {
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.75rem;
+  color: #f1f5f9;
+  background: rgba(93, 63, 211, 0.15);
+  border: 1px solid rgba(93, 63, 211, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chart-wrapper {
+  position: relative;
+  min-height: 260px;
+  flex: 1;
+}
+
+.chart-empty {
+  color: #94a3b8;
+  text-align: center;
+}
+

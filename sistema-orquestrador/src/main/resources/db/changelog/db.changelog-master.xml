@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Migration inicial: Criação das tabelas do módulo gestao-cardapio -->
+    <include file="changes/001-initial-schema.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona coluna foto na tabela produtos -->
+    <include file="changes/002-add-foto-column-produtos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela de clientes -->
+    <include file="changes/003-create-clientes-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação das tabelas de pedidos e itens_pedido -->
+    <include file="changes/004-create-pedidos-tables.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Atualiza pedidos PENDENTE para PREPARANDO -->
+    <include file="changes/005-update-pendente-to-preparando.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona coluna meio_pagamento na tabela pedidos -->
+    <include file="changes/006-add-meio-pagamento-pedidos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Altera coluna foto de TEXT para LONGTEXT na tabela produtos -->
+    <include file="changes/007-alter-foto-column-produtos-longtext.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela meios_pagamento_pedido para múltiplos meios de pagamento -->
+    <include file="changes/008-create-meios-pagamento-pedido-table.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela de usuários para autenticação -->
+    <include file="changes/009-create-usuarios-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela de sessões de trabalho -->
+    <include file="changes/010-create-sessoes-trabalho-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona coluna sessao_id na tabela pedidos -->
+    <include file="changes/011-add-sessao-id-to-pedidos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela de configuração de animação -->
+    <include file="changes/012-create-config-animacao-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona coluna data_finalizacao na tabela pedidos -->
+    <include file="changes/013-add-data-finalizacao-pedidos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Torna usuario_id obrigatório na tabela pedidos -->
+    <include file="changes/014-make-usuario-id-required-pedidos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela de configuração de impressora -->
+    <include file="changes/015-create-config-impressora-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona coluna logo_base64 na tabela config_impressora -->
+    <include file="changes/016-add-logo-base64-config-impressora.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona coluna device_path na tabela config_impressora -->
+    <include file="changes/017-add-device-path-config-impressora.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona largura_papel e tamanho_fonte na tabela config_impressora -->
+    <include file="changes/018-add-largura-papel-e-tamanho-fonte-config-impressora.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Gestão de Caixa - colunas de abertura/fechamento e tabela de movimentações -->
+    <include file="changes/019-gestao-caixa.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona coluna usuario_id na tabela movimentacoes_caixa -->
+    <include file="changes/020-adicionar-usuario-movimentacoes-caixa.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Remove coluna pedido_id da tabela movimentacoes_caixa -->
+    <include file="changes/021-remover-pedido-id-movimentacoes-caixa.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Gestão de Estoque - tabela de itens de estoque -->
+    <include file="changes/022-gestao-estoque.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela de mesas com QR code para pedidos de clientes -->
+    <include file="changes/023-create-mesas-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Permite usuario_id nulo para pedidos via mesa (QR code) -->
+    <include file="changes/024-make-usuario-id-nullable-pedidos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona coluna numero_mesa na tabela pedidos -->
+    <include file="changes/025-add-numero-mesa-to-pedidos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Autenticação de cliente (senha, Google OAuth), favoritos e avaliações -->
+    <include file="changes/026-cliente-autenticacao-favoritos-avaliacoes.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona colunas version para Optimistic Locking em pedidos e sessoes_trabalho -->
+    <include file="changes/027-add-version-columns-optimistic-locking.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Cria tabelas para persistir pedidos pendentes de mesa (QR code) -->
+    <include file="changes/028-create-pedidos-pendentes-mesa-table.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Cria tabela para meios de pagamento de pedidos pendentes de mesa -->
+    <include file="changes/030-create-meios-pagamento-pendente-mesa-table.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Permite telefone nulo na tabela clientes (necessário para login via Google
+    OAuth) -->
+    <include file="changes/031-allow-null-telefone-clientes.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela de histórico de conversas do Chat IA -->
+    <include file="changes/032-create-historico-conversas-chat-table.sql"
+        relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação das tabelas de adicionais (carne extra, bacon, etc.) -->
+    <include file="changes/033-create-adicionais-tables.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Criação da tabela de adicionais para itens de pedidos pendentes de mesa -->
+    <include file="changes/034-create-adicionais-item-pedido-pendente-mesa-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Permite cliente_id nulo para pedidos de auto-atendimento (totem) -->
+    <include file="changes/035-allow-null-cliente-id-pedidos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Cria tabela para chaves de idempotência (prevenir requisições duplicadas) -->
+    <include file="changes/036-create-idempotency-keys-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Cria tabela sequence para número de pedido (substituir MAX+1 por atomicidade) -->
+    <include file="changes/037-create-numero-pedido-sequence.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Cria tabela de auditoria para operações de pagamento -->
+    <include file="changes/038-create-auditoria-pagamentos-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Corrige tipo da coluna id na tabela idempotency_keys (VARCHAR -> BIGINT) -->
+    <include file="changes/039-fix-idempotency-keys-id-column.sql" relativeToChangelogFile="true" />
+
+    <!-- 
+    NOTA: O usuário administrador inicial é criado automaticamente via CommandLineRunner
+    (UsuarioInicialConfig) na primeira execução da aplicação.
+    Credenciais: admin@snackbar.com / admin123
+    -->
+
+</databaseChangeLog>

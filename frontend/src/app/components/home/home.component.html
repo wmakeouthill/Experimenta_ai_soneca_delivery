@@ -1,0 +1,48 @@
+<div class="home-container">
+  <div class="home-card">
+    <header class="home-header">
+      <div class="home-header-top">
+        <div>
+          <h1 class="home-titulo">
+            <app-titulo-home />
+          </h1>
+        </div>
+        @if (estaAutenticado()) {
+          <div class="home-user-info">
+            <div class="user-info-content">
+              <span class="user-name">{{ nomeFormatado() }}</span>
+              <span class="user-role">{{ usuarioAtual()?.descricaoRole }}</span>
+            </div>
+            <button class="btn-logout" (click)="logout()">
+              Sair
+            </button>
+          </div>
+        }
+      </div>
+    </header>
+
+    <div class="home-modulos">
+      @for (modulo of modulosDisponiveis(); track modulo.id) {
+        <button
+          [class]="'modulo-card modulo-' + modulo.cor"
+          [class.modulo-bloqueado]="modulo.bloqueado"
+          (click)="navegarParaModulo(modulo, $event)"
+          (auxclick)="navegarParaModulo(modulo, $event)"
+          [disabled]="!modulo.disponivel || modulo.bloqueado"
+          [title]="modulo.bloqueado ? 'Bloqueado apenas para administração' : ''"
+        >
+          <div class="modulo-icone">{{ modulo.icone }}</div>
+          <h2 class="modulo-titulo">{{ modulo.nome }}</h2>
+          <p class="modulo-descricao">{{ modulo.descricao }}</p>
+          @if (modulo.bloqueado) {
+            <div class="modulo-bloqueado-badge">
+              <span class="bloqueado-icon">🔒</span>
+              <span class="bloqueado-texto">Apenas Administração</span>
+            </div>
+          }
+        </button>
+      }
+    </div>
+  </div>
+</div>
+

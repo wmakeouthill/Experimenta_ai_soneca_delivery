@@ -1,0 +1,88 @@
+@if (aberto()) {
+  <div class="formulario-overlay" (click)="fechar()">
+    <div class="formulario-sidebar" (click)="$event.stopPropagation()">
+      <div class="formulario-header">
+        <h2>➕ Novo Pedido</h2>
+        <button class="btn-fechar" (click)="fechar()">×</button>
+      </div>
+
+      <div class="formulario-conteudo">
+        <div class="formulario-secao" [class.cliente-selecionado]="!!clienteSelecionado()">
+          <h3>Cliente</h3>
+          <app-selecao-cliente
+            [clienteSelecionado]="clienteSelecionado()"
+            (onClienteSelecionado)="onClienteSelecionado($event)"
+            (onClienteCriado)="onClienteCriado($event)"
+            (onTrocarCliente)="onTrocarCliente()"
+          />
+        </div>
+
+        @if (clienteSelecionado()) {
+          <div class="produtos-itens-layout">
+            <div class="formulario-secao produtos-coluna">
+              <app-selecao-produtos
+                [produtos]="produtos()"
+                (onProdutoSelecionado)="onProdutoSelecionado($event)"
+              />
+            </div>
+
+            <div class="formulario-secao itens-coluna">
+              <app-itens-pedido
+                [itens]="itensSelecionados()"
+                [produtos]="produtos()"
+                (onQuantidadeAlterada)="onQuantidadeAlterada($event)"
+                (onItemRemovido)="onItemRemovido($event)"
+              />
+            </div>
+          </div>
+
+          <div class="formulario-rodape">
+            <form [formGroup]="pedidoForm">
+              <div class="formulario-colunas">
+                <div class="formulario-coluna">
+                  <div class="formulario-secao">
+                    <h3>Observações</h3>
+                    <textarea
+                      formControlName="observacoes"
+                      class="form-textarea"
+                      placeholder="Observações do pedido..."
+                      rows="3"
+                    ></textarea>
+                  </div>
+                </div>
+                <div class="formulario-coluna">
+                  <div class="formulario-secao">
+                    <app-meios-pagamento
+                      [valorTotal]="valorTotal()"
+                      [meiosPagamento]="meiosPagamento()"
+                      (onMeiosPagamentoChange)="onMeiosPagamentoChange($event)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <div class="formulario-acoes">
+              <button
+                class="btn-primary btn-criar"
+                (click)="criarPedido()"
+                [disabled]="!podeCriarPedido()"
+              >
+                Criar Pedido
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de detalhes do produto com adicionais -->
+  <app-produto-detalhes-modal
+    [aberto]="modalDetalhesAberto()"
+    [produto]="produtoParaDetalhe()"
+    (onFechar)="onFecharModalDetalhes()"
+    (onConfirmar)="onConfirmarProduto($event)"
+  />
+}
+

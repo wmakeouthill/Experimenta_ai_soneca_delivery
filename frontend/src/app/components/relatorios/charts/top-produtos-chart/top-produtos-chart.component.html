@@ -1,0 +1,18 @@
+<section class="chart-card">
+  <header>
+    <div>
+      <h3>Top 15 produtos</h3>
+      <p>Produtos com maior volume de vendas para insights rápidos</p>
+    </div>
+    <span class="chip">Mix</span>
+  </header>
+
+  <div class="chart-wrapper">
+    @if (dados().length === 0) {
+      <p class="chart-empty">Sem dados para este período.</p>
+    } @else {
+      <canvas #canvas aria-label="Top produtos"></canvas>
+    }
+  </div>
+</section>
+

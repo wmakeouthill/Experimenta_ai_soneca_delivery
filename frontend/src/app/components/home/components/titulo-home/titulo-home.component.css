@@ -1,0 +1,76 @@
+.titulo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  overflow: visible;
+}
+
+.titulo-imagem {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.titulo-imagem-esquerda {
+  order: 1;
+}
+
+.titulo-imagem-direita {
+  order: 3;
+}
+
+.titulo-texto {
+  order: 2;
+  flex: 1 1 auto;
+  font-size: 1.2rem; /* Tamanho inicial, será ajustado pelo Angular */
+  font-weight: 900;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+  height: auto;
+  max-height: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .home-header-top {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .home-header-top > div:first-child:not(:only-child) {
+    max-width: 100%;
+  }
+
+  .titulo-container {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .titulo-imagem {
+    width: 100px;
+    height: 100px;
+  }
+
+  .titulo-texto {
+    flex-basis: 100%;
+    order: 2;
+    font-size: clamp(1.2rem, 5vw, 2.5rem);
+  }
+}
+

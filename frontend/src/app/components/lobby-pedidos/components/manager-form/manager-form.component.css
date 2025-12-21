@@ -1,0 +1,81 @@
+.form-container {
+  background: white;
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+}
+
+.form-container.escondido {
+  opacity: 0 !important;
+  transform: translateY(-10px);
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: all 0.8s ease-out;
+}
+
+.form-adicionar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-nome {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 3px solid #ff6b35;
+  border-radius: 12px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-nome:focus {
+  border-color: #f7931e;
+  box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.2);
+}
+
+.btn-adicionar {
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-adicionar:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f7931e 0%, #ff6b35 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+.btn-adicionar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  margin-top: 15px;
+  padding: 12px;
+  background: #ffebee;
+  color: #c62828;
+  border-radius: 8px;
+  border-left: 4px solid #c62828;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .input-nome,
+  .btn-adicionar {
+    width: 100%;
+  }
+}
+

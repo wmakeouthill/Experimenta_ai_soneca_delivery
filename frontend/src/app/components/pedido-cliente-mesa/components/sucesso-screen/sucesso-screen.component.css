@@ -1,0 +1,288 @@
+/* ============================================
+   Sucesso Screen - Acompanhamento do Pedido
+   ============================================ */
+
+.success-screen {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+    color: white;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+/* Header com botão minimizar */
+.success-header {
+    display: flex;
+    justify-content: flex-start;
+    padding: 0.5rem 0 1rem;
+}
+
+.btn-minimizar-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-minimizar-status:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-minimizar-icon {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Content */
+.success-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0 0.5rem;
+    gap: 0.75rem;
+}
+
+/* Card principal */
+.success-card {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.success-card.cancelado {
+    opacity: 0.9;
+}
+
+.success-icon-wrapper {
+    margin-bottom: 1rem;
+}
+
+.success-icon {
+    font-size: 4rem;
+    display: inline-block;
+}
+
+.success-icon.pulsing {
+    animation: pulse-icon 2s infinite;
+}
+
+@keyframes pulse-icon {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.success-icon.cancelado {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.numero-pedido-badge {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.success-titulo {
+    font-size: 1.5rem;
+    margin: 0 0 0.75rem;
+    font-weight: 600;
+}
+
+.success-main {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.success-mesa-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.mesa-icon {
+    font-size: 1.2rem;
+}
+
+.motivo-cancelamento {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+}
+
+/* Timeline de status */
+.success-timeline {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto 1.5rem;
+}
+
+.timeline-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    position: relative;
+}
+
+.timeline-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 2.5rem;
+    bottom: -0.25rem;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.timeline-step.completed:not(:last-child)::before {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.timeline-marker {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-step.completed .timeline-marker {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.timeline-step.active .timeline-marker {
+    background: white;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.4);
+    animation: pulse-marker 2s infinite;
+}
+
+@keyframes pulse-marker {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.2); }
+}
+
+.timeline-step.pending .timeline-marker {
+    opacity: 0.5;
+}
+
+.timeline-icon {
+    font-size: 0.9rem;
+}
+
+.timeline-step.completed .timeline-icon {
+    color: #FF6B35;
+}
+
+.timeline-icon.waiting {
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.timeline-icon.cooking {
+    font-size: 1rem;
+}
+
+.timeline-icon.done {
+    font-size: 1rem;
+}
+
+.timeline-icon.pending {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.timeline-content {
+    display: flex;
+    flex-direction: column;
+    padding-top: 0.25rem;
+}
+
+.timeline-label {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.timeline-sublabel {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+/* Tempo de espera */
+.success-tempo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.tempo-icon {
+    font-size: 1.1rem;
+}
+
+/* Ações */
+.success-actions {
+    padding: 0.75rem 0 1.5rem;
+    text-align: center;
+}
+
+.btn-novo-pedido {
+    padding: 1rem 2rem;
+    background: white;
+    color: #FF6B35;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-novo-pedido:active {
+    transform: scale(0.95);
+}
+
+.aguardando-finalizacao {
+    margin: 0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}

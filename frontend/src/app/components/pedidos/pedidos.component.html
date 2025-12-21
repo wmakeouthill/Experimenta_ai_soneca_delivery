@@ -1,0 +1,353 @@
+<div class="pedidos-container">
+  <header class="pedidos-header">
+    <div class="pedidos-header-content">
+      <h1 class="pedidos-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.webp" alt="Experimenta aí" class="pedidos-logo" />
+        Gestão de Pedidos
+      </h1>
+
+      <!-- Informações do Header -->
+      <div class="header-info-wrapper">
+        @if (estado() === 'sucesso') {
+        <div class="sessao-ativa-header">
+          <span class="sessao-ativa-label">Mostrando {{ pedidosFiltrados().length }} pedido(s)</span>
+        </div>
+        }
+
+        <!-- Sessão Ativa no Header -->
+        <div class="sessao-ativa-wrapper">
+          @if (sessaoAtiva()) {
+          <div class="sessao-ativa-header">
+            <span class="sessao-ativa-label">Sessão:</span>
+            <span class="sessao-ativa-nome">{{ sessaoAtiva()!.nome }}</span>
+            <span class="sessao-ativa-status sessao-aberta-badge">● ABERTA</span>
+          </div>
+          } @else {
+          <div class="sessao-ativa-header sessao-sem-sessao">
+            <span class="sessao-ativa-label">⚠️ Sem sessão</span>
+            <a routerLink="/sessoes" class="sessao-link-criar">Criar</a>
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-header btn-primary" (click)="abrirFormulario()" [disabled]="!temSessaoAtiva()">
+          ➕ Novo Pedido
+        </button>
+        <button class="btn-voltar" routerLink="/" aria-label="Voltar para home">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="pedidos-layout">
+    <!-- Sidebar de Filtros -->
+    <aside class="sidebar-filtros">
+      <div class="filtros-container">
+        <h2 class="filtros-titulo">🔍 Filtros</h2>
+
+        <!-- Busca -->
+        <div class="filtro-grupo">
+          <label class="filtro-label">Buscar</label>
+          <input type="text" class="filtro-input" placeholder="Número, cliente..." [value]="pesquisaTexto()"
+            (input)="pesquisar($any($event.target).value)" />
+        </div>
+
+        <!-- Filtro por Status -->
+        <div class="filtro-grupo">
+          <label class="filtro-label">Status</label>
+          <div class="filtro-opcoes">
+            <button class="filtro-opcao"
+              [class.active]="pedidosComposable.statusSelecionado() === StatusPedido.PENDENTE"
+              (click)="filtrarPorStatus(StatusPedido.PENDENTE)">
+              Aguardando
+            </button>
+            <button class="filtro-opcao"
+              [class.active]="pedidosComposable.statusSelecionado() === StatusPedido.PREPARANDO"
+              (click)="filtrarPorStatus(StatusPedido.PREPARANDO)">
+              Preparando
+            </button>
+            <button class="filtro-opcao" [class.active]="pedidosComposable.statusSelecionado() === StatusPedido.PRONTO"
+              (click)="filtrarPorStatus(StatusPedido.PRONTO)">
+              Pronto
+            </button>
+            <button class="filtro-opcao"
+              [class.active]="pedidosComposable.statusSelecionado() === StatusPedido.FINALIZADO"
+              (click)="filtrarPorStatus(StatusPedido.FINALIZADO)">
+              Finalizado
+            </button>
+            <button class="filtro-opcao"
+              [class.active]="pedidosComposable.statusSelecionado() === StatusPedido.CANCELADO"
+              (click)="filtrarPorStatus(StatusPedido.CANCELADO)">
+              Cancelados
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-limpar-filtros" (click)="limparFiltros()">
+          🗑️ Limpar Filtros
+        </button>
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="pedidos-conteudo">
+      @if (estaCarregando()) {
+      <div class="estado-carregando">
+        <div class="spinner"></div>
+        <p>Carregando pedidos...</p>
+      </div>
+      }
+
+      @if (estado() === 'erro') {
+      <div class="estado-erro">
+        <p class="erro-mensagem">{{ erro() }}</p>
+        <button class="btn-recarregar" (click)="recarregar()">
+          Tentar novamente
+        </button>
+      </div>
+      }
+
+      @if (estado() === 'sucesso') {
+      <!-- Cards de Status Horizontais -->
+      <div class="status-cards">
+        <!-- Card de Fila de Mesa (Aguardando Aceitação) -->
+        @if (pedidosPendentesMesa().length > 0) {
+        <button class="status-card fila-mesa"
+          [class.selected]="filtroFilaMesa()"
+          (click)="filtrarPorFilaMesa()">
+          <div class="status-card-header">
+            <h3>🍽️ Mesa</h3>
+            <span class="status-count pulse">{{ pedidosPendentesMesa().length }}</span>
+          </div>
+        </button>
+        }
+        <button class="status-card aguardando"
+          [class.selected]="pedidosComposable.statusSelecionado() === StatusPedido.PENDENTE && !filtroFilaMesa()"
+          (click)="filtrarPorStatus(StatusPedido.PENDENTE)">
+          <div class="status-card-header">
+            <h3>⏳ Aguardando</h3>
+            <span class="status-count">{{ pedidosPorStatus().aguardando.length }}</span>
+          </div>
+        </button>
+        <button class="status-card preparando"
+          [class.selected]="pedidosComposable.statusSelecionado() === StatusPedido.PREPARANDO && !filtroFilaMesa()"
+          (click)="filtrarPorStatus(StatusPedido.PREPARANDO)">
+          <div class="status-card-header">
+            <h3>🔄 Preparando</h3>
+            <span class="status-count">{{ pedidosPorStatus().preparando.length }}</span>
+          </div>
+        </button>
+        <button class="status-card pronto"
+          [class.selected]="pedidosComposable.statusSelecionado() === StatusPedido.PRONTO && !filtroFilaMesa()"
+          (click)="filtrarPorStatus(StatusPedido.PRONTO)">
+          <div class="status-card-header">
+            <h3>✅ Pronto</h3>
+            <span class="status-count">{{ pedidosPorStatus().pronto.length }}</span>
+          </div>
+        </button>
+        <button class="status-card finalizado"
+          [class.selected]="pedidosComposable.statusSelecionado() === StatusPedido.FINALIZADO && !filtroFilaMesa()"
+          (click)="filtrarPorStatus(StatusPedido.FINALIZADO)">
+          <div class="status-card-header">
+            <h3>✔️ Finalizado</h3>
+            <span class="status-count">{{ pedidosPorStatus().finalizado.length }}</span>
+          </div>
+        </button>
+        <button class="status-card cancelado"
+          [class.selected]="pedidosComposable.statusSelecionado() === StatusPedido.CANCELADO && !filtroFilaMesa()"
+          (click)="filtrarPorStatus(StatusPedido.CANCELADO)">
+          <div class="status-card-header">
+            <h3>❌ Cancelados</h3>
+            <span class="status-count">{{ pedidosPorStatus().cancelado.length }}</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Lista de Pedidos Pendentes de Mesa (quando filtro ativo) -->
+      @if (filtroFilaMesa()) {
+        @if (pedidosPendentesMesa().length === 0) {
+          <div class="estado-vazio">
+            <p class="vazio-mensagem">Nenhum pedido de mesa aguardando aceitação.</p>
+          </div>
+        } @else {
+          <div class="pedidos-lista">
+            @for (pedido of pedidosPendentesMesa(); track pedido.id) {
+            <article class="pedido-card status-fila-mesa">
+              <div class="pedido-header">
+                <div class="pedido-info-principal">
+                  <h3 class="pedido-numero">
+                    <span class="pedido-mesa-badge fila">🍽️ Mesa {{ pedido.numeroMesa }}</span>
+                  </h3>
+                  <p class="pedido-cliente-data">
+                    <span class="pedido-cliente" [title]="pedido.nomeCliente">{{ pedido.nomeCliente }}</span>
+                    @if (pedido.telefoneCliente) {
+                      <span class="pedido-separador"> - </span>
+                      <span class="pedido-telefone">📱 {{ pedido.telefoneCliente }}</span>
+                    }
+                  </p>
+                </div>
+                <div class="pedido-status-badge badge-fila-mesa">
+                  <span class="tempo-espera" [class]="getClasseTempoEspera(pedido.tempoEsperaSegundos)">
+                    ⏱️ {{ formatarTempoEspera(pedido.tempoEsperaSegundos) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="pedido-itens">
+                <ul class="itens-lista">
+                  @for (item of pedido.itens; track item.produtoId) {
+                  <li class="item-lista">
+                    <div class="item-linha-principal">
+                      <span class="item-quantidade">{{ item.quantidade }}x</span>
+                      <span class="item-nome">{{ item.nomeProduto }}</span>
+                      <span class="item-preco">{{ formatarPreco(item.subtotal) }}</span>
+                    </div>
+                    @if (item.adicionais && item.adicionais.length > 0) {
+                      <div class="item-adicionais">
+                        @for (ad of item.adicionais; track ad.adicionalId) {
+                          <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.nome }}</span>
+                        }
+                      </div>
+                    }
+                  </li>
+                  }
+                </ul>
+              </div>
+
+              @if (pedido.observacoes && pedido.observacoes.trim()) {
+              <div class="pedido-observacoes">
+                <span class="observacoes-titulo">Observações:</span>
+                <span class="observacoes-texto">{{ pedido.observacoes }}</span>
+              </div>
+              }
+
+              <div class="pedido-footer">
+                <div class="pedido-total">
+                  <strong>Total: {{ formatarPreco(pedido.valorTotal) }}</strong>
+                </div>
+                <div class="pedido-acoes fila-acoes">
+                  <button class="btn-acao btn-aceitar" (click)="aceitarPedidoMesa(pedido.id)" [disabled]="carregandoFilaMesa()">
+                    ✅ Aceitar
+                  </button>
+                  <button class="btn-acao btn-rejeitar" (click)="rejeitarPedidoMesa(pedido.id)" [disabled]="carregandoFilaMesa()">
+                    ❌ Rejeitar
+                  </button>
+                </div>
+              </div>
+            </article>
+            }
+          </div>
+        }
+      } @else {
+      <!-- Lista de Pedidos Normais -->
+      @if (pedidosFiltrados().length === 0) {
+      <div class="estado-vazio">
+        <p class="vazio-mensagem">Nenhum pedido encontrado.</p>
+        <button class="btn-primary" (click)="abrirFormulario()">
+          ➕ Criar Primeiro Pedido
+        </button>
+      </div>
+      } @else {
+      <!-- Lista de Pedidos -->
+      <div class="pedidos-lista">
+        @for (pedido of pedidosFiltrados(); track pedido.id) {
+        <article class="pedido-card" [class]="'status-' + pedido.status.toLowerCase()"
+          (contextmenu)="abrirMenuContexto($event, pedido.id)">
+          <div class="pedido-header">
+            <div class="pedido-info-principal">
+              <h3 class="pedido-numero">Pedido #{{ pedido.numeroPedido }}</h3>
+              <p class="pedido-cliente-data">
+                @if (pedido.mesaId) {
+                  <span class="pedido-mesa-badge">🍽️ Mesa {{ pedido.numeroMesa }}</span>
+                  <span class="pedido-cliente" [title]="pedido.nomeClienteMesa || 'Cliente da mesa'">{{ pedido.nomeClienteMesa || 'Cliente' }}</span>
+                } @else if (!pedido.clienteId) {
+                  <span class="pedido-totem-badge">🖥️ Totem</span>
+                  <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome) }}</span>
+                } @else {
+                  <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome) }}</span>
+                }
+                <span class="pedido-separador"> - </span>
+                <span class="pedido-data">{{ formatarData(pedido.dataPedido) }}</span>
+              </p>
+            </div>
+            <div class="pedido-status-badge" [class]="'badge-' + pedido.status.toLowerCase()">
+              {{ formatarStatus(pedido.status) }}
+            </div>
+          </div>
+
+          <div class="pedido-itens">
+            <ul class="itens-lista">
+              @for (item of pedido.itens; track item.produtoId) {
+              <li class="item-lista">
+                <div class="item-linha-principal">
+                  <span class="item-quantidade">{{ item.quantidade }}x</span>
+                  <span class="item-nome">{{ item.produtoNome }}</span>
+                  <span class="item-preco">{{ formatarPreco(item.subtotal) }}</span>
+                </div>
+                @if (item.adicionais && item.adicionais.length > 0) {
+                  <div class="item-adicionais">
+                    @for (ad of item.adicionais; track ad.adicionalId) {
+                      <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.adicionalNome }}</span>
+                    }
+                  </div>
+                }
+              </li>
+              }
+            </ul>
+          </div>
+
+          @if (pedido.observacoes && pedido.observacoes.trim()) {
+          <div class="pedido-observacoes">
+            <span class="observacoes-titulo">Observações:</span>
+            <span class="observacoes-texto">{{ pedido.observacoes }}</span>
+          </div>
+          }
+
+          <div class="pedido-footer">
+            <div class="pedido-total">
+              <strong>Total: {{ formatarPreco(pedido.valorTotal) }}</strong>
+            </div>
+            <div class="pedido-acoes">
+              @if (pedido.status === StatusPedido.PENDENTE) {
+              <button class="btn-acao btn-preparando" (click)="atualizarStatus(pedido.id, StatusPedido.PREPARANDO)">
+                Iniciar Preparo
+              </button>
+              }
+              @if (pedido.status === StatusPedido.PREPARANDO) {
+              <button class="btn-acao btn-pronto" (click)="atualizarStatus(pedido.id, StatusPedido.PRONTO)">
+                Pronto
+              </button>
+              }
+              @if (pedido.status === StatusPedido.PRONTO) {
+              <button class="btn-acao btn-finalizar" (click)="atualizarStatus(pedido.id, StatusPedido.FINALIZADO)">
+                Finalizar
+              </button>
+              }
+              @if (pedido.status !== StatusPedido.CANCELADO) {
+              <button class="btn-acao btn-cancelar" (click)="cancelarPedido(pedido.id)">
+                Cancelar
+              </button>
+              }
+            </div>
+          </div>
+        </article>
+        }
+      </div>
+      }
+      } <!-- Fecha o @else do filtroFilaMesa -->
+      } <!-- Fecha o @if (estado() === 'sucesso') -->
+    </main>
+  </div>
+
+  <app-menu-contexto-pedido [aberto]="!!menuContexto()" [posicao]="menuContexto()" [pedido]="obterPedidoDoMenu()"
+    (onFechar)="fecharMenuContexto()" (onStatusAlterado)="onStatusAlteradoViaMenu($event)"
+    (onCancelar)="onCancelarViaMenu($event)" (onImprimirSegundaVia)="onImprimirSegundaViaViaMenu($event)" />
+
+  <app-novo-pedido-modal [aberto]="mostrarFormulario()" [produtos]="produtos()" (onFechar)="fecharFormulario()"
+    (onCriarPedido)="onPedidoCriado($event)" />
+
+
+</div>

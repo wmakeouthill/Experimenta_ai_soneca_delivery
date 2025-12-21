@@ -1,0 +1,555 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.relatorio-financeiro-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.relatorio-financeiro-header {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  color: white;
+  padding: 0.75rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.relatorio-financeiro-header-content {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.relatorio-financeiro-titulo {
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.relatorio-financeiro-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-header, .btn-voltar {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-header:hover, .btn-voltar:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.relatorio-financeiro-content {
+  padding: 0.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Filtros */
+.filtros-section {
+  background: white;
+  border-radius: 12px;
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.filtro-data-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filtro-data-wrapper label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.filtro-data-wrapper input {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #333;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  min-width: 150px;
+}
+
+/* Estados */
+.estado {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  margin: 0.25rem 0;
+}
+
+.estado--loading {
+  background: rgba(34, 211, 238, 0.1);
+  color: #22d3ee;
+}
+
+.estado--erro {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.estado--vazio {
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+}
+
+/* Cards de Métricas */
+.cards-metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.card-metrica {
+  background: white;
+  border-radius: 12px;
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-metrica:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.card-metrica--principal {
+  border-left: 4px solid #7C3AED;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f5ff 100%);
+}
+
+.card-metrica--caixa {
+  border-left: 4px solid #10B981;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.card-metrica-label {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-metrica-valor {
+  font-size: 1.5rem;
+  color: #333;
+  font-weight: 700;
+  display: block;
+  line-height: 1.2;
+}
+
+.card-metrica--principal .card-metrica-valor {
+  color: #7C3AED;
+}
+
+.card-metrica--caixa .card-metrica-valor {
+  color: #10B981;
+}
+
+/* Tabelas */
+.tabela-resumo-pagamento,
+.tabela-pedidos {
+  background: white;
+  border-radius: 12px;
+  padding: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Tabela Compacta - Métodos de Pagamento como Colunas */
+.tabela-compacta {
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.tabela-compacta th {
+  padding: 0.5rem 0.5rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.tabela-compacta td {
+  padding: 0.5rem 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabela-compacta .coluna-indicador {
+  text-align: left;
+  font-weight: 600;
+  background: #f8f9fa;
+  min-width: 180px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.tabela-compacta .coluna-total {
+  background: #f8f9fa;
+  font-weight: 600;
+  border-left: 2px solid #dee2e6;
+}
+
+.tabela-compacta .linha-indicador {
+  background: #f8f9fa;
+  font-weight: 600;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.tabela-compacta tbody tr:hover .linha-indicador {
+  background: #e9ecef;
+}
+
+.tabela-compacta tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.tabela-compacta tbody tr:hover td:not(.linha-indicador):not(.coluna-total) {
+  background: #f8f9fa;
+}
+
+.tabela-titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tabela-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabela thead {
+  background: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.tabela th {
+  padding: 0.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: #555;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tabela th.text-right {
+  text-align: right;
+}
+
+.tabela td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #333;
+}
+
+.tabela tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela-total {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+.tabela-total td {
+  padding: 0.75rem 0.5rem;
+  border-top: 2px solid #dee2e6;
+  border-bottom: none;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Tabela de Pedidos Detalhada */
+.tabela-pedidos-detalhada {
+  min-width: 1000px;
+}
+
+.numero-pedido {
+  font-weight: 600;
+  color: #7C3AED;
+}
+
+.meios-pagamento-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 250px;
+}
+
+.meio-pagamento-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.15rem 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.meio-pagamento-nome {
+  color: #555;
+  font-weight: 500;
+}
+
+.meio-pagamento-valor {
+  color: #10B981;
+  font-weight: 600;
+}
+
+.sem-meio-pagamento {
+  color: #999;
+  font-style: italic;
+}
+
+.valor-total-pedido {
+  font-size: 1rem;
+}
+
+/* Badges de Status */
+.badge-status {
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-pendente {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.status-preparando {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.status-pronto {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.status-finalizado {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.status-cancelado {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  .cards-metricas {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .relatorio-financeiro-header {
+    padding: 0.5rem 1rem;
+  }
+
+  .relatorio-financeiro-content {
+    padding: 0.75rem;
+  }
+
+  .relatorio-financeiro-titulo {
+    font-size: 1.5rem;
+  }
+
+  .relatorio-financeiro-logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .cards-metricas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filtro-data-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtro-data-wrapper input {
+    width: 100%;
+  }
+
+  .tabela-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabela-compacta {
+    min-width: 600px;
+  }
+
+  .tabela-compacta th,
+  .tabela-compacta td {
+    padding: 0.4rem 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  .tabela-compacta .coluna-indicador {
+    min-width: 140px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Paginação */
+.paginacao {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  margin-top: 0.5rem;
+}
+
+.btn-paginacao {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-paginacao:hover:not(:disabled) {
+  background: #7C3AED;
+  color: white;
+  border-color: #7C3AED;
+}
+
+.btn-paginacao:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.paginacao-numeros {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-pagina {
+  min-width: 40px;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-pagina:hover:not(.disabled):not(.active) {
+  background: #f5f5f5;
+  border-color: #7C3AED;
+}
+
+.btn-pagina.active {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  color: white;
+  border-color: #7C3AED;
+}
+
+.btn-pagina.disabled {
+  cursor: default;
+  border: none;
+  background: transparent;
+}
+
+@media (max-width: 480px) {
+  .cards-metricas {
+    grid-template-columns: 1fr;
+  }
+
+  .card-metrica-valor {
+    font-size: 1.5rem;
+  }
+
+  .paginacao {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .paginacao-numeros {
+    gap: 0.25rem;
+  }
+
+  .btn-paginacao,
+  .btn-pagina {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+

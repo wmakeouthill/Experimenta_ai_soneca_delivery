@@ -1,0 +1,65 @@
+/* Responsividade */
+@media (max-width: 1024px) {
+  .historico-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-sessoes {
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  .resumo-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .pedidos-lista {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .historico-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .historico-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .historico-conteudo {
+    padding: 1rem;
+  }
+
+  .sessao-info-detalhes {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pedidos-lista {
+    grid-template-columns: 1fr;
+  }
+
+  .pedidos-secao-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pedidos-busca {
+    min-width: 100%;
+  }
+
+  .meios-pagamento-lista {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 1200px) {
+  .pedidos-lista {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+

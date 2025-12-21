@@ -1,0 +1,229 @@
+.meios-pagamento-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.30rem;
+  margin-bottom: 0.1rem;
+}
+
+.meio-pagamento-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.meio-pagamento-input-group .form-select {
+  flex: 1;
+  min-width: 150px;
+}
+
+.input-valor-meio-pagamento {
+  width: 120px;
+  flex-shrink: 0;
+  padding: 0.6rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.input-valor-meio-pagamento:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.btn-adicionar-meio-pagamento {
+  padding: 0.6rem 1rem;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-adicionar-meio-pagamento:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-1px);
+}
+
+.btn-adicionar-meio-pagamento:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.valor-total-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #f5f5f5;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.valor-label {
+  font-weight: 600;
+  color: #333;
+}
+
+.separador {
+  color: #999;
+  font-weight: 400;
+}
+
+.valor-restante {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.valor-restante.completo {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.meios-pagamento-lista {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.meio-pagamento-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #e8f5e9;
+  border: 1px solid #4CAF50;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  width: auto;
+  max-width: none;
+}
+
+.meio-pagamento-nome {
+  flex: 0 0 auto;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
+.meio-pagamento-valor {
+  font-weight: 700;
+  color: #2e7d32;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.btn-remover-meio-pagamento {
+  background: #ffcdd2;
+  border: 1px solid #c62828;
+  color: #c62828;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.btn-remover-meio-pagamento:hover {
+  background: #c62828;
+  color: white;
+}
+
+.meio-pagamento-hint {
+  font-size: 0.8rem;
+  color: #999;
+  font-style: italic;
+  margin: 0;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.form-input, .form-select {
+  padding: 0.6rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  background: white;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.obrigatorio {
+  color: #c62828;
+}
+
+/* Responsivo Mobile */
+@media (max-width: 768px) {
+  .meios-pagamento-container {
+    gap: 0.25rem;
+  }
+
+  .meio-pagamento-input-group {
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+  }
+
+  .meio-pagamento-input-group .form-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .input-valor-meio-pagamento {
+    flex: 0 0 80px;
+    width: 80px;
+    min-width: 70px;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .btn-adicionar-meio-pagamento {
+    flex: 0 0 auto;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .valor-total-info {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.75rem;
+    gap: 0.3rem;
+  }
+
+  .meios-pagamento-lista {
+    flex-direction: row;
+    gap: 0.3rem;
+    max-height: 80px;
+  }
+
+  .meio-pagamento-item {
+    width: auto;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.75rem;
+    gap: 0.3rem;
+  }
+
+  .meio-pagamento-hint {
+    padding: 0.25rem;
+    font-size: 0.7rem;
+  }
+}
+

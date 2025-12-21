@@ -1,0 +1,20 @@
+{
+  "name": "Experimenta aí - Cliente",
+  "short_name": "ExperimentaAI",
+  "start_url": "/mesa",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF6B35",
+  "icons": [
+    {
+      "src": "/assets/experimenta_ai_banner_circular.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

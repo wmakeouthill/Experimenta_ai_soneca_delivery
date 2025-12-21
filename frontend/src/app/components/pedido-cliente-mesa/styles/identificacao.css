@@ -1,0 +1,276 @@
+/* ========== TELA DE IDENTIFICAÇÃO ========== */
+.identificacao-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #FF6B35 0%, #F7931E 50%, #f5f5f5 50%);
+}
+
+.identificacao-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 2rem 2rem;
+    color: white;
+    text-align: center;
+}
+
+.logo-grande {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-bottom: 1.5rem;
+}
+
+.identificacao-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.mesa-badge {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.identificacao-form {
+    flex: 1;
+    background: white;
+    border-radius: 24px 24px 0 0;
+    padding: 2rem 1.5rem;
+    margin-top: -24px;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.identificacao-form h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    color: #333;
+    text-align: center;
+}
+
+.form-hint {
+    color: #888;
+    text-align: center;
+    margin: 0 0 2rem;
+    font-size: 0.9rem;
+}
+
+.input-group {
+    margin-bottom: 1.25rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.input-telefone,
+.input-nome {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    /* Font size 16px ou maior previne zoom automático no iOS */
+    font-size: 1rem;
+    font-size: max(1rem, 16px);
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fafafa;
+    transition: all 0.2s;
+    text-align: center;
+    letter-spacing: 1px;
+    box-sizing: border-box;
+    /* Herda a fonte do container para consistência */
+    font-family: inherit;
+}
+
+.input-nome {
+    text-align: left;
+    letter-spacing: normal;
+}
+
+.input-telefone:focus,
+.input-nome:focus {
+    outline: none;
+    border-color: #FF6B35;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+}
+
+.input-telefone.valido,
+.input-nome.valido {
+    border-color: #4CAF50;
+}
+
+.input-telefone.disabled {
+    background: #f0f0f0;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.erro-msg {
+    color: #e53935;
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.btn-continuar {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.btn-continuar:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-continuar:not(:disabled):active {
+    transform: scale(0.98);
+}
+
+.btn-voltar {
+    width: 100%;
+    padding: 1rem;
+    background: transparent;
+    color: #666;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.btn-voltar:active {
+    color: #333;
+}
+
+/* ========== DIVISOR "OU" ========== */
+.divisor-ou {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.divisor-ou::before,
+.divisor-ou::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.divisor-ou span {
+    padding: 0 1rem;
+    color: #999;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* ========== CONTAINER BOTÃO GOOGLE OFICIAL ========== */
+.google-button-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 44px;
+    position: relative;
+}
+
+.google-signin-button {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Overlay de loading sobre o botão do Google */
+.google-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #666;
+    border-radius: 12px;
+}
+
+/* ========== BOTÃO GOOGLE CUSTOMIZADO (fallback) ========== */
+.btn-google {
+    width: 100%;
+    padding: 1rem;
+    background: white;
+    color: #333;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.btn-google:hover:not(:disabled) {
+    background: #f8f8f8;
+    border-color: #ccc;
+}
+
+.btn-google:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-google:not(:disabled):active {
+    transform: scale(0.98);
+}
+
+.btn-google .google-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-google .spinner-mini {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-top-color: #4285F4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

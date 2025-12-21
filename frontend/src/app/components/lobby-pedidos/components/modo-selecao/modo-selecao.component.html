@@ -1,0 +1,35 @@
+<div class="modo-selecao-container">
+  <div class="modo-selecao-card">
+    <header class="modo-header">
+      <h1 class="modo-titulo">🍔 Experimenta aí</h1>
+      <p class="modo-subtitulo">Escolha o modo de acesso</p>
+    </header>
+
+    <div class="modo-opcoes">
+      <button 
+        class="modo-opcao modo-gestor"
+        type="button"
+        (click)="selecionarModo('gestor')"
+      >
+        <div class="modo-icone">👨‍💼</div>
+        <h2 class="modo-opcao-titulo">Modo Gestor</h2>
+        <p class="modo-opcao-descricao">
+          Acesso completo: adicionar pedidos, marcar como pronto e remover da fila
+        </p>
+      </button>
+
+      <button 
+        class="modo-opcao modo-cliente"
+        type="button"
+        (click)="selecionarModo('cliente')"
+      >
+        <div class="modo-icone">👀</div>
+        <h2 class="modo-opcao-titulo">Modo Visualização</h2>
+        <p class="modo-opcao-descricao">
+          Apenas visualizar as filas de pedidos em preparação e prontos
+        </p>
+      </button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,41 @@
+<header class="header">
+  <div class="header-content">
+    <div class="header-left">
+      <a routerLink="/" class="logo">
+        <h1>🍔 Snackbar System</h1>
+      </a>
+    </div>
+    
+    @if (estaAutenticado()) {
+      <nav class="header-nav">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+          Home
+        </a>
+        <a routerLink="/cardapio" routerLinkActive="active">
+          Cardápio
+        </a>
+        <a routerLink="/pedidos" routerLinkActive="active">
+          Pedidos
+        </a>
+        @if (isAdministrador()) {
+          <a routerLink="/administracao" routerLinkActive="active">
+            Administração
+          </a>
+        }
+      </nav>
+    }
+    
+    <div class="header-right">
+      @if (estaAutenticado()) {
+        <div class="user-info">
+          <span class="user-name">{{ usuarioAtual()?.nome }}</span>
+          <span class="user-role">{{ usuarioAtual()?.descricaoRole }}</span>
+        </div>
+        <button class="btn-logout" (click)="logout()">
+          Sair
+        </button>
+      }
+    </div>
+  </div>
+</header>
+

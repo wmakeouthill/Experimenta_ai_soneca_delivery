@@ -1,0 +1,18 @@
+<section class="chart-card">
+  <header>
+    <div>
+      <h3>Quantidade por categoria</h3>
+      <p>Volume de produtos vendidos agrupados por categoria</p>
+    </div>
+    <span class="chip">Volume</span>
+  </header>
+
+  <div class="chart-wrapper">
+    @if (dados().length === 0) {
+      <p class="chart-empty">Sem dados para este período.</p>
+    } @else {
+      <canvas #canvas aria-label="Gráfico de quantidade por categoria"></canvas>
+    }
+  </div>
+</section>
+

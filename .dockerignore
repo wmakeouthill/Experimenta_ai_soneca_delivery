@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentação
+*.md
+!README.md
+
+# IDE
+.idea
+.vscode
+*.iml
+*.swp
+*.swo
+*~
+
+# Build artifacts
+target/
+dist/
+node_modules/
+frontend/node_modules/
+frontend/dist/
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Node
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testes
+*.test
+*.spec
+
+# Temporários
+tmp/
+temp/
+*.tmp
+
+# Secrets
+application-secrets.yml
+*.secret
+.env.local
+
+# Outros
+Lobby-pedidos/
+*.exe
+

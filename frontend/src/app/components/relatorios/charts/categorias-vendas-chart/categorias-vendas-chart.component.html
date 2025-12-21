@@ -1,0 +1,18 @@
+<section class="chart-card">
+  <header>
+    <div>
+      <h3>Faturamento por categoria</h3>
+      <p>Identifique quais categorias puxam o faturamento no período</p>
+    </div>
+    <span class="chip">Top categorias</span>
+  </header>
+
+  <div class="chart-wrapper">
+    @if (dados().length === 0) {
+      <p class="chart-empty">Sem dados para este período.</p>
+    } @else {
+      <canvas #canvas aria-label="Gráfico de categorias"></canvas>
+    }
+  </div>
+</section>
+

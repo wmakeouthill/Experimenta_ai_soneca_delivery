@@ -1,0 +1,29 @@
+<div class="tooltip-meios-pagamento-container">
+  <button 
+    #link
+    type="button"
+    class="ver-meios-pagamento-link"
+    (click)="toggleTooltip($event)"
+    [class.ativo]="aberto()"
+  >
+    Ver métodos de pagamento
+  </button>
+  
+  @if (aberto()) {
+    <div #tooltip class="tooltip" (click)="$event.stopPropagation()">
+      <div class="tooltip-content">
+        @if (meiosPagamento() && meiosPagamento().length > 0) {
+          @for (mp of meiosPagamento(); track mp.meioPagamento + $index) {
+            <div class="tooltip-item">
+              <span class="tooltip-nome">{{ formatarMeioPagamento(mp.meioPagamento) }}</span>
+              <span class="tooltip-preco">{{ formatarMoeda(mp.valor) }}</span>
+            </div>
+          }
+        } @else {
+          <div class="tooltip-item">Nenhum método de pagamento</div>
+        }
+      </div>
+    </div>
+  }
+</div>
+

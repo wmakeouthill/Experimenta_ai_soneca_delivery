@@ -1,0 +1,480 @@
+/* Lista de Pedidos - Grid com Largura Fixa */
+.pedidos-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+  justify-content: start;
+}
+
+.pedido-card {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem 0.45rem 0.9rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.pedido-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #e0e0e0;
+  transition: background 0.3s ease;
+}
+
+.pedido-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: #4CAF50;
+}
+
+.pedido-card:hover::before {
+  background: #4CAF50;
+}
+
+.pedido-card.status-pendente::before,
+.pedido-card.status-aguardando::before {
+  background: #FFC107;
+}
+
+.pedido-card.status-preparando::before {
+  background: #FF9800;
+}
+
+.pedido-card.status-pronto::before {
+  background: #4CAF50;
+}
+
+.pedido-card.status-finalizado::before {
+  background: #2196F3;
+}
+
+.pedido-card.status-cancelado::before {
+  background: #F44336;
+}
+
+.pedido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.4rem;
+  gap: 0.75rem;
+}
+
+.pedido-info-principal {
+  flex: 1;
+  min-width: 0;
+}
+
+.pedido-numero {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 0.2rem 0;
+  line-height: 1.2;
+}
+
+.pedido-cliente-data {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pedido-cliente {
+  color: #666;
+}
+
+.pedido-mesa-badge {
+  background: linear-gradient(135deg, #FF6B35, #F7931E);
+  color: white;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-right: 0.3rem;
+}
+
+.pedido-totem-badge {
+  background: linear-gradient(135deg, #6B5B95, #9B59B6);
+  color: white;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-right: 0.3rem;
+}
+
+.pedido-separador {
+  color: #999;
+  font-weight: 400;
+}
+
+.pedido-data {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.pedido-status-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 16px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-pendente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-preparando {
+  background: #ffe0b2;
+  color: #e65100;
+}
+
+.badge-pronto {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.badge-finalizado {
+  background: #bbdefb;
+  color: #1565c0;
+}
+
+.badge-cancelado {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.pedido-itens {
+  margin-bottom: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.itens-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.item-lista {
+  display: flex;
+  flex-direction: column;
+  padding: 0.1rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 0.2rem;
+}
+
+.item-lista:last-child {
+  border-bottom: none;
+}
+
+.item-linha-principal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.item-quantidade {
+  font-weight: 600;
+  color: #4CAF50;
+  min-width: 30px;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.item-nome {
+  flex: 1;
+  margin-left: 0.5rem;
+  color: #333;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.item-preco {
+  font-weight: 600;
+  color: #2e7d32;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.item-adicionais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding-left: 35px;
+}
+
+.adicional-badge {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.pedido-observacoes {
+  margin: 0 0 0.3rem 0;
+  padding: 0.4rem 0.5rem;
+  background: #fff9e6;
+  border-left: 3px solid #ff9800;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  line-height: 1.3;
+}
+
+.observacoes-titulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e65100;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.observacoes-texto {
+  font-size: 0.8rem;
+  color: #666;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+  min-width: 0;
+}
+
+.pedido-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.4rem;
+  padding-bottom: 0;
+  border-top: 2px solid #e0e0e0;
+  margin-top: auto;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pedido-total {
+  font-size: 1rem;
+  color: #2e7d32;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pedido-acoes {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.btn-acao {
+  padding: 0.35rem 0.7rem;
+  border: 2px solid;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-preparando {
+  color: #FF9800;
+  border-color: #FF9800;
+}
+
+.btn-preparando:hover {
+  background: #FF9800;
+  color: white;
+}
+
+.btn-pronto {
+  color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.btn-pronto:hover {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-finalizar {
+  color: #2196F3;
+  border-color: #2196F3;
+}
+
+.btn-finalizar:hover {
+  background: #2196F3;
+  color: white;
+}
+
+.btn-cancelar {
+  color: #c62828;
+  border-color: #c62828;
+}
+
+.btn-cancelar:hover {
+  background: #c62828;
+  color: white;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+/* Estilos para Fila de Pedidos de Mesa */
+.pedido-card.status-fila-mesa::before {
+  background: linear-gradient(90deg, #9C27B0, #BA68C8);
+}
+
+.pedido-card.status-fila-mesa {
+  border-color: #E1BEE7;
+  background: linear-gradient(135deg, #fff 0%, #faf5fc 100%);
+}
+
+.pedido-card.status-fila-mesa:hover {
+  border-color: #9C27B0;
+}
+
+.pedido-mesa-badge.fila {
+  background: linear-gradient(135deg, #9C27B0, #BA68C8);
+  font-size: 0.85rem;
+  padding: 0.2rem 0.6rem;
+}
+
+.badge-fila-mesa {
+  background: #f3e5f5;
+  color: #6a1b9a;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.tempo-espera {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.tempo-espera.tempo-ok {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.tempo-espera.tempo-atencao {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.tempo-espera.tempo-urgente {
+  background: #ffcdd2;
+  color: #c62828;
+  animation: urgente-pulse 1s infinite;
+}
+
+@keyframes urgente-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.pedido-telefone {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.fila-acoes {
+  gap: 0.5rem !important;
+}
+
+.btn-aceitar {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+}
+
+.btn-aceitar:hover {
+  background: linear-gradient(135deg, #45a049 0%, #388e3c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+
+.btn-aceitar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-rejeitar {
+  background: transparent;
+  color: #c62828;
+  border: 2px solid #c62828;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+}
+
+.btn-rejeitar:hover {
+  background: #c62828;
+  color: white;
+}
+
+.btn-rejeitar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

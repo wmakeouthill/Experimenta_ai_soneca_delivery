@@ -1,0 +1,98 @@
+{
+  "name": "experimenta-ai-soneca-electron",
+  "version": "1.0.0",
+  "description": "Experimenta aí do Soneca - Sistema de Gestão para Lanchonetes",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "cross-env NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac",
+    "build:all": "electron-builder --win --linux --mac"
+  },
+  "keywords": [
+    "electron",
+    "experimenta-ai",
+    "lanchonete",
+    "desktop"
+  ],
+  "author": "Experimenta aí do Soneca",
+  "license": "MIT",
+  "build": {
+    "appId": "com.experimentaaisoneca.app",
+    "productName": "Experimenta aí do Soneca",
+    "copyright": "Copyright © 2024 Experimenta aí do Soneca",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "core/**/*",
+      "infrastructure/**/*",
+      "utils/**/*",
+      "../dist/frontend/browser/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "core/**/*",
+      "infrastructure/**/*",
+      "utils/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "icon.ico",
+        "to": "icon.ico"
+      }
+    ],
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "publisherName": "Experimenta aí do Soneca"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Experimenta aí do Soneca"
+    },
+    "linux": {
+      "icon": "../src/assets/experimenta_ai_banner_circular.png",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Office"
+    },
+    "mac": {
+      "icon": "../src/assets/experimenta_ai_banner_circular.png",
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.business"
+    }
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}

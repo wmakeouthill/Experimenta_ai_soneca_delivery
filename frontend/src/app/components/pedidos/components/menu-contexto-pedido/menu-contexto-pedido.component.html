@@ -1,0 +1,51 @@
+@if (aberto() && posicao() && pedido()) {
+  <div 
+    class="context-menu-overlay"
+    (click)="fechar()"
+    (contextmenu)="$event.preventDefault(); fechar()"
+  >
+    <div 
+      class="context-menu"
+      [style.left.px]="posicao()!.x"
+      [style.top.px]="posicao()!.y"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="context-menu-header">
+        <span>Opções do Pedido</span>
+      </div>
+      <div class="context-menu-items">
+        @if (pedido(); as pedidoAtual) {
+          <div class="context-menu-section">
+            <div class="context-menu-section-title">Alterar Status</div>
+            @for (status of obterStatusDisponiveis(pedidoAtual.status); track status) {
+              <button 
+                class="context-menu-item"
+                (click)="alterarStatus(status)"
+              >
+                {{ obterNomeStatus(status) }}
+              </button>
+            }
+          </div>
+          <div class="context-menu-divider"></div>
+          <div class="context-menu-section">
+            <button 
+              class="context-menu-item context-menu-item-impressao"
+              (click)="imprimirSegundaVia()"
+            >
+              🖨️ Imprimir Segunda Via
+            </button>
+            @if (podeCancelar(pedidoAtual.status)) {
+              <button 
+                class="context-menu-item context-menu-item-cancelar"
+                (click)="cancelarPedido()"
+              >
+                ❌ Cancelar Pedido
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+

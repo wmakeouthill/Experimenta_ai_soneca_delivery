@@ -1,0 +1,18 @@
+<section class="chart-card">
+  <header>
+    <div>
+      <h3>Clientes que mais compram</h3>
+      <p>Visualize quem sustenta o faturamento para ações de fidelização</p>
+    </div>
+    <span class="chip">Clientes</span>
+  </header>
+
+  <div class="chart-wrapper">
+    @if (dados().length === 0) {
+      <p class="chart-empty">Sem dados para este período.</p>
+    } @else {
+      <canvas #canvas aria-label="Vendas por cliente"></canvas>
+    }
+  </div>
+</section>
+

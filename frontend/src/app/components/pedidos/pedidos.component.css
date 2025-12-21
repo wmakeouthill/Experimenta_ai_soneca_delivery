@@ -1,0 +1,8 @@
+/* Arquivo principal que importa todos os módulos CSS */
+@import './styles/layout.css';
+@import './styles/header.css';
+@import './styles/sidebar.css';
+@import './styles/status-cards.css';
+@import './styles/pedido-card.css';
+@import './styles/estados.css';
+@import './styles/responsive.css';

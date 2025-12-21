@@ -1,0 +1,303 @@
+/* ========== PAGAMENTO CONTAINER ========== */
+.pagamento-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+/* ========== TOGGLE DIVIDIR ========== */
+.pagamento-toggle-dividir {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.toggle-dividir {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-dividir input {
+    display: none;
+}
+
+.toggle-slider {
+    width: 48px;
+    height: 26px;
+    background: var(--border-color);
+    border-radius: 13px;
+    position: relative;
+    transition: var(--transition);
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: var(--transition);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-dividir input:checked + .toggle-slider {
+    background: var(--primary-color);
+}
+
+.toggle-dividir input:checked + .toggle-slider::after {
+    left: 24px;
+}
+
+.toggle-label {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.pagamento-instrucao {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* ========== OPÇÕES DE PAGAMENTO ========== */
+.pagamento-opcoes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.pagamento-opcao {
+    background: var(--surface);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.pagamento-opcao-full {
+    grid-column: span 2;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.pagamento-opcao:hover {
+    border-color: var(--primary-color);
+}
+
+.pagamento-opcao.selecionado {
+    border-color: var(--primary-color);
+    background: rgba(255, 107, 53, 0.1);
+}
+
+.pagamento-icone {
+    font-size: 2rem;
+}
+
+.pagamento-nome {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.pagamento-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--primary-color);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* ========== INPUT VALOR DIVIDIDO ========== */
+.pagamento-valor-input {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.25rem 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.pagamento-valor-input span {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.pagamento-valor-input input {
+    width: 70px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: transparent;
+    outline: none;
+    text-align: right;
+}
+
+.pagamento-valor-input input::-webkit-outer-spin-button,
+.pagamento-valor-input input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.pagamento-valor-input input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* ========== RESUMO PAGAMENTO ========== */
+.pagamento-resumo {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.resumo-linha {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.resumo-linha.total {
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.resumo-linha.restante,
+.resumo-linha.excedente {
+    color: var(--error-color);
+}
+
+.valor-ok {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.valor-erro {
+    color: var(--error-color);
+    font-weight: 600;
+}
+
+/* ========== TABLETS E DESKTOP ========== */
+@media (min-width: 768px) {
+    .pagamento-container {
+        padding: 1.5rem;
+    }
+
+    .pagamento-opcoes {
+        gap: 1rem;
+    }
+
+    .pagamento-opcao {
+        padding: 1.5rem 1rem;
+    }
+
+    .pagamento-icone {
+        font-size: 2.5rem;
+    }
+
+    .pagamento-nome {
+        font-size: 1rem;
+    }
+}
+
+/* ========== CONFIRMAÇÃO ========== */
+.confirmacao-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.confirmacao-resumo {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.confirmacao-resumo h2 {
+    font-size: 1.3rem;
+    margin: 0 0 1rem;
+    color: var(--text-primary);
+}
+
+.confirmacao-cliente {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin: 0 0 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.confirmacao-itens {
+    margin-bottom: 1.5rem;
+}
+
+.confirmacao-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.confirmacao-pagamento {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.confirmacao-pagamento h3 {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.5rem;
+}
+
+.confirmacao-pagamento p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.confirmacao-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding-top: 1rem;
+    border-top: 2px solid var(--primary-color);
+    margin-top: 1rem;
+}

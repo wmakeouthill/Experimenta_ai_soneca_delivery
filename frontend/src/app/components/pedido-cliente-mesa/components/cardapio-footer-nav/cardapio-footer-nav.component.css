@@ -1,0 +1,65 @@
+/* ============================================
+   Footer Navegação - Abas do cardápio
+   ============================================ */
+
+.footer-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    background: white;
+    border-top: 1px solid #eee;
+    padding: 0.5rem 0;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    z-index: 50;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    position: relative;
+}
+
+.nav-item.ativo {
+    color: #FF6B35;
+}
+
+.nav-icon {
+    font-size: 1.25rem;
+}
+
+.nav-label {
+    font-weight: 500;
+}
+
+.carrinho-nav {
+    position: relative;
+}
+
+.carrinho-badge {
+    position: absolute;
+    top: 0;
+    right: 0.5rem;
+    min-width: 18px;
+    height: 18px;
+    background: #FF6B35;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}

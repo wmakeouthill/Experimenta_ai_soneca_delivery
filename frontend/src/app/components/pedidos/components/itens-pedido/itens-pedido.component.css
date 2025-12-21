@@ -1,0 +1,169 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+:host h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid #4CAF50;
+  flex-shrink: 0;
+}
+
+.itens-selecionados {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 0.5rem;
+  max-width: 100%;
+  padding-right: 0.25rem;
+}
+
+.item-selecionado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  min-width: 0;
+  max-width: 100%;
+  gap: 0.5rem;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.item-adicionais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.adicional-badge {
+  font-size: 0.65rem;
+  background: #fff3e0;
+  color: #e65100;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.item-obs {
+  font-size: 0.65rem;
+  color: #666;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-controles {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.btn-quantidade {
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid #4CAF50;
+  background: white;
+  color: #4CAF50;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-quantidade:hover {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-remover {
+  background: #ffcdd2;
+  border: 1.5px solid #c62828;
+  color: #c62828;
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.btn-remover:hover {
+  background: #c62828;
+  color: white;
+}
+
+.item-nome {
+  flex: 1;
+  color: #333;
+  font-size: 0.8rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-quantidade {
+  font-weight: 600;
+  color: #4CAF50;
+  min-width: 24px;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.item-subtotal {
+  font-weight: 700;
+  color: #2e7d32;
+  min-width: 60px;
+  font-size: 0.8rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.pedido-total-form {
+  padding: 0.5rem 0.75rem;
+  background: #e8f5e9;
+  border-radius: 6px;
+  text-align: right;
+  font-size: 1rem;
+  color: #2e7d32;
+  margin-bottom: 0;
+  margin-top: auto;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+

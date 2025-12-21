@@ -1,0 +1,94 @@
+{
+  "groups": [
+    {
+      "name": "impressao",
+      "type": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties",
+      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties"
+    },
+    {
+      "name": "impressao.epson",
+      "type": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig",
+      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig"
+    },
+    {
+      "name": "impressao.epson.tm-t20",
+      "type": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig$TmT20Config",
+      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig$TmT20Config"
+    },
+    {
+      "name": "impressao.daruma",
+      "type": "java.util.Map",
+      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties"
+    },
+    {
+      "name": "impressao.generica",
+      "type": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$GenericaConfig",
+      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$GenericaConfig"
+    },
+    {
+      "name": "estabelecimento",
+      "type": "com.snackbar.impressao.infrastructure.config.EstabelecimentoProperties",
+      "sourceType": "com.snackbar.impressao.infrastructure.config.EstabelecimentoProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "impressao.epson.tm-t20.device",
+      "type": "java.lang.String",
+      "description": "Caminho do dispositivo da impressora EPSON TM-T20 (ex: /dev/usb/lp0 no Linux ou COM3 no Windows)",
+      "defaultValue": "/dev/usb/lp0"
+    },
+    {
+      "name": "impressao.epson.tm-t20.modo-teste",
+      "type": "java.lang.Boolean",
+      "description": "Se true, salva em arquivo .prn ao invés de imprimir diretamente",
+      "defaultValue": true
+    },
+    {
+      "name": "impressao.daruma.800.device",
+      "type": "java.lang.String",
+      "description": "Caminho do dispositivo da impressora DARUMA DR-800 (ex: /dev/usb/lp1 no Linux ou COM4 no Windows)",
+      "defaultValue": "/dev/usb/lp1"
+    },
+    {
+      "name": "impressao.daruma.800.modo-teste",
+      "type": "java.lang.Boolean",
+      "description": "Se true, salva em arquivo .prn ao invés de imprimir diretamente",
+      "defaultValue": true
+    },
+    {
+      "name": "impressao.generica.device",
+      "type": "java.lang.String",
+      "description": "Caminho do dispositivo da impressora genérica ESC/POS (ex: /dev/usb/lp2 no Linux ou COM5 no Windows)",
+      "defaultValue": "/dev/usb/lp2"
+    },
+    {
+      "name": "impressao.generica.modo-teste",
+      "type": "java.lang.Boolean",
+      "description": "Se true, salva em arquivo .prn ao invés de imprimir diretamente",
+      "defaultValue": true
+    },
+    {
+      "name": "estabelecimento.nome",
+      "type": "java.lang.String",
+      "description": "Nome do estabelecimento que aparecerá no cupom fiscal",
+      "defaultValue": "experimenta-ai-do-soneca"
+    },
+    {
+      "name": "estabelecimento.endereco",
+      "type": "java.lang.String",
+      "description": "Endereço do estabelecimento que aparecerá no cupom fiscal"
+    },
+    {
+      "name": "estabelecimento.telefone",
+      "type": "java.lang.String",
+      "description": "Telefone do estabelecimento que aparecerá no cupom fiscal"
+    },
+    {
+      "name": "estabelecimento.cnpj",
+      "type": "java.lang.String",
+      "description": "CNPJ do estabelecimento que aparecerá no cupom fiscal"
+    }
+  ]
+}
+

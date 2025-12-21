@@ -1,0 +1,146 @@
+.gerenciar-sessao-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  width: 100%;
+  display: block;
+  visibility: visible;
+}
+
+.sessao-header {
+  margin-bottom: 1rem;
+}
+
+.sessao-titulo {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.sessao-loading,
+.sessao-erro {
+  padding: 0.75rem;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.sessao-loading {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.sessao-erro {
+  background: #fee;
+  color: #c33;
+}
+
+.sessao-info {
+  margin-bottom: 1rem;
+}
+
+.sessao-nome {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.sessao-status {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.status-aberta {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-pausada {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.sessao-data {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.sessao-acoes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-sessao {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sessao:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-iniciar {
+  background: #28a745;
+  color: white;
+}
+
+.btn-iniciar:hover:not(:disabled) {
+  background: #218838;
+}
+
+.btn-pausar {
+  background: #ffc107;
+  color: #333;
+}
+
+.btn-pausar:hover:not(:disabled) {
+  background: #e0a800;
+}
+
+.btn-retomar {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-retomar:hover:not(:disabled) {
+  background: #138496;
+}
+
+.btn-finalizar {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-finalizar:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.sessao-vazia {
+  text-align: center;
+  padding: 1rem;
+}
+
+.sessao-vazia p {
+  margin: 0 0 1rem 0;
+  color: #666;
+}
+

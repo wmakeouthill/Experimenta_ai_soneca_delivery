@@ -1,0 +1,30 @@
+<div class="tooltip-itens-container">
+  <button 
+    #link
+    type="button"
+    class="ver-itens-link"
+    (click)="toggleTooltip($event)"
+    [class.ativo]="aberto()"
+  >
+    Ver itens
+  </button>
+  
+  @if (aberto()) {
+    <div #tooltip class="tooltip" (click)="$event.stopPropagation()">
+      <div class="tooltip-content">
+        @if (itens() && itens().length > 0) {
+          @for (item of itens(); track item.produtoId + $index) {
+            <div class="tooltip-item">
+              <span class="tooltip-quantidade">{{ item.quantidade }}x</span>
+              <span class="tooltip-nome">{{ item.produtoNome }}</span>
+              <span class="tooltip-preco">{{ formatarMoeda(item.subtotal) }}</span>
+            </div>
+          }
+        } @else {
+          <div class="tooltip-item">Nenhum item</div>
+        }
+      </div>
+    </div>
+  }
+</div>
+

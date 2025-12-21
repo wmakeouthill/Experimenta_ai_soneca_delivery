@@ -1,0 +1,50 @@
+/* Paginação */
+.paginacao {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 0;
+}
+
+.btn-pagina {
+  min-width: 36px;
+  height: 36px;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-pagina:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #FF6B35;
+  transform: translateY(-1px);
+}
+
+.btn-pagina:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-pagina.active {
+  background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+  color: white;
+  border-color: #FF6B35;
+}
+
+.pagina-ellipsis {
+  padding: 0 0.5rem;
+  color: #999;
+  font-weight: 600;
+}
+

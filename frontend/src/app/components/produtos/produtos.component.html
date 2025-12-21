@@ -1,0 +1,31 @@
+<div class="produtos-container">
+  <h1>Cardápio - Produtos</h1>
+  
+  <div *ngIf="carregando" class="loading">
+    Carregando produtos...
+  </div>
+  
+  <div *ngIf="erro" class="error">
+    {{ erro }}
+    <button (click)="carregarProdutos()">Tentar novamente</button>
+  </div>
+  
+  <div *ngIf="!carregando && !erro">
+    <div *ngIf="produtos.length === 0" class="empty">
+      Nenhum produto cadastrado ainda.
+    </div>
+    
+    <div *ngIf="produtos.length > 0" class="produtos-grid">
+      <div *ngFor="let produto of produtos" class="produto-card">
+        <h3>{{ produto.nome }}</h3>
+        <p class="categoria">{{ produto.categoria }}</p>
+        <p class="descricao">{{ produto.descricao || 'Sem descrição' }}</p>
+        <p class="preco">R$ {{ produto.preco.toFixed(2) }}</p>
+        <span [class]="'status ' + (produto.disponivel ? 'disponivel' : 'indisponivel')">
+          {{ produto.disponivel ? 'Disponível' : 'Indisponível' }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+

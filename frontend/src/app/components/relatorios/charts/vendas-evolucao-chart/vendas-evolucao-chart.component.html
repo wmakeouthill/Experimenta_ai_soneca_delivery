@@ -1,0 +1,18 @@
+<section class="chart-card">
+  <header>
+    <div>
+      <h3>Evolução de vendas</h3>
+      <p>Acompanha faturamento e volume de pedidos no período selecionado</p>
+    </div>
+    <span class="chip">Linha do tempo</span>
+  </header>
+
+  <div class="chart-wrapper">
+    @if (dados().length === 0) {
+      <p class="chart-empty">Sem dados para este período.</p>
+    } @else {
+      <canvas #canvas aria-label="Gráfico de evolução de vendas"></canvas>
+    }
+  </div>
+</section>
+

@@ -1,0 +1,35 @@
+<h3>Itens do Pedido</h3>
+<div class="itens-selecionados">
+  @for (item of itens(); track obterItemId(item); let i = $index) {
+    @if (buscarProdutoPorId(item.produtoId); as produto) {
+      <div class="item-selecionado">
+        <div class="item-info">
+          <span class="item-nome" [title]="produto.nome">{{ produto.nome }}</span>
+          @if (item.adicionais && item.adicionais.length > 0) {
+            <div class="item-adicionais">
+              @for (ad of obterAdicionaisInfo(item); track ad.nome) {
+                <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.nome }}</span>
+              }
+            </div>
+          }
+          @if (item.observacoes) {
+            <span class="item-obs">📝 {{ item.observacoes }}</span>
+          }
+        </div>
+        <div class="item-controles">
+          <button class="btn-quantidade" (click)="atualizarQuantidade(i, item.quantidade - 1)">-</button>
+          <span class="item-quantidade">{{ item.quantidade }}</span>
+          <button class="btn-quantidade" (click)="atualizarQuantidade(i, item.quantidade + 1)">+</button>
+          <button class="btn-remover" (click)="removerItem(i)">🗑️</button>
+        </div>
+        <span class="item-subtotal">
+          {{ formatarPreco(calcularSubtotalItem(item)) }}
+        </span>
+      </div>
+    }
+  }
+</div>
+<div class="pedido-total-form">
+  <strong>Total: {{ formatarPreco(calcularTotal()) }}</strong>
+</div>
+

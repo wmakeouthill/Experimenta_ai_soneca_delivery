@@ -1,0 +1,108 @@
+# Multi-stage build otimizado para Google Cloud Run
+# Stage 1: Build do Frontend Angular
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app/frontend
+
+# Copiar package files
+COPY frontend/package*.json ./
+
+# Instalar dependências
+RUN npm ci
+
+# Copiar código fonte do frontend
+COPY frontend ./
+
+# Build do frontend
+RUN npm run build
+
+# Stage 2: Build do Maven (com frontend já buildado)
+FROM maven:3.9-eclipse-temurin-17 AS maven-build
+
+WORKDIR /app
+
+# Copiar arquivos de configuração Maven primeiro (cache layer)
+COPY pom.xml .
+COPY kernel-compartilhado/pom.xml ./kernel-compartilhado/
+COPY gestao-cardapio/pom.xml ./gestao-cardapio/
+COPY gestao-clientes/pom.xml ./gestao-clientes/
+COPY gestao-pedidos/pom.xml ./gestao-pedidos/
+COPY autenticacao/pom.xml ./autenticacao/
+COPY sistema-orquestrador/pom.xml ./sistema-orquestrador/
+COPY impressao-cupom-fiscal/pom.xml ./impressao-cupom-fiscal/
+COPY chat-ia/pom.xml ./chat-ia/
+
+# Baixar dependências (cache layer)
+RUN mvn dependency:go-offline -B
+
+# Copiar código fonte
+COPY kernel-compartilhado ./kernel-compartilhado
+COPY gestao-cardapio ./gestao-cardapio
+COPY gestao-clientes ./gestao-clientes
+COPY gestao-pedidos ./gestao-pedidos
+COPY autenticacao ./autenticacao
+COPY impressao-cupom-fiscal ./impressao-cupom-fiscal
+COPY sistema-orquestrador ./sistema-orquestrador
+COPY chat-ia ./chat-ia
+
+# Copiar frontend buildado para dentro do projeto (para ser incluído no JAR)
+COPY --from=frontend-build /app/frontend/dist/frontend/browser ./frontend/dist/frontend/browser
+
+# Build do backend COM frontend incluído no JAR
+# IMPORTANTE: 
+# 1. Compilar todos os módulos primeiro (install) - cria os JARs de cada módulo no repositório local
+# 2. O frontend já está buildado no Stage 1 e copiado para frontend/dist/frontend/browser
+# 3. O plugin maven-resources-plugin copia o frontend para resources/static/ durante process-resources
+# 4. Manter skip.frontend.build=true para não tentar buildar novamente (já está buildado)
+RUN mvn clean install -DskipTests -B -Dskip.frontend.build=true && \
+    cd sistema-orquestrador && \
+    mvn clean package spring-boot:repackage -DskipTests -B -Dskip.frontend.build=true && \
+    cd ..
+
+# Stage 3: Imagem final otimizada para Cloud Run
+FROM eclipse-temurin:17-jre-alpine
+
+# Instalar apenas dependências necessárias (SEM MySQL - usando Cloud SQL)
+RUN apk add --no-cache \
+    bash \
+    tini \
+    && rm -rf /var/cache/apk/*
+
+# Criar diretório da aplicação
+RUN mkdir -p /app
+
+# Criar usuário não-root para segurança
+RUN addgroup -g 1001 appuser && \
+    adduser -D -u 1001 -G appuser appuser
+
+# Copiar JAR do backend (já contém o frontend dentro do JAR em classpath:/static/)
+COPY --from=maven-build /app/sistema-orquestrador/target/sistema-orquestrador-*.jar /app/app.jar
+
+# Ajustar permissões
+RUN chown -R appuser:appuser /app
+
+# Variáveis de ambiente padrão
+# IMPORTANTE: DB_PASSWORD, JWT_SECRET e DB_URL serão fornecidos via Secret Manager
+ENV SERVER_PORT=8080
+ENV JWT_EXPIRATION=86400
+ENV SHOW_SQL=false
+ENV LOG_LEVEL=INFO
+ENV SPRING_PROFILES_ACTIVE=prod
+
+# Expor porta
+EXPOSE 8080
+
+# Mudar para usuário não-root
+USER appuser
+
+# Usar tini como init system
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Comando para iniciar a aplicação
+CMD ["java", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-jar", \
+    "/app/app.jar"]
+

@@ -1,0 +1,47 @@
+<div class="identificacao-screen">
+    <div class="identificacao-header">
+        <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-grande">
+        <h1>Bem-vindo!</h1>
+        <p class="mesa-badge">Mesa {{ mesa().numero }}</p>
+    </div>
+
+    <div class="identificacao-form">
+        <h2>Digite seu telefone</h2>
+        <p class="form-hint">Usamos para identificar você e seus pedidos</p>
+
+        <div class="input-group">
+            <input
+                type="tel"
+                [ngModel]="telefoneValue()"
+                (ngModelChange)="telefoneChange.emit($event)"
+                placeholder="(00) 00000-0000"
+                class="input-telefone"
+                [class.valido]="identificacao().telefoneValido()"
+                maxlength="15"
+                inputmode="numeric">
+        </div>
+
+        @if (identificacao().erro()) {
+            <p class="erro-msg">{{ identificacao().erro() }}</p>
+        }
+
+        <button
+            class="btn-continuar"
+            [disabled]="!identificacao().podeBuscar()"
+            (click)="buscarCliente.emit()">
+            @if (identificacao().buscando()) {
+                <span class="spinner-mini"></span> Buscando...
+            } @else {
+                Continuar
+            }
+        </button>
+
+        <!-- Divisor -->
+        <div class="divisor-ou">
+            <span>ou</span>
+        </div>
+
+        <!-- Botão Login Google (emitido via output) -->
+        <ng-content select="[googleButton]"></ng-content>
+    </div>
+</div>

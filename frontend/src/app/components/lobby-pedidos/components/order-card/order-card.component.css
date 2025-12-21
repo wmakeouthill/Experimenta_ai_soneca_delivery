@@ -1,0 +1,261 @@
+.card-pedido {
+  padding: 22px 24px;
+  border-radius: 14px;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 8px solid;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+}
+
+.card-content .nome-cliente {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-pedido::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 0;
+}
+
+.card-pedido.preparando {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-left-color: #ff9800;
+}
+
+.card-pedido.preparando::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(255, 152, 0, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(20px, -20px);
+}
+
+.card-pedido.pronto {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-left-color: #4caf50;
+}
+
+.card-pedido.pronto::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(20px, -20px);
+}
+
+.card-pedido:hover {
+  transform: translateY(-4px) translateX(2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.nome-cliente {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #2c2c2c;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  word-break: break-word;
+  position: relative;
+  z-index: 1;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nome-cliente::before {
+  content: counter(fila-counter);
+  counter-increment: fila-counter;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
+  border-radius: 50%;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #555;
+  flex-shrink: 0;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.nome-cliente.sem-numero::before {
+  content: "";
+  counter-increment: none;
+}
+
+.card-pedido.preparando .nome-cliente.com-numero::before {
+  background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.card-pedido.preparando .nome-cliente.sem-numero::before {
+  background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.card-pedido.pronto .nome-cliente.com-numero::before {
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.card-pedido.pronto .nome-cliente.sem-numero::before {
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.card-pedido.animando-saida {
+  animation: saidaParaPronto 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  z-index: 1000;
+  position: relative;
+  pointer-events: none;
+}
+
+.card-pedido.animando-entrada {
+  animation: entradaDePreparando 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  z-index: 1000;
+  position: relative;
+}
+
+@keyframes saidaParaPronto {
+  0% {
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  30% {
+    transform: translateX(200px) translateY(-30px) scale(0.9) rotate(5deg);
+    opacity: 0.8;
+    filter: brightness(1.1);
+  }
+  60% {
+    transform: translateX(400px) translateY(-50px) scale(0.85) rotate(10deg);
+    opacity: 0.5;
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: translateX(600px) translateY(-80px) scale(0.7) rotate(15deg);
+    opacity: 0;
+    filter: brightness(1.3);
+  }
+}
+
+@keyframes entradaDePreparando {
+  0% {
+    transform: translateX(-600px) translateY(-80px) scale(0.7) rotate(-15deg);
+    opacity: 0;
+    filter: brightness(1.3);
+  }
+  40% {
+    transform: translateX(-400px) translateY(-50px) scale(0.85) rotate(-10deg);
+    opacity: 0.5;
+    filter: brightness(1.2);
+  }
+  70% {
+    transform: translateX(-200px) translateY(-30px) scale(0.9) rotate(-5deg);
+    opacity: 0.8;
+    filter: brightness(1.1);
+  }
+  100% {
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+.btn-acao {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.btn-pronto {
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-pronto:hover {
+  background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn-remover {
+  background: linear-gradient(135deg, #f44336 0%, #e57373 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+}
+
+.btn-remover:hover {
+  background: linear-gradient(135deg, #e57373 0%, #f44336 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+@media (max-width: 768px) {
+  .nome-cliente {
+    font-size: 1.4rem;
+  }
+
+  .card-pedido.modo-visualizacao {
+    flex: 1;
+    min-height: 75px;
+    max-height: 200px;
+    padding: 10px 24px;
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-pedido.modo-visualizacao .nome-cliente {
+    display: flex;
+    align-items: center;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    gap: 24px;
+  }
+}
+

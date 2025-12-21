@@ -1,0 +1,17 @@
+.main-content {
+  min-height: calc(100vh - 80px);
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    min-height: calc(100vh - 60px);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    min-height: calc(100vh - 50px);
+  }
+}
+

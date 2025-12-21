@@ -1,0 +1,56 @@
+<div class="produtos-container">
+  <div class="produtos-header">
+    <h3>Produtos</h3>
+    <div class="produtos-filtros">
+      <select
+        class="filtro-categoria"
+        [value]="categoriaFiltro() || ''"
+        (change)="filtrarPorCategoria($any($event.target).value || null)"
+      >
+        <option value="">Todas as categorias</option>
+        @for (categoria of categoriasUnicas(); track categoria) {
+          <option [value]="categoria">{{ categoria }}</option>
+        }
+      </select>
+      <input
+        type="text"
+        class="input-pesquisa-produto"
+        placeholder="🔍 Pesquisar produto..."
+        [value]="pesquisaProduto()"
+        (input)="pesquisarProduto($any($event.target).value)"
+      />
+    </div>
+  </div>
+  <div class="produtos-grid-form">
+    @for (produto of produtosFiltrados(); track produto.id) {
+      <button 
+        class="produto-item-form"
+        [class.disponivel]="produto.disponivel"
+        [class.indisponivel]="!produto.disponivel"
+        [title]="!produto.disponivel ? 'Produto indisponível' : produto.nome"
+        (click)="selecionarProduto(produto)"
+      >
+        @if (produto.foto) {
+          <img [src]="produto.foto" [alt]="produto.nome" class="produto-foto-mini" />
+        } @else {
+          <div class="produto-foto-placeholder-mini">📷</div>
+        }
+        <div class="produto-info-form">
+          <span class="produto-nome-form" [title]="produto.nome">{{ produto.nome }}</span>
+          <span class="produto-preco-form">{{ formatarPreco(produto.preco) }}</span>
+        </div>
+        @if (!produto.disponivel) {
+          <div class="produto-indisponivel-overlay">
+            <span class="produto-indisponivel-texto">Indisponível</span>
+          </div>
+        }
+      </button>
+    }
+    @if (produtosFiltrados().length === 0 && pesquisaProduto().trim()) {
+      <div class="produto-sem-resultado">
+        <p>Nenhum produto encontrado para "{{ pesquisaProduto() }}"</p>
+      </div>
+    }
+  </div>
+</div>
+

@@ -1,0 +1,551 @@
+/* ========== VARIÁVEIS E RESET ========== */
+:host {
+    --primary-color: #FF6B35;
+    --primary-hover: #e55a2b;
+    --secondary-color: #2D3436;
+    --background: #f8f9fa;
+    --surface: #ffffff;
+    --text-primary: #2D3436;
+    --text-secondary: #636e72;
+    --border-color: #dfe6e9;
+    --success-color: #00b894;
+    --error-color: #d63031;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.2);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --transition: all 0.2s ease;
+
+    display: block;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.autoatendimento-container {
+    height: 100%;
+    width: 100%;
+    background: var(--background);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ========== LOADING E ERROR ========== */
+.loading-screen,
+.error-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-icon {
+    font-size: 4rem;
+}
+
+.btn-tentar-novamente {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-md);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-tentar-novamente:hover {
+    background: var(--primary-hover);
+}
+
+/* ========== TELA INICIAL ========== */
+.tela-inicio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 1.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, var(--surface) 0%, #fff5f2 100%);
+    position: relative;
+}
+
+.inicio-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-grande {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+}
+
+.tela-inicio h1 {
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.subtitulo {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.btn-comecar {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    margin-top: 1rem;
+}
+
+.btn-comecar:hover {
+    background: var(--primary-hover);
+    transform: scale(1.05);
+}
+
+.btn-comecar:active {
+    transform: scale(0.98);
+}
+
+.operador-info {
+    position: absolute;
+    bottom: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Tablets e Desktop */
+@media (min-width: 768px) {
+    .logo-grande {
+        width: 180px;
+        height: 180px;
+    }
+
+    .tela-inicio h1 {
+        font-size: 3rem;
+    }
+
+    .subtitulo {
+        font-size: 1.5rem;
+    }
+
+    .btn-comecar {
+        padding: 1.5rem 4rem;
+        font-size: 1.5rem;
+    }
+}
+
+.btn-sair-totem {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: var(--transition);
+}
+
+.btn-sair-totem:hover {
+    opacity: 1;
+}
+
+/* ========== HEADER ========== */
+.header-totem {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    min-height: 56px;
+}
+
+.header-totem h1 {
+    font-size: 1.1rem;
+    margin: 0;
+    color: white;
+    text-align: center;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-voltar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    color: white;
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+    justify-self: start;
+}
+
+.btn-voltar-header:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-voltar-header:active {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(0.95);
+}
+
+.btn-carrinho-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    transition: var(--transition);
+    position: relative;
+    justify-self: end;
+}
+
+.btn-carrinho-header:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-carrinho-header:active {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(0.95);
+}
+
+.btn-carrinho-header:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-cancelar-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    transition: var(--transition);
+    justify-self: end;
+}
+
+.btn-cancelar-header:hover {
+    background: rgba(255, 100, 100, 0.4);
+}
+
+.btn-cancelar-header:active {
+    transform: scale(0.95);
+}
+
+/* Espaçador vazio para manter grid equilibrado */
+.header-totem > div:empty {
+    justify-self: end;
+}
+
+.badge-carrinho {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: white;
+    color: var(--primary-color);
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Tablets e Desktop */
+@media (min-width: 768px) {
+    .header-totem {
+        padding: 1rem 1.5rem;
+        min-height: 64px;
+    }
+
+    .header-totem h1 {
+        font-size: 1.3rem;
+    }
+
+    .btn-voltar-header {
+        font-size: 1rem;
+        padding: 0.6rem 1rem;
+    }
+
+    .btn-carrinho-header,
+    .btn-cancelar-header {
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+    }
+}
+
+/* ========== MODAL INATIVIDADE ========== */
+.modal-overlay.inatividade {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-inatividade {
+    background: var(--surface);
+    padding: 3rem;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    max-width: 400px;
+    margin: 1rem;
+}
+
+.inatividade-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.modal-inatividade h2 {
+    margin: 0 0 1rem;
+    color: var(--text-primary);
+}
+
+.modal-inatividade p {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+/* ========== BOTÕES GERAIS ========== */
+.btn-continuar-grande {
+    width: 100%;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 1.25rem 2rem;
+    border-radius: var(--radius-md);
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-continuar-grande:hover:not(:disabled) {
+    background: var(--primary-hover);
+}
+
+.btn-continuar-grande:disabled {
+    background: var(--border-color);
+    cursor: not-allowed;
+}
+
+.btn-finalizar {
+    width: 100%;
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 1.25rem 2rem;
+    border-radius: var(--radius-md);
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-finalizar:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.btn-finalizar:disabled {
+    background: var(--border-color);
+    cursor: not-allowed;
+}
+
+.btn-cancelar {
+    width: 100%;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    padding: 1rem 2rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 1rem;
+}
+
+.btn-cancelar:hover {
+    border-color: var(--error-color);
+    color: var(--error-color);
+}
+
+.spinner-mini {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+}
+
+/* ========== TELA SUCESSO ========== */
+.tela-sucesso {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 1.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+.sucesso-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.sucesso-icon {
+    font-size: 4rem;
+}
+
+.tela-sucesso h1 {
+    font-size: 1.75rem;
+    color: var(--success-color);
+    margin: 0;
+}
+
+.numero-pedido {
+    background: var(--surface);
+    padding: 1.25rem 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.numero-pedido .label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.numero-pedido .numero {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--success-color);
+}
+
+.sucesso-nome {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+.sucesso-info {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.sucesso-timer {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.btn-novo-pedido {
+    background: var(--surface);
+    color: var(--success-color);
+    border: 2px solid var(--success-color);
+    padding: 0.875rem 2rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 0.5rem;
+}
+
+.btn-novo-pedido:hover {
+    background: var(--success-color);
+    color: white;
+}
+
+/* Tablets e Desktop */
+@media (min-width: 768px) {
+    .sucesso-icon {
+        font-size: 6rem;
+    }
+
+    .tela-sucesso h1 {
+        font-size: 2.5rem;
+    }
+
+    .numero-pedido {
+        padding: 2rem 3rem;
+    }
+
+    .numero-pedido .numero {
+        font-size: 4rem;
+    }
+
+    .sucesso-nome {
+        font-size: 1.5rem;
+    }
+}

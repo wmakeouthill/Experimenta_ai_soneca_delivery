@@ -1,0 +1,331 @@
+<div class="config-impressora-container">
+  <div class="config-impressora-header" (click)="alternarExpansao()">
+    <h2 class="config-impressora-titulo">
+      🖨️ Configuração de Impressora
+    </h2>
+    <span class="config-impressora-toggle">
+      {{ estaExpandido() ? '▼' : '▶' }}
+    </span>
+  </div>
+
+  @if (estaExpandido()) {
+    <div class="config-impressora-content">
+      <form [formGroup]="formImpressora" class="config-impressora-form">
+        @if (!estaNoElectron()) {
+          <!-- Apenas mostra o tipo quando NÃO está no Electron (modo Web) -->
+          <div class="form-row">
+            <label for="tipoImpressora">
+              Tipo de Impressora:
+            </label>
+            <select 
+              id="tipoImpressora" 
+              formControlName="tipoImpressora" 
+              class="form-input-compact"
+            >
+              @for (tipo of tiposImpressora; track tipo.value) {
+                <option [value]="tipo.value">{{ tipo.label }}</option>
+              }
+            </select>
+            <small class="form-help-text">
+              💡 Escolha o tipo de impressora que você está usando
+            </small>
+          </div>
+        } @else {
+          <!-- No Electron, tipo é definido automaticamente (GENERICA_ESCPOS) -->
+          <!-- Campo hidden para manter o valor no formulário -->
+          <input type="hidden" formControlName="tipoImpressora" />
+        }
+
+        <div class="form-row">
+          <label for="devicePath">
+            @if (estaNoElectron()) {
+              Impressora:
+              <button 
+                type="button" 
+                class="btn-ajuda-inline btn-atualizar"
+                (click)="carregarImpressorasDisponiveis()"
+                [disabled]="estaCarregandoImpressoras()"
+                title="Atualizar lista de impressoras"
+              >
+                @if (estaCarregandoImpressoras()) {
+                  ⏳ Atualizando...
+                } @else {
+                  🔄 Atualizar Lista
+                }
+              </button>
+            } @else {
+              Caminho do Dispositivo:
+              <button 
+                type="button" 
+                class="btn-ajuda-inline"
+                (click)="alternarAjudaDevicePath()"
+                title="Como descobrir o caminho da impressora"
+              >
+                ❓ Ajuda
+              </button>
+            }
+          </label>
+
+          @if (estaNoElectron()) {
+            @if (impressorasDisponiveis().length > 0) {
+              <div class="impressoras-lista">
+                <select 
+                  class="form-input-compact impressora-select"
+                  formControlName="devicePath"
+                  (change)="onImpressoraSelecionada($event)"
+                  required
+                >
+                  <option value="">-- Selecione uma impressora --</option>
+                  @for (impressora of impressorasDisponiveis(); track impressora.name) {
+                    <option [value]="impressora.devicePath">
+                      @if (impressora.padrao) {
+                        ⭐ 
+                      }
+                      {{ impressora.name }}
+                      @if (impressora.padrao) {
+                         (Padrão)
+                      }
+                      - {{ impressora.devicePath }}
+                      @if (impressora.status) {
+                         [{{ impressora.status }}]
+                      }
+                    </option>
+                  }
+                </select>
+                <small class="form-help-text sucesso">
+                  ✅ {{ impressorasDisponiveis().length }} impressora(s) detectada(s). 
+                  Selecione a impressora que deseja usar.
+                </small>
+              </div>
+            } @else if (estaCarregandoImpressoras()) {
+              <div class="impressoras-carregando">
+                <small class="form-help-text">
+                  ⏳ Detectando impressoras instaladas no sistema...
+                </small>
+              </div>
+            } @else {
+              <small class="form-help-text">
+                ⚠️ Nenhuma impressora detectada. Clique em "Atualizar Lista" ou configure manualmente abaixo.
+              </small>
+            }
+            
+            <!-- Campo manual como fallback -->
+            <input
+              id="devicePath"
+              type="text"
+              formControlName="devicePath"
+              class="form-input-compact"
+              [class.invalid]="erroDevicePath()"
+              placeholder="Ou digite manualmente (ex: COM3, /dev/usb/lp0, 192.168.1.100:9100)"
+              style="margin-top: 8px;"
+            />
+          } @else {
+
+            <input
+              id="devicePath"
+              type="text"
+              formControlName="devicePath"
+              class="form-input-compact"
+              [class.invalid]="erroDevicePath()"
+              [placeholder]="placeholderSugerido"
+            />
+            @if (erroDevicePath()) {
+              <span class="error-text">{{ erroDevicePath() }}</span>
+            }
+            @if (!erroDevicePath()) {
+              <small class="form-help-text">
+                Para rede: IP:PORTA (ex: 127.0.0.1:9100) | 
+                Para Windows: COM3, COM4... | 
+                Para Linux: /dev/usb/lp0, /dev/usb/lp1...
+              </small>
+            }
+          }
+          
+          @if (!estaNoElectron() && mostrarAjudaDevicePath()) {
+            <div class="ajuda-device-path">
+              <h4>📖 Como descobrir o caminho da impressora</h4>
+              
+              <div class="ajuda-tabs">
+                <button 
+                  type="button"
+                  class="ajuda-tab"
+                  [class.active]="abaAjudaAtiva() === 'windows'"
+                  (click)="abaAjudaAtiva.set('windows')"
+                >
+                  Windows
+                </button>
+                <button 
+                  type="button"
+                  class="ajuda-tab"
+                  [class.active]="abaAjudaAtiva() === 'linux'"
+                  (click)="abaAjudaAtiva.set('linux')"
+                >
+                  Linux
+                </button>
+                <button 
+                  type="button"
+                  class="ajuda-tab"
+                  [class.active]="abaAjudaAtiva() === 'rede'"
+                  (click)="abaAjudaAtiva.set('rede')"
+                >
+                  Rede
+                </button>
+              </div>
+
+              <div class="ajuda-conteudo">
+                <ol>
+                  @for (instrucao of obterInstrucoesParaSO(); track instrucao) {
+                    <li>{{ instrucao }}</li>
+                  }
+                </ol>
+              </div>
+
+              <div class="ajuda-nota">
+                <strong>⚠️ Nota:</strong> Aplicações web não podem detectar impressoras automaticamente 
+                por questões de segurança do navegador. Você precisa descobrir o caminho manualmente 
+                seguindo as instruções acima.
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="form-row form-row-logo">
+          <label>Logo (PNG):</label>
+          <div class="logo-upload-container">
+            @if (logoPreview()) {
+              <div class="logo-preview">
+                <img [src]="logoPreview()" alt="Logo preview" />
+                <button type="button" class="btn-remover-logo" (click)="removerLogo()">✕</button>
+              </div>
+            } @else {
+              <input
+                #logoInput
+                type="file"
+                accept="image/png,image/jpeg"
+                (change)="onLogoSelecionado($event)"
+                class="logo-input"
+              />
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="larguraPapel">Tamanho do papel:</label>
+          <select
+            id="larguraPapel"
+            formControlName="larguraPapel"
+            class="form-input-compact"
+          >
+            @for (tam of tamanhosPapel; track tam.value) {
+              <option [value]="tam.value">{{ tam.label }}</option>
+            }
+          </select>
+          <small class="form-help-text">
+            Define a largura da bobina para ajustar automaticamente a quebra de linhas.
+          </small>
+        </div>
+
+        <div class="form-row">
+          <label for="tamanhoFonte">Tamanho da fonte:</label>
+          <select
+            id="tamanhoFonte"
+            formControlName="tamanhoFonte"
+            class="form-input-compact"
+          >
+            @for (tf of tamanhosFonte; track tf.value) {
+              <option [value]="tf.value">{{ tf.label }}</option>
+            }
+          </select>
+          <small class="form-help-text">
+            Controla o tamanho do texto no cupom (pode caber mais ou menos informação por linha).
+          </small>
+        </div>
+
+        <div class="form-row">
+          <label for="nomeEstabelecimento">Nome do Estabelecimento *:</label>
+          <input
+            id="nomeEstabelecimento"
+            type="text"
+            formControlName="nomeEstabelecimento"
+            class="form-input-compact"
+            [class.invalid]="nomeEstabelecimento?.invalid && nomeEstabelecimento?.touched"
+            placeholder="Ex: experimenta-ai-do-soneca"
+          />
+          @if (nomeEstabelecimento?.invalid && nomeEstabelecimento?.touched) {
+            <span class="error-text">Obrigatório</span>
+          }
+        </div>
+
+        <div class="form-row">
+          <label for="enderecoEstabelecimento">Endereço:</label>
+          <input
+            id="enderecoEstabelecimento"
+            type="text"
+            formControlName="enderecoEstabelecimento"
+            class="form-input-compact"
+            placeholder="Ex: Rua Exemplo, 123 - Centro"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="telefoneEstabelecimento">Telefone:</label>
+          <input
+            id="telefoneEstabelecimento"
+            type="text"
+            formControlName="telefoneEstabelecimento"
+            class="form-input-compact"
+            placeholder="Ex: (21) 97439-7966"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="cnpjEstabelecimento">CNPJ:</label>
+          <input
+            id="cnpjEstabelecimento"
+            type="text"
+            formControlName="cnpjEstabelecimento"
+            class="form-input-compact"
+            placeholder="Ex: 12345678000190"
+            maxlength="14"
+          />
+        </div>
+
+        @if (mensagemImpressao()) {
+          <div class="mensagem-impressao" [class.sucesso]="mensagemImpressao()?.startsWith('✅')">
+            {{ mensagemImpressao() }}
+          </div>
+        }
+
+        <div class="config-impressora-actions">
+          @if (isAdministrador()) {
+            <button
+              type="button"
+              class="btn-compact btn-salvar"
+              (click)="salvarConfiguracao()"
+              [disabled]="formImpressora.invalid || estaSalvando()"
+            >
+              @if (estaSalvando()) {
+                💾 Salvando...
+              } @else {
+                💾 Salvar
+              }
+            </button>
+          }
+          <button
+            type="button"
+            class="btn-compact btn-test-impressao"
+            (click)="testarImpressao()"
+            [disabled]="formImpressora.invalid || estaImprimindo()"
+          >
+            @if (estaImprimindo()) {
+              ⏳ Testando...
+            } @else {
+              🧪 Testar
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>
+

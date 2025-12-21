@@ -1,0 +1,80 @@
+.hamburguer-container {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  margin-top: 0;
+  position: relative;
+  align-self: flex-end;
+  transition: transform 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    padding 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.fila-pedidos-container.animando .hamburguer-container {
+  position: fixed !important;
+  top: 20px !important;
+  left: 20px !important;
+  bottom: auto !important;
+  right: auto !important;
+  width: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  z-index: 10001 !important;
+  overflow: visible !important;
+  transform: translate(0, 0) !important;
+  transition: transform 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    padding 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  max-width: calc(100vw - 40px) !important;
+  max-height: calc(100vh - 40px) !important;
+  opacity: 0.6 !important;
+  display: flex !important;
+  visibility: visible !important;
+}
+
+.hamburguer-imagem {
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  display: block;
+  transition: width 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    height 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    max-width 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    max-height 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 1.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center center;
+  will-change: transform, width, height, max-width, max-height;
+}
+
+.fila-pedidos-container.animando .hamburguer-imagem {
+  width: auto !important;
+  max-width: min(40vw, 300px) !important;
+  max-height: min(17.5vh, calc(50vh - 25vh)) !important;
+  height: auto !important;
+  z-index: 10001 !important;
+  position: relative !important;
+  transform: scale(0.5) !important;
+  margin: 0 !important;
+  animation: none !important;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2)) !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+@keyframes bounceImagem {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.05) translateY(-10px);
+  }
+}
+

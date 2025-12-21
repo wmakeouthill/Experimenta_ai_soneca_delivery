@@ -1,0 +1,18 @@
+<section class="chart-card">
+  <header>
+    <div>
+      <h3>Pedidos por horário</h3>
+      <p>Quantidade de pedidos agrupados por hora dentro das sessões</p>
+    </div>
+    <span class="chip">Volume</span>
+  </header>
+
+  <div class="chart-wrapper">
+    @if (dados().length === 0) {
+      <p class="chart-empty">Sem dados para este período.</p>
+    } @else {
+      <canvas #canvas aria-label="Pedidos por horário"></canvas>
+    }
+  </div>
+</section>
+

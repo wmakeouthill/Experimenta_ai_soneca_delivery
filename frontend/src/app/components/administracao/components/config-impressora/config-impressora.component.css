@@ -1,0 +1,421 @@
+.config-impressora-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 2rem;
+  overflow: hidden;
+}
+
+.config-impressora-header {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.config-impressora-header:hover {
+  background: linear-gradient(135deg, #5aa0f2 0%, #458acd 100%);
+}
+
+.config-impressora-titulo {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.config-impressora-toggle {
+  font-size: 1.2rem;
+  transition: transform 0.3s;
+}
+
+.config-impressora-content {
+  padding: 1rem 1.5rem;
+}
+
+.config-impressora-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0;
+}
+
+.form-row label {
+  min-width: 180px;
+  color: #555;
+  font-weight: 500;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.form-input-compact {
+  flex: 1;
+  padding: 6px 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.form-input-compact:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.form-input-compact:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-input-compact.invalid {
+  border-color: #e74c3c;
+}
+
+.error-text {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-left: 0.5rem;
+}
+
+.form-row-logo {
+  align-items: flex-start;
+}
+
+.logo-upload-container {
+  flex: 1;
+}
+
+.logo-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.logo-preview img {
+  max-width: 200px;
+  max-height: 100px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 4px;
+  background: white;
+}
+
+.btn-remover-logo {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-remover-logo:hover {
+  background: #c0392b;
+}
+
+.logo-input {
+  padding: 6px 10px;
+  border: 2px dashed #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.logo-input:hover {
+  border-color: #4a90e2;
+}
+
+.config-impressora-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn-compact {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-salvar {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: white;
+}
+
+.btn-salvar:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+.btn-test-impressao {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+.btn-test-impressao:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-compact:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mensagem-impressao {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.mensagem-impressao.sucesso {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.mensagem-impressao:not(.sucesso) {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .config-impressora-container {
+    margin: 1rem;
+  }
+
+  .config-impressora-content {
+    padding: 1rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .form-row label {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .form-input-compact {
+    width: 100%;
+  }
+
+  .config-impressora-actions {
+    flex-direction: column;
+  }
+
+  .btn-compact {
+    width: 100%;
+  }
+}
+
+/* Ajuda Device Path */
+.btn-ajuda-inline {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  margin-left: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-ajuda-inline:hover {
+  background: #e0e0e0;
+  border-color: #4a90e2;
+}
+
+.ajuda-device-path {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.ajuda-device-path h4 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.ajuda-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.ajuda-tab {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.ajuda-tab:hover {
+  color: #4a90e2;
+}
+
+.ajuda-tab.active {
+  color: #4a90e2;
+  border-bottom-color: #4a90e2;
+  font-weight: 600;
+}
+
+.ajuda-conteudo {
+  margin-top: 0.75rem;
+}
+
+.ajuda-conteudo ol {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.ajuda-conteudo li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+  color: #555;
+}
+
+.ajuda-nota {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #856404;
+}
+
+.form-help-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 11px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Impressoras detectadas (Electron) */
+.impressoras-lista {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.impressora-select {
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.btn-atualizar {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+.btn-atualizar:hover:not(:disabled) {
+  background: #218838;
+  border-color: #1e7e34;
+}
+
+.btn-atualizar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Badge Electron */
+.badge-electron {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Lista de impressoras */
+.impressoras-lista {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0f8ff 0%, #e8f4f8 100%);
+  border: 2px solid #4a90e2;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
+}
+
+.impressora-select-label {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  color: #2c5aa0;
+  margin-bottom: 0.5rem;
+}
+
+.impressora-select {
+  width: 100%;
+  margin-bottom: 0.25rem;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+.impressoras-carregando,
+.impressoras-vazia {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+}
+
+.form-help-text.sucesso {
+  color: #155724;
+  font-weight: 500;
+}
+

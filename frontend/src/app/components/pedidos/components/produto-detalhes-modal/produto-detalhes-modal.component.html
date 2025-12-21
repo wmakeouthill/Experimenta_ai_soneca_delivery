@@ -1,0 +1,114 @@
+@if (aberto() && produto()) {
+  <div class="modal-overlay" (click)="fechar()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ produto()!.nome }}</h2>
+        <button class="btn-fechar" (click)="fechar()">×</button>
+      </div>
+
+      <div class="modal-body">
+        @if (produto()!.foto) {
+          <div class="produto-imagem">
+            <img [src]="produto()!.foto" [alt]="produto()!.nome">
+          </div>
+        }
+
+        @if (produto()!.descricao) {
+          <p class="produto-descricao">{{ produto()!.descricao }}</p>
+        }
+
+        <div class="produto-preco-base">
+          <span>Preço unitário:</span>
+          <strong>{{ formatarPreco(produto()!.preco) }}</strong>
+        </div>
+
+        <!-- Seção de Adicionais -->
+        @if (carregandoAdicionais()) {
+          <div class="adicionais-loading">
+            <span class="spinner"></span>
+            <span>Carregando adicionais...</span>
+          </div>
+        } @else if (adicionaisDisponiveis().length > 0) {
+          <div class="adicionais-secao">
+            <button
+              class="btn-expandir-adicionais"
+              [class.expandido]="adicionaisExpandido()"
+              (click)="toggleAdicionaisExpandido()"
+            >
+              <span>
+                🍕 Adicionais ({{ adicionaisDisponiveis().length }})
+                @if (totalAdicionaisSelecionados() > 0) {
+                  <span class="adicionais-badge">{{ totalAdicionaisSelecionados() }}</span>
+                }
+              </span>
+              <span class="expandir-icone">▼</span>
+            </button>
+
+            @if (adicionaisExpandido()) {
+              <div class="adicionais-lista-container">
+                <div class="adicionais-lista">
+                  @for (adicional of adicionaisDisponiveis(); track adicional.id) {
+                    <div
+                      class="adicional-item"
+                      [class.selecionado]="isAdicionalSelecionado(adicional.id)"
+                      (click)="toggleAdicional(adicional)"
+                    >
+                      <div class="adicional-info">
+                        <span class="adicional-nome">{{ adicional.nome }}</span>
+                        <span class="adicional-preco">+ {{ formatarPreco(adicional.preco) }}</span>
+                      </div>
+                      @if (isAdicionalSelecionado(adicional.id)) {
+                        <div class="adicional-quantidade" (click)="$event.stopPropagation()">
+                          <button class="btn-qtd" (click)="decrementarAdicional(adicional.id, $event)">−</button>
+                          <span class="qtd-valor">{{ getQuantidadeAdicional(adicional.id) }}</span>
+                          <button class="btn-qtd" (click)="incrementarAdicional(adicional.id, $event)">+</button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+                @if (subtotalAdicionais() > 0) {
+                  <div class="adicionais-subtotal">
+                    Adicionais: {{ formatarPreco(subtotalAdicionais()) }}
+                  </div>
+                }
+              </div>
+            } @else if (totalAdicionaisSelecionados() > 0) {
+              <div class="adicionais-resumo">
+                {{ totalAdicionaisSelecionados() }} adicional(is) selecionado(s) • {{ formatarPreco(subtotalAdicionais()) }}
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Observações -->
+        <div class="observacoes-container">
+          <label for="observacoes">Observações:</label>
+          <textarea
+            id="observacoes"
+            [(ngModel)]="observacoes"
+            placeholder="Ex: Sem cebola, bem passado..."
+            rows="2"
+          ></textarea>
+        </div>
+
+        <!-- Controle de Quantidade -->
+        <div class="quantidade-container">
+          <span>Quantidade:</span>
+          <div class="quantidade-controle">
+            <button class="btn-qtd" (click)="decrementarQuantidade()" [disabled]="quantidade() <= 1">−</button>
+            <span class="qtd-valor">{{ quantidade() }}</span>
+            <button class="btn-qtd" (click)="incrementarQuantidade()">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="fechar()">Cancelar</button>
+        <button class="btn-confirmar" (click)="confirmar()">
+          Adicionar • {{ formatarPreco(precoTotal()) }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

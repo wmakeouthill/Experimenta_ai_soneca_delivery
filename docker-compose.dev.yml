@@ -1,0 +1,177 @@
+services:
+  # MySQL para desenvolvimento
+  mysql-dev:
+    image: mysql:8.0
+    container_name: snackbar-mysql-dev
+    ports:
+      - "${MYSQL_PORT:-3307}:3306" # Porta 3307 por padrão para evitar conflito com MySQL local
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-dev_password}
+      - MYSQL_DATABASE=${DB_NAME:-snackbar_db}
+      - MYSQL_USER=${DB_USERNAME:-snackbar_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-dev_password}
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    # ✅ Healthcheck melhorado: verifica se MySQL aceita conexões e queries
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${DB_PASSWORD:-dev_password}",
+          "--silent",
+        ]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+      start_period: 15s # Aguarda 15s antes de começar a verificar (tempo de inicialização do MySQL)
+    restart: unless-stopped
+
+  # Backend Spring Boot com hot-reload
+  backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev.backend
+    container_name: snackbar-backend-dev
+    ports:
+      - "8080:8080"
+      - "5005:5005" # Porta para debug remoto Java
+    # ✅ Otimizações de rede removidas temporariamente para garantir resolução DNS
+    # sysctls podem interferir na rede do Docker Compose
+    # sysctls:
+    #   - net.core.somaxconn=1024
+    #   - net.ipv4.tcp_fin_timeout=30
+    #   - net.ipv4.tcp_keepalive_time=300
+    environment:
+      - DB_HOST=mysql-dev
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME:-snackbar_db}
+      - DB_USERNAME=${DB_USERNAME:-snackbar_user}
+      - DB_PASSWORD=${DB_PASSWORD:-dev_password}
+      - DB_URL=jdbc:mysql://mysql-dev:3306/${DB_NAME:-snackbar_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo
+      - MYSQL_PORT=${MYSQL_PORT:-3307}
+      - SERVER_PORT=8080
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret-minimo-256-bits-para-desenvolvimento-local}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400}
+      - SHOW_SQL=${SHOW_SQL:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+      - SPRING_PROFILES_ACTIVE=dev
+      # ========== Chat IA - OpenAI ==========
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-mini}
+      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS:-4000}
+      - OPENAI_MODELS_FALLBACK=${OPENAI_MODELS_FALLBACK:-gpt-4o-mini,gpt-3.5-turbo}
+    # Nota: Variáveis de ambiente acima têm valores padrão
+    # Para usar valores customizados, crie um arquivo .env na raiz do projeto
+    volumes:
+      # Mapear código fonte para hot-reload
+      - ./sistema-orquestrador:/app/sistema-orquestrador
+      - ./kernel-compartilhado:/app/kernel-compartilhado
+      - ./gestao-cardapio:/app/gestao-cardapio
+      - ./gestao-clientes:/app/gestao-clientes
+      - ./gestao-pedidos:/app/gestao-pedidos
+      - ./autenticacao:/app/autenticacao
+      - ./impressao-cupom-fiscal:/app/impressao-cupom-fiscal
+      - ./chat-ia:/app/chat-ia
+      - ./pom.xml:/app/pom.xml
+      # Cache do Maven para acelerar builds
+      - maven_cache:/root/.m2
+      # ✅ OTIMIZAÇÃO: Volumes persistentes para targets compilados (evita recompilar tudo)
+      - backend_target_kernel:/app/kernel-compartilhado/target
+      - backend_target_cardapio:/app/gestao-cardapio/target
+      - backend_target_clientes:/app/gestao-clientes/target
+      - backend_target_pedidos:/app/gestao-pedidos/target
+      - backend_target_auth:/app/autenticacao/target
+      - backend_target_orquestrador:/app/sistema-orquestrador/target
+      - backend_target_impressao:/app/impressao-cupom-fiscal/target
+      - backend_target_chatia:/app/chat-ia/target
+    depends_on:
+      mysql-dev:
+        condition: service_healthy # ✅ Aguarda MySQL estar saudável antes de iniciar backend
+    restart: unless-stopped
+    # ✅ RECURSOS OTIMIZADOS para Ryzen 5 5600X + 32GB RAM
+    deploy:
+      resources:
+        limits:
+          cpus: "6" # Usa todos os 6 cores para build Maven
+          memory: 8G # 8GB RAM para JVM + Maven (sobra 24GB pro Windows)
+        reservations:
+          cpus: "4" # Garante mínimo 4 CPUs
+          memory: 4G # Garante mínimo 4GB RAM
+
+  # Frontend Angular com hot-reload
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev.frontend
+    container_name: snackbar-frontend-dev
+    ports:
+      - "4200:4200" # Porta padrão do ng serve
+    environment:
+      - NODE_ENV=development
+      - DOCKER_ENV=true
+      # ⚠️ POLLING OBRIGATÓRIO no Windows! Eventos de filesystem não propagam para container Linux
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_INTERVAL=500
+      # Aumenta memória do Node.js para melhor buffering
+      - NODE_OPTIONS=--max-old-space-size=6144
+      # Backend URL para proxy
+      - BACKEND_URL=http://backend-dev:8080
+    volumes:
+      # Mapear código fonte para hot-reload
+      - ./frontend:/app/frontend:cached
+      # Volume nomeado para node_modules (evita sobrescrever com volume do código)
+      - frontend_node_modules:/app/frontend/node_modules
+      # Cache do npm para acelerar instalações
+      - npm_cache:/root/.npm
+    depends_on:
+      backend-dev:
+        condition: service_started
+    restart: unless-stopped
+    # ✅ RECURSOS para Angular (build rápido)
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 6G
+        reservations:
+          cpus: "2"
+          memory: 2G
+    # Rede otimizada para comunicação com backend
+    networks:
+      default:
+        aliases:
+          - frontend
+
+volumes:
+  mysql_dev_data:
+    driver: local
+  maven_cache:
+    driver: local
+  npm_cache:
+    driver: local
+  frontend_node_modules:
+    driver: local
+  # ✅ Volumes para preservar compilação entre restarts (MUITO mais rápido!)
+  backend_target_kernel:
+    driver: local
+  backend_target_cardapio:
+    driver: local
+  backend_target_clientes:
+    driver: local
+  backend_target_pedidos:
+    driver: local
+  backend_target_auth:
+    driver: local
+  backend_target_orquestrador:
+    driver: local
+  backend_target_impressao:
+    driver: local
+  backend_target_chatia:
+    driver: local

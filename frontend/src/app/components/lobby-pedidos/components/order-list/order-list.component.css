@@ -1,0 +1,253 @@
+.coluna-fila {
+  background: white;
+  border-radius: 15px;
+  padding: 12px 18px 18px 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: calc(100% - 10px);
+  max-height: calc(100vh - 20px);
+  transition: all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-sizing: border-box;
+}
+
+.coluna-fila.saindo {
+  opacity: 0;
+  transform: scale(0.3) translateX(100%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.coluna-fila.coluna-preparando.saindo {
+  transform: scale(0.3) translateX(-100%);
+}
+
+.cabecalho-coluna {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  margin-top: 0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+  min-height: 70px;
+  gap: 15px;
+}
+
+.cabecalho-direita {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+}
+
+.indicador-pagina-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  margin: 0 10px;
+}
+
+.cabecalho-coluna::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.cabecalho-coluna.preparando {
+  background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.cabecalho-coluna.pronto {
+  background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.cabecalho-coluna h2 {
+  font-size: 2rem;
+  font-weight: 900;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 0, 0, 0.2);
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
+
+.contador {
+  background: rgba(255, 255, 255, 0.35);
+  padding: 10px 24px;
+  border-radius: 25px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+}
+
+.lista-pedidos {
+  flex: 1;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 0 5px 5px 5px;
+  position: relative;
+  min-height: 0;
+}
+
+.lista-pedidos.lista-paginada {
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+
+.lista-paginada {
+  position: relative;
+}
+
+/*
+ * IMPORTANTE: A animação de paginação SEMPRE está ativa,
+ * independente da configuração animacaoAtivada.
+ * A configuração animacaoAtivada controla apenas a animação periódica/global.
+ */
+.lista-paginada .card-pedido {
+  animation: fadeInPagina 0.6s ease-in-out;
+}
+
+@keyframes fadeInPagina {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lista-pedidos::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lista-pedidos::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.lista-pedidos::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.lista-pedidos::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.pedido-vazio {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 1.2rem;
+  font-style: italic;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+
+.pagina-info-header {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  letter-spacing: 0.5px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+}
+
+.pontos-pagina-header {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.ponto-pagina-header {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.ponto-pagina-header.ativo {
+  width: 24px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  animation: pulsePontoHeaderAtivo 0.6s ease-out;
+}
+
+@keyframes pulsePontoHeaderAtivo {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), 0 0 15px rgba(255, 255, 255, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 255, 255, 0.4);
+  }
+}
+
+@media (max-width: 768px) {
+  .coluna-fila.coluna-preparando {
+    order: 2;
+  }
+
+  .coluna-fila.coluna-pronto {
+    order: 3;
+  }
+
+  .cabecalho-coluna h2 {
+    font-size: 1.3rem;
+  }
+
+  .coluna-fila {
+    padding: 10px;
+  }
+
+  .cabecalho-coluna {
+    padding: 12px;
+  }
+}
+

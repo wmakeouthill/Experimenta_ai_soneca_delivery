@@ -1,0 +1,43 @@
+# Dockerfile para desenvolvimento do backend Spring Boot
+FROM maven:3.9-eclipse-temurin-17
+
+WORKDIR /app
+
+# Instalar dependências do sistema necessárias
+RUN apt-get update && apt-get install -y \
+    bash \
+    netcat-openbsd \
+    iputils-ping \
+    default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar arquivos de configuração Maven primeiro (para cache)
+COPY pom.xml .
+COPY kernel-compartilhado/pom.xml ./kernel-compartilhado/
+COPY gestao-cardapio/pom.xml ./gestao-cardapio/
+COPY gestao-clientes/pom.xml ./gestao-clientes/
+COPY gestao-pedidos/pom.xml ./gestao-pedidos/
+COPY autenticacao/pom.xml ./autenticacao/
+COPY sistema-orquestrador/pom.xml ./sistema-orquestrador/
+COPY impressao-cupom-fiscal/pom.xml ./impressao-cupom-fiscal/
+COPY chat-ia/pom.xml ./chat-ia/
+
+# ✅ OTIMIZAÇÃO: Não fazer dependency:go-offline aqui (lento demais)
+# As dependências são baixadas incrementalmente e cacheadas no volume maven_cache
+
+# Copiar código fonte (será sobrescrito por volumes no docker-compose)
+COPY . .
+
+# Script de entrada para desenvolvimento
+# Converter line endings para LF (remover CRLF do Windows)
+COPY docker-entrypoint.dev.backend.sh /docker-entrypoint.dev.backend.sh
+RUN tr -d '\r' < /docker-entrypoint.dev.backend.sh > /docker-entrypoint.dev.backend.sh.tmp && \
+    mv /docker-entrypoint.dev.backend.sh.tmp /docker-entrypoint.dev.backend.sh && \
+    chmod +x /docker-entrypoint.dev.backend.sh && \
+    mv /docker-entrypoint.dev.backend.sh /usr/local/bin/docker-entrypoint.dev.backend.sh
+
+# Expor portas
+EXPOSE 8080 5005
+
+# Usar script de entrada
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/docker-entrypoint.dev.backend.sh"]

@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  snackbar-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: snackbar-app
+    ports:
+      - "8080:8080"
+      - "3306:3306"
+    # IMPORTANTE: Para usar credenciais reais, defina-as via arquivo .env na raiz do projeto
+    # Exemplo: crie um arquivo .env (não commitado) com:
+    # DB_PASSWORD=seu-password-seguro
+    # JWT_SECRET=seu-jwt-secret-minimo-256-bits
+    # As variáveis abaixo usarão os valores do arquivo .env ou variáveis de ambiente do sistema
+    environment:
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME:-snackbar_db}
+      - DB_USERNAME=${DB_USERNAME:-snackbar_user}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_URL=${DB_URL:-jdbc:mysql://localhost:3306/snackbar_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo}
+      - SERVER_PORT=${SERVER_PORT:-8080}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400}
+      - SHOW_SQL=${SHOW_SQL:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    env_file:
+      - .env  # Carrega variáveis de ambiente do arquivo .env (se existir, não é commitado)
+    volumes:
+      # Persistir dados do MySQL (opcional para desenvolvimento)
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  mysql_data:
+    driver: local
+

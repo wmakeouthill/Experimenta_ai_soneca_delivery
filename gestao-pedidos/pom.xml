@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.snackbar</groupId>
+        <artifactId>snackbar-system</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gestao-pedidos</artifactId>
+    <name>Gestão de Pedidos</name>
+    <description>Módulo de gestão de pedidos - Fila de pedidos (Lobby/Cozinha)</description>
+
+    <dependencies>
+        <!-- Kernel Compartilhado -->
+        <dependency>
+            <groupId>com.snackbar</groupId>
+            <artifactId>kernel-compartilhado</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Módulo Gestão de Cardápio (para Preco e ProdutoDTO) -->
+        <dependency>
+            <groupId>com.snackbar</groupId>
+            <artifactId>gestao-cardapio</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Módulo Gestão de Clientes (para integração com clientes via mesa) -->
+        <dependency>
+            <groupId>com.snackbar</groupId>
+            <artifactId>gestao-clientes</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Starters (apenas para Infrastructure) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+</project>

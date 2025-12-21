@@ -1,0 +1,127 @@
+spring:
+  application:
+    name: experimenta-ai-do-soneca-backend
+
+  config:
+    # application-secrets.yml só é importado se NÃO estiver em produção
+    # Em produção (profile prod), o application-prod.yml desabilita este import
+    import: optional:classpath:application-secrets.yml
+
+  datasource:
+    url: ${DB_URL:}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        "[format_sql]": true
+        # dialect removido - Hibernate detecta automaticamente baseado na URL do datasource
+        jdbc:
+          "[time_zone]": America/Sao_Paulo
+
+  # Liquibase configurado via LiquibaseConfig.java para garantir uso do arquivo XML
+  liquibase:
+    enabled: false # Desabilitado aqui - usando configuração Java explícita
+
+# JWT Configuration
+# Configurado via JwtProperties (@ConfigurationProperties)
+# IMPORTANTE: Defina JWT_SECRET e JWT_EXPIRATION no application-secrets.yml ou variáveis de ambiente
+# NUNCA hardcode valores de secrets no application.yml!
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400}
+
+# Google OAuth Configuration (para login de clientes)
+google:
+  client-id: ${GOOGLE_CLIENT_ID:}
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+    include-binding-errors: always
+  # ✅ Compressão GZIP para reduzir tamanho de transferência
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css,image/svg+xml
+    min-response-size: 1024 # Comprime apenas respostas > 1KB
+  # ✅ Otimizações do Tomcat para melhor performance de streaming
+  tomcat:
+    # Buffer de escrita maior para evitar transferências byte-a-byte
+    max-swallow-size: 2MB
+    # Thread pool otimizado
+    threads:
+      max: 200
+      min-spare: 10
+    # Connection timeout e keep-alive
+    connection-timeout: 20000
+    keep-alive-timeout: 60000
+    max-keep-alive-requests: 100
+    # Buffer de requisição maior
+    max-http-post-size: 10MB
+    # Accept count (fila de conexões)
+    accept-count: 100
+    # URIs encoding
+    uri-encoding: UTF-8
+    # Compressão no nível do Tomcat (backup)
+    compression: on
+    compressable-mime-type: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,application/xml
+
+logging:
+  level:
+    "[com.snackbar]": ${LOG_LEVEL:INFO}
+    "[org.springframework.web]": INFO
+    "[org.hibernate.SQL]": ${SHOW_SQL:false}
+    "[org.hibernate.type.descriptor.sql.BasicBinder]": ${SHOW_SQL:false}
+    "[org.springframework.web.servlet.DispatcherServlet]": INFO
+
+# Configuração de Impressão de Cupom Fiscal
+impressao:
+  # Configuração para EPSON TM-T20
+  epson:
+    tm-t20:
+      # Formato: IP:PORTA para rede (ex: 127.0.0.1:9100) ou caminho local (ex: /dev/usb/lp0, COM3)
+      device: ${IMPRESSAO_EPSON_DEVICE:127.0.0.1:9100} # Padrão: impressora virtual, ou /dev/usb/lp0 (Linux), COM3 (Windows)
+      modo-teste: ${IMPRESSAO_EPSON_MODO_TESTE:false} # false = usa device configurado, true = salva em arquivo .prn
+
+  # Configuração para DARUMA DR-800
+  daruma:
+    "800":
+      device: ${IMPRESSAO_DARUMA_DEVICE:/dev/usb/lp1} # Linux padrão, ou COM4 no Windows
+      modo-teste: ${IMPRESSAO_DARUMA_MODO_TESTE:true} # true = salva em arquivo .prn
+
+  # Configuração para impressoras genéricas ESC/POS
+  generica:
+    device: ${IMPRESSAO_GENERICA_DEVICE:/dev/usb/lp2} # Linux padrão, ou COM5 no Windows
+    modo-teste: ${IMPRESSAO_GENERICA_MODO_TESTE:true} # true = salva em arquivo .prn
+
+# Configurações do estabelecimento (usadas no cupom fiscal)
+estabelecimento:
+  nome: ${ESTABELECIMENTO_NOME:experimenta-ai-do-soneca}
+  endereco: ${ESTABELECIMENTO_ENDERECO:Av. Leandro da Mota, 58 - Dr. Laureano, Duque de Caxias.}
+  telefone: ${ESTABELECIMENTO_TELEFONE:(21) 97439-7966}
+  cnpj: ${ESTABELECIMENTO_CNPJ:12345678000190}
+
+# ========== Chat IA - OpenAI Configuration ==========
+# IMPORTANTE: Defina OPENAI_API_KEY no application-secrets.yml ou variável de ambiente
+openai:
+  api:
+    key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-4o-mini}
+  models:
+    fallback: ${OPENAI_MODELS_FALLBACK:gpt-3.5-turbo}
+  max-tokens: ${OPENAI_MAX_TOKENS:2000}
+
+# System prompt customizável para o assistente Soneca
+chat:
+  ia:
+    system-prompt: ${CHAT_IA_SYSTEM_PROMPT:Você é o Soneca, um assistente virtual simpático e prestativo de uma lanchonete chamada Experimenta Aí. Ajude os clientes com dúvidas sobre o cardápio, pedidos e funcionamento do estabelecimento. Seja amigável, use emojis ocasionalmente e mantenha respostas concisas. Você pode sugerir produtos populares e ajudar o cliente a montar seu pedido.}

@@ -1,0 +1,50 @@
+<div class="image-upload-container">
+  <label class="image-upload-label">
+    {{ label() }}
+  </label>
+
+  <div class="image-upload-wrapper">
+    @if (temImagem()) {
+      <div class="image-preview-container">
+        <img
+          [src]="urlPreview()"
+          alt="Preview"
+          class="image-preview"
+        />
+        <button
+          type="button"
+          class="btn-remover-imagem"
+          (click)="removerImagem()"
+          aria-label="Remover imagem"
+        >
+          ✕
+        </button>
+      </div>
+    } @else {
+      <div class="image-upload-placeholder">
+        <div class="placeholder-icon">📷</div>
+        <p class="placeholder-text">Clique para adicionar imagem</p>
+        <p class="placeholder-hint">
+          Máximo: {{ tamanhoMaximoMB() }}MB
+        </p>
+      </div>
+    }
+
+    @if (carregando()) {
+      <div class="image-upload-overlay">
+        <div class="spinner-upload"></div>
+        <p>Processando imagem...</p>
+      </div>
+    }
+
+    <input
+      id="image-upload-input"
+      type="file"
+      accept="image/*"
+      class="image-upload-input"
+      (change)="onFileSelected($event)"
+      [disabled]="carregando()"
+    />
+  </div>
+</div>
+

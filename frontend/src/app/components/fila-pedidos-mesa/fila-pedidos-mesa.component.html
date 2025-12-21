@@ -1,0 +1,131 @@
+<div class="fila-container">
+  <div class="header">
+    <h2>
+      <span class="icon">🍽️</span>
+      Pedidos de Mesa Aguardando
+      @if (quantidade() > 0) {
+        <span class="badge">{{ quantidade() }}</span>
+      }
+    </h2>
+    <button class="btn-refresh" (click)="recarregar()" [disabled]="carregando()">
+      <span class="icon" [class.spinning]="carregando()">🔄</span>
+    </button>
+  </div>
+
+  @if (erro()) {
+    <div class="erro-msg">
+      <span class="icon">⚠️</span>
+      {{ erro() }}
+      <button class="btn-retry" (click)="recarregar()">Tentar novamente</button>
+    </div>
+  }
+
+  @if (!temPedidos() && !carregando()) {
+    <div class="empty-state">
+      <span class="icon-large">✅</span>
+      <p>Nenhum pedido de mesa aguardando</p>
+      <small>Os pedidos feitos via QR code aparecerão aqui</small>
+    </div>
+  }
+
+  <div class="pedidos-lista">
+    @for (pedido of pedidosPendentes(); track pedido.id) {
+      <div class="pedido-card" [class.expandido]="pedidoExpandido() === pedido.id">
+        <div class="pedido-header" (click)="toggleExpandir(pedido.id)">
+          <div class="mesa-info">
+            <span class="mesa-numero">Mesa {{ pedido.numeroMesa }}</span>
+            <span class="cliente-nome">{{ pedido.nomeCliente }}</span>
+          </div>
+
+          <div class="pedido-meta">
+            <span class="tempo-espera" [class]="getClasseTempoEspera(pedido.tempoEsperaSegundos)">
+              ⏱️ {{ formatarTempoEspera(pedido.tempoEsperaSegundos) }}
+            </span>
+            <span class="valor-total">{{ formatarPreco(pedido.valorTotal) }}</span>
+          </div>
+
+          <div class="expand-icon">
+            {{ pedidoExpandido() === pedido.id ? '▲' : '▼' }}
+          </div>
+        </div>
+
+        @if (pedidoExpandido() === pedido.id) {
+          <div class="pedido-detalhes">
+            <div class="itens-lista">
+              <h4>Itens do Pedido</h4>
+              @for (item of pedido.itens; track item.produtoId) {
+                <div class="item">
+                  <div class="item-info">
+                    <span class="item-quantidade">{{ item.quantidade }}x</span>
+                    <span class="item-nome">{{ item.nomeProduto }}</span>
+                  </div>
+                  <span class="item-preco">{{ formatarPreco(item.subtotal) }}</span>
+                  @if (item.adicionais && item.adicionais.length > 0) {
+                    <div class="item-adicionais">
+                      @for (ad of item.adicionais; track ad.adicionalId) {
+                        <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.nome }} ({{ formatarPreco(ad.subtotal) }})</span>
+                      }
+                    </div>
+                  }
+                  @if (item.observacoes) {
+                    <div class="item-obs">📝 {{ item.observacoes }}</div>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (pedido.observacoes) {
+              <div class="observacoes">
+                <strong>Observações:</strong>
+                <p>{{ pedido.observacoes }}</p>
+              </div>
+            }
+
+            <div class="acoes">
+              <button
+                class="btn-aceitar"
+                (click)="aceitarPedido(pedido); $event.stopPropagation()"
+                [disabled]="processando() !== null">
+                @if (processando() === pedido.id) {
+                  <span class="spinner"></span> Processando...
+                } @else {
+                  ✓ Aceitar Pedido
+                }
+              </button>
+
+              <button
+                class="btn-rejeitar"
+                (click)="abrirModalRejeicao(pedido); $event.stopPropagation()"
+                [disabled]="processando() !== null">
+                ✕ Rejeitar
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal de Rejeição -->
+@if (mostrarModalRejeicao()) {
+  <div class="modal-overlay" (click)="fecharModalRejeicao()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Rejeitar Pedido</h3>
+      <p>Mesa {{ pedidoParaRejeitar()?.numeroMesa }} - {{ pedidoParaRejeitar()?.nomeCliente }}</p>
+
+      <div class="form-group">
+        <label for="motivo">Motivo da rejeição (opcional):</label>
+        <textarea
+          id="motivo"
+          [(ngModel)]="motivoRejeicaoTexto"
+          placeholder="Ex: Produto indisponível, mesa não existe..."
+          rows="3">
+        </textarea>
+      </div>      <div class="modal-acoes">
+        <button class="btn-cancelar" (click)="fecharModalRejeicao()">Cancelar</button>
+        <button class="btn-confirmar-rejeicao" (click)="confirmarRejeicao()">Confirmar Rejeição</button>
+      </div>
+    </div>
+  </div>
+}
