@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { usePedidos } from './composables/use-pedidos';
-import { PedidoService, StatusPedido, Pedido } from '../../services/pedido.service';
+import { PedidoService, StatusPedido, Pedido, TipoPedido } from '../../services/pedido.service';
 import { SessaoTrabalhoService, SessaoTrabalho } from '../../services/sessao-trabalho.service';
 import { AuthService } from '../../services/auth.service';
 import { ImpressaoService, TipoImpressora } from '../../services/impressao.service';
@@ -346,6 +346,37 @@ export class PedidosComponent implements OnInit, OnDestroy {
           }
         }
       });
+  }
+
+  // Helpers para identificar tipos de pedido
+  readonly TipoPedido = TipoPedido;
+
+  isDelivery(pedido: Pedido): boolean {
+    return pedido.tipoPedido === TipoPedido.DELIVERY;
+  }
+
+  isRetirada(pedido: Pedido): boolean {
+    return pedido.tipoPedido === TipoPedido.RETIRADA;
+  }
+
+  isMesa(pedido: Pedido): boolean {
+    return pedido.tipoPedido === TipoPedido.MESA || !!pedido.mesaId;
+  }
+
+  formatarTipoPedido(tipo: TipoPedido | undefined): string {
+    if (!tipo) return 'Balcão';
+    const nomes: Record<TipoPedido, string> = {
+      [TipoPedido.BALCAO]: 'Balcão',
+      [TipoPedido.MESA]: 'Mesa',
+      [TipoPedido.DELIVERY]: 'Delivery',
+      [TipoPedido.RETIRADA]: 'Retirada'
+    };
+    return nomes[tipo] || tipo;
+  }
+
+  formatarPrevisaoEntrega(data: string | undefined): string {
+    if (!data) return '--';
+    return new Date(data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
   atualizarStatus(pedidoId: string, novoStatus: StatusPedido): void {

@@ -42,6 +42,26 @@ public class CriarPedidoMesaRequest {
     @Valid
     private List<MeioPagamentoRequest> meiosPagamento;
 
+    // ========== Campos de Delivery ==========
+
+    /**
+     * Tipo do pedido: MESA, DELIVERY ou RETIRADA.
+     * Se não informado, assume MESA.
+     */
+    private String tipoPedido;
+
+    /**
+     * Endereço de entrega para pedidos DELIVERY.
+     * Obrigatório quando tipoPedido = DELIVERY.
+     */
+    private String enderecoEntrega;
+
+    /**
+     * Previsão de entrega informada pelo cliente.
+     * Exemplo: "O mais rápido possível", "Entre 18h e 19h"
+     */
+    private String previsaoEntregaCliente;
+
     public String mesaToken() {
         return mesaToken;
     }

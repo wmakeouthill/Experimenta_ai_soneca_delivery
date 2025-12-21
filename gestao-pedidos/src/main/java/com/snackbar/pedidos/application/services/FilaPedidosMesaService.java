@@ -114,6 +114,10 @@ public class FilaPedidosMesaService {
                 .valorTotal(valorTotal)
                 .dataHoraSolicitacao(LocalDateTime.now())
                 .tempoEsperaSegundos(0)
+                // Campos de delivery
+                .tipoPedido(request.getTipoPedido() != null ? request.getTipoPedido() : "MESA")
+                .enderecoEntrega(request.getEnderecoEntrega())
+                .previsaoEntregaCliente(request.getPrevisaoEntregaCliente())
                 .build();
 
         // Persiste no banco de dados

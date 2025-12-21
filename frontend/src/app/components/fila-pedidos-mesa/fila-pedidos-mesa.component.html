@@ -2,7 +2,7 @@
   <div class="header">
     <h2>
       <span class="icon">🍽️</span>
-      Pedidos de Mesa Aguardando
+      Pedidos Aguardando
       @if (quantidade() > 0) {
         <span class="badge">{{ quantidade() }}</span>
       }
@@ -23,18 +23,27 @@
   @if (!temPedidos() && !carregando()) {
     <div class="empty-state">
       <span class="icon-large">✅</span>
-      <p>Nenhum pedido de mesa aguardando</p>
-      <small>Os pedidos feitos via QR code aparecerão aqui</small>
+      <p>Nenhum pedido aguardando</p>
+      <small>Os pedidos de mesa e delivery aparecerão aqui</small>
     </div>
   }
 
   <div class="pedidos-lista">
     @for (pedido of pedidosPendentes(); track pedido.id) {
-      <div class="pedido-card" [class.expandido]="pedidoExpandido() === pedido.id">
+      <div class="pedido-card" [class.expandido]="pedidoExpandido() === pedido.id" [class.delivery]="isDelivery(pedido)" [class.retirada]="isRetirada(pedido)">
         <div class="pedido-header" (click)="toggleExpandir(pedido.id)">
           <div class="mesa-info">
-            <span class="mesa-numero">Mesa {{ pedido.numeroMesa }}</span>
+            @if (isDelivery(pedido)) {
+              <span class="tipo-badge delivery">🏍️ Delivery</span>
+            } @else if (isRetirada(pedido)) {
+              <span class="tipo-badge retirada">🏪 Retirada</span>
+            } @else {
+              <span class="mesa-numero">Mesa {{ pedido.numeroMesa }}</span>
+            }
             <span class="cliente-nome">{{ pedido.nomeCliente }}</span>
+            @if (pedido.telefoneCliente) {
+              <span class="cliente-telefone">📞 {{ pedido.telefoneCliente }}</span>
+            }
           </div>
 
           <div class="pedido-meta">
@@ -51,6 +60,27 @@
 
         @if (pedidoExpandido() === pedido.id) {
           <div class="pedido-detalhes">
+            <!-- Informações de Delivery -->
+            @if (isDelivery(pedido) && pedido.enderecoEntrega) {
+              <div class="delivery-info">
+                <h4>📍 Endereço de Entrega</h4>
+                <p class="endereco">{{ pedido.enderecoEntrega }}</p>
+                @if (pedido.previsaoEntregaCliente) {
+                  <p class="previsao-cliente">🕐 Previsão solicitada: {{ pedido.previsaoEntregaCliente }}</p>
+                }
+              </div>
+            }
+
+            @if (isRetirada(pedido)) {
+              <div class="retirada-info">
+                <h4>🏪 Retirada no Local</h4>
+                <p>Cliente irá buscar o pedido</p>
+                @if (pedido.previsaoEntregaCliente) {
+                  <p class="previsao-cliente">🕐 Previsão solicitada: {{ pedido.previsaoEntregaCliente }}</p>
+                }
+              </div>
+            }
+
             <div class="itens-lista">
               <h4>Itens do Pedido</h4>
               @for (item of pedido.itens; track item.produtoId) {
@@ -84,7 +114,7 @@
             <div class="acoes">
               <button
                 class="btn-aceitar"
-                (click)="aceitarPedido(pedido); $event.stopPropagation()"
+                (click)="aceitarOuAbrirModal(pedido); $event.stopPropagation()"
                 [disabled]="processando() !== null">
                 @if (processando() === pedido.id) {
                   <span class="spinner"></span> Processando...
@@ -125,6 +155,82 @@
       </div>      <div class="modal-acoes">
         <button class="btn-cancelar" (click)="fecharModalRejeicao()">Cancelar</button>
         <button class="btn-confirmar-rejeicao" (click)="confirmarRejeicao()">Confirmar Rejeição</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de Aceitar Delivery/Retirada -->
+@if (mostrarModalAceitar()) {
+  <div class="modal-overlay" (click)="fecharModalAceitar()">
+    <div class="modal-content modal-aceitar" (click)="$event.stopPropagation()">
+      <h3>
+        @if (isDelivery(pedidoParaAceitar()!)) {
+          🏍️ Aceitar Delivery
+        } @else {
+          🏪 Aceitar Retirada
+        }
+      </h3>
+
+      <div class="info-pedido">
+        <p><strong>Cliente:</strong> {{ pedidoParaAceitar()?.nomeCliente }}</p>
+        @if (pedidoParaAceitar()?.telefoneCliente) {
+          <p><strong>Telefone:</strong> {{ pedidoParaAceitar()?.telefoneCliente }}</p>
+        }
+        <p><strong>Valor:</strong> {{ formatarPreco(pedidoParaAceitar()?.valorTotal || 0) }}</p>
+        @if (isDelivery(pedidoParaAceitar()!) && pedidoParaAceitar()?.enderecoEntrega) {
+          <p><strong>Endereço:</strong> {{ pedidoParaAceitar()?.enderecoEntrega }}</p>
+        }
+        @if (pedidoParaAceitar()?.previsaoEntregaCliente) {
+          <p><strong>Previsão solicitada:</strong> {{ pedidoParaAceitar()?.previsaoEntregaCliente }}</p>
+        }
+      </div>
+
+      @if (isDelivery(pedidoParaAceitar()!)) {
+        <div class="form-group">
+          <label for="motoboy">Motoboy:</label>
+          @if (carregandoMotoboys()) {
+            <p class="loading-text">Carregando motoboys...</p>
+          } @else if (motoboysDisponiveis().length > 0) {
+            <select id="motoboy" [(ngModel)]="motoboyIdSelecionado">
+              <option value="">Selecione um motoboy (opcional)</option>
+              @for (motoboy of motoboysDisponiveis(); track motoboy.id) {
+                <option [value]="motoboy.id">
+                  {{ motoboy.nome }} {{ motoboy.veiculo ? '- ' + motoboy.veiculo : '' }}
+                </option>
+              }
+            </select>
+          } @else {
+            <p class="aviso">Nenhum motoboy disponível. <a routerLink="/gestao-motoboys">Cadastrar motoboy</a></p>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="taxa">Taxa de Entrega (R$):</label>
+          <input
+            type="number"
+            id="taxa"
+            [(ngModel)]="taxaEntrega"
+            placeholder="0.00"
+            step="0.01"
+            min="0">
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="previsao">Previsão de Entrega/Retirada:</label>
+        <input
+          type="text"
+          id="previsao"
+          [(ngModel)]="previsaoEntrega"
+          placeholder="Ex: 30 minutos, 1 hora">
+      </div>
+
+      <div class="modal-acoes">
+        <button class="btn-cancelar" (click)="fecharModalAceitar()">Cancelar</button>
+        <button class="btn-confirmar-aceitar" (click)="confirmarAceitarDelivery()">
+          ✓ Confirmar e Aceitar
+        </button>
       </div>
     </div>
   </div>

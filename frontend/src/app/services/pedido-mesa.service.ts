@@ -28,12 +28,18 @@ export interface MeioPagamentoMesaRequest {
     valor: number;
 }
 
+export type TipoPedido = 'BALCAO' | 'MESA' | 'DELIVERY' | 'RETIRADA';
+
 export interface CriarPedidoMesaRequest {
     mesaToken: string;
     clienteId: string;
     nomeCliente: string;
     itens: ItemPedidoMesaRequest[];
     meiosPagamento?: MeioPagamentoMesaRequest[];
+    // Campos de delivery
+    tipoPedido?: TipoPedido;
+    enderecoEntrega?: string;
+    previsaoEntregaCliente?: string; // Previsão informada pelo cliente (ex: "30 minutos", "1 hora")
 }
 
 export interface PedidoMesaResponse {

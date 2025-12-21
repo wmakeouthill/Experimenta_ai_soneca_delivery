@@ -129,6 +129,15 @@
     <!-- Migration: Corrige tipo da coluna id na tabela idempotency_keys (VARCHAR -> BIGINT) -->
     <include file="changes/039-fix-idempotency-keys-id-column.sql" relativeToChangelogFile="true" />
 
+    <!-- Migration: Criação da tabela de motoboys para delivery -->
+    <include file="changes/040-create-motoboys-table.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona campos de delivery na tabela de pedidos -->
+    <include file="changes/041-add-delivery-fields-pedidos.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Adiciona campos de delivery na tabela de pedidos pendentes -->
+    <include file="changes/042-add-delivery-fields-pedidos-pendentes.sql" relativeToChangelogFile="true" />
+
     <!-- 
     NOTA: O usuário administrador inicial é criado automaticamente via CommandLineRunner
     (UsuarioInicialConfig) na primeira execução da aplicação.

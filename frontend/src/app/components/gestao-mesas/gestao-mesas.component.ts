@@ -32,13 +32,6 @@ export class GestaoMesasComponent implements OnInit {
 
     readonly form: FormGroup;
 
-    // URL do Auto-Atendimento (Totem)
-    get urlAutoAtendimento(): string {
-        if (!this.isBrowser) return '';
-        const baseUrl = window.location.origin;
-        return `${baseUrl}/autoatendimento`;
-    }
-
     constructor() {
         this.form = this.fb.group({
             numero: [null, [Validators.required, Validators.min(1)]],
@@ -203,16 +196,6 @@ export class GestaoMesasComponent implements OnInit {
         </html>
       `);
             printWindow.document.close();
-        }
-    }
-
-    // ========== Totem Auto-Atendimento ==========
-    copiarUrlAutoAtendimento(): void {
-        const url = this.urlAutoAtendimento;
-        if (typeof navigator !== 'undefined' && navigator.clipboard) {
-            navigator.clipboard.writeText(url).then(() => {
-                alert('Link do Totem copiado para a área de transferência!');
-            });
         }
     }
 

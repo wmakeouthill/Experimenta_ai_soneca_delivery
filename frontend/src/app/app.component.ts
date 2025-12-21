@@ -33,8 +33,8 @@ export class AppComponent implements OnInit {
   private readonly rotasPublicas = ['/mesa/', '/pedido-mesa/'];
 
   // Rotas onde a notificação de novo pedido deve ser suprimida
-  // (ex: auto-atendimento cria o pedido na própria tela, não precisa notificar)
-  private readonly rotasSemNotificacao = ['/autoatendimento', '/mesa/', '/pedido-mesa/'];
+  // (ex: cliente delivery cria o pedido na própria tela, não precisa notificar)
+  private readonly rotasSemNotificacao = ['/mesa/', '/pedido-mesa/', '/delivery/'];
 
   ngOnInit(): void {
     if (this.isBrowser) {

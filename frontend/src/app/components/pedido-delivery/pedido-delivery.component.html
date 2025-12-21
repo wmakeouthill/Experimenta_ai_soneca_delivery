@@ -1,0 +1,514 @@
+<div class="pedido-delivery-container" [class.sucesso]="etapaAtual() === 'sucesso'">
+
+    <!-- Carregando -->
+    @if (carregando()) {
+        <div class="loading-screen">
+            <div class="loading-spinner"></div>
+            <p>Carregando...</p>
+        </div>
+    }
+
+    <!-- Erro Global -->
+    @if (erro() && !carregando()) {
+        <div class="error-banner">
+            <span>⚠️ {{ erro() }}</span>
+            <button (click)="erro.set(null)">✕</button>
+        </div>
+    }
+
+    <!-- ========== ETAPA: IDENTIFICAÇÃO ========== -->
+    @if (!carregando() && etapaAtual() === 'identificacao') {
+        <div class="identificacao-screen">
+            <div class="identificacao-header">
+                <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-grande">
+                <h1>Delivery</h1>
+                <p class="subtitulo">Peça seu lanche e receba em casa!</p>
+            </div>
+
+            <div class="identificacao-form">
+                <h2>Digite seu telefone</h2>
+                <p class="form-hint">Usamos para identificar você e seus pedidos</p>
+
+                <div class="input-group">
+                    <input
+                        type="tel"
+                        [value]="telefone()"
+                        (input)="onTelefoneChange($event)"
+                        placeholder="(00) 00000-0000"
+                        class="input-telefone"
+                        [class.valido]="telefoneValido()"
+                        maxlength="15"
+                        inputmode="numeric">
+                </div>
+
+                <button
+                    class="btn-continuar"
+                    [disabled]="!podeBuscarCliente()"
+                    (click)="buscarCliente()">
+                    @if (buscandoCliente()) {
+                        <span class="spinner-mini"></span> Buscando...
+                    } @else {
+                        Continuar
+                    }
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- ========== ETAPA: CADASTRO ========== -->
+    @if (!carregando() && etapaAtual() === 'cadastro') {
+        <div class="identificacao-screen">
+            <div class="identificacao-header">
+                <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-grande">
+                <h1>Novo por aqui?</h1>
+            </div>
+
+            <div class="identificacao-form">
+                <h2>Complete seu cadastro</h2>
+                <p class="form-hint">Precisamos de algumas informações para continuar</p>
+
+                <div class="input-group">
+                    <label>Telefone</label>
+                    <input
+                        type="tel"
+                        [value]="telefone()"
+                        disabled
+                        class="input-telefone disabled">
+                </div>
+
+                <div class="input-group">
+                    <label>Seu nome</label>
+                    <input
+                        type="text"
+                        [ngModel]="nome()"
+                        (ngModelChange)="nome.set($event)"
+                        placeholder="Como podemos te chamar?"
+                        class="input-nome"
+                        [class.valido]="nomeValido()"
+                        maxlength="100">
+                </div>
+
+                <button
+                    class="btn-continuar"
+                    [disabled]="!podeCadastrar()"
+                    (click)="cadastrarCliente()">
+                    @if (buscandoCliente()) {
+                        <span class="spinner-mini"></span> Cadastrando...
+                    } @else {
+                        Começar a pedir
+                    }
+                </button>
+
+                <button class="btn-voltar" (click)="voltarParaIdentificacao()">
+                    ← Voltar
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- ========== ETAPA: CARDÁPIO ========== -->
+    @if (!carregando() && etapaAtual() === 'cardapio' && clienteIdentificado()) {
+        <header class="header-delivery">
+            <div class="header-content">
+                <img src="/assets/experimenta_ai_banner_circular.webp" alt="Logo" class="logo-mini">
+                <div class="header-info">
+                    <span class="cliente-nome">Olá, {{ clienteIdentificado()!.nome.split(' ')[0] }}!</span>
+                    <span class="tipo-badge">🏍️ Delivery</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Categorias -->
+        <div class="categorias-scroll">
+            <button
+                class="categoria-chip"
+                [class.ativa]="categoriaSelecionada() === null"
+                (click)="selecionarCategoria(null)">
+                🍽️ Todos
+            </button>
+            @for (categoria of categorias(); track categoria.id) {
+                <button
+                    class="categoria-chip"
+                    [class.ativa]="categoriaSelecionada() === categoria.nome"
+                    (click)="selecionarCategoria(categoria.nome)">
+                    {{ categoria.nome }}
+                </button>
+            }
+        </div>
+
+        <!-- Lista de Produtos -->
+        <div class="produtos-container">
+            @for (produto of produtosFiltrados(); track produto.id) {
+                <div class="produto-card" (click)="abrirDetalhesProduto(produto)">
+                    @if (produto.foto) {
+                        <div class="produto-imagem">
+                            <img [src]="produto.foto" [alt]="produto.nome">
+                        </div>
+                    } @else {
+                        <div class="produto-imagem produto-sem-foto">
+                            <span>🍽️</span>
+                        </div>
+                    }
+                    <div class="produto-info">
+                        <h3 class="produto-nome">{{ produto.nome }}</h3>
+                        @if (produto.descricao) {
+                            <p class="produto-descricao">{{ produto.descricao }}</p>
+                        }
+                        <span class="produto-preco">{{ formatarPreco(produto.preco) }}</span>
+                    </div>
+                </div>
+            } @empty {
+                <div class="produtos-vazio">
+                    <p>Nenhum produto disponível nesta categoria.</p>
+                </div>
+            }
+        </div>
+
+        <!-- Botão flutuante do carrinho -->
+        @if (!carrinhoVazio()) {
+            <button class="btn-carrinho-flutuante" (click)="abrirCarrinho()">
+                <span class="carrinho-icon">🛒</span>
+                <span class="carrinho-qtd">{{ quantidadeItensCarrinho() }}</span>
+                <span class="carrinho-total">{{ formatarPreco(totalCarrinho()) }}</span>
+            </button>
+        }
+    }
+
+    <!-- ========== ETAPA: CHECKOUT ========== -->
+    @if (!carregando() && etapaAtual() === 'checkout') {
+        <div class="checkout-screen">
+            <header class="checkout-header">
+                <button class="btn-voltar-header" (click)="voltarParaCardapio()">←</button>
+                <h1>Finalizar Pedido</h1>
+            </header>
+
+            <div class="checkout-content">
+                <!-- Tipo de Pedido -->
+                <section class="checkout-section">
+                    <h2>Como você prefere?</h2>
+                    <div class="tipo-pedido-opcoes">
+                        <button
+                            class="tipo-opcao"
+                            [class.ativa]="tipoPedido() === 'DELIVERY'"
+                            (click)="selecionarTipoPedido('DELIVERY')">
+                            <span class="tipo-icon">🏍️</span>
+                            <span class="tipo-label">Delivery</span>
+                            <span class="tipo-desc">Receba em casa</span>
+                        </button>
+                        <button
+                            class="tipo-opcao"
+                            [class.ativa]="tipoPedido() === 'RETIRADA'"
+                            (click)="selecionarTipoPedido('RETIRADA')">
+                            <span class="tipo-icon">🏪</span>
+                            <span class="tipo-label">Retirada</span>
+                            <span class="tipo-desc">Busque no local</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Endereço (somente delivery) -->
+                @if (tipoPedido() === 'DELIVERY') {
+                    <section class="checkout-section">
+                        <h2>Endereço de Entrega</h2>
+                        <div class="input-group">
+                            <textarea
+                                [ngModel]="enderecoEntrega()"
+                                (ngModelChange)="enderecoEntrega.set($event)"
+                                placeholder="Digite o endereço completo (rua, número, bairro, complemento, referência)"
+                                class="input-endereco"
+                                rows="3"
+                                maxlength="500"></textarea>
+                        </div>
+                    </section>
+                }
+
+                <!-- Previsão do cliente -->
+                <section class="checkout-section">
+                    <h2>Previsão de tempo (opcional)</h2>
+                    <p class="section-hint">Informe o tempo que você pode esperar</p>
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            [ngModel]="previsaoCliente()"
+                            (ngModelChange)="previsaoCliente.set($event)"
+                            placeholder="Ex: 30 minutos, 1 hora"
+                            class="input-previsao"
+                            maxlength="100">
+                    </div>
+                </section>
+
+                <!-- Resumo do Pedido -->
+                <section class="checkout-section">
+                    <h2>Resumo do Pedido</h2>
+                    <div class="resumo-itens">
+                        @for (item of itensCarrinho(); track $index) {
+                            <div class="resumo-item">
+                                <span class="item-qtd">{{ item.quantidade }}x</span>
+                                <div class="item-info">
+                                    <span class="item-nome">{{ item.produto.nome }}</span>
+                                    @if (item.observacao) {
+                                        <span class="item-obs">{{ item.observacao }}</span>
+                                    }
+                                    @if (item.adicionais && item.adicionais.length > 0) {
+                                        <span class="item-adicionais">
+                                            + {{ item.adicionais.map(a => a.adicional.nome).join(', ') }}
+                                        </span>
+                                    }
+                                </div>
+                                <span class="item-preco">{{ formatarPreco(calcularPrecoItemCarrinho(item)) }}</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="resumo-total">
+                        <span>Total</span>
+                        <strong>{{ formatarPreco(totalCarrinho()) }}</strong>
+                    </div>
+                </section>
+
+                <!-- Forma de Pagamento -->
+                <section class="checkout-section">
+                    <h2>Forma de Pagamento</h2>
+                    <div class="pagamento-opcoes">
+                        <button
+                            class="pagamento-opcao"
+                            [class.ativa]="meioPagamentoSelecionado() === 'PIX'"
+                            (click)="selecionarMeioPagamento('PIX')">
+                            <span class="pag-icon">📱</span>
+                            <span>PIX</span>
+                        </button>
+                        <button
+                            class="pagamento-opcao"
+                            [class.ativa]="meioPagamentoSelecionado() === 'DINHEIRO'"
+                            (click)="selecionarMeioPagamento('DINHEIRO')">
+                            <span class="pag-icon">💵</span>
+                            <span>Dinheiro</span>
+                        </button>
+                        <button
+                            class="pagamento-opcao"
+                            [class.ativa]="meioPagamentoSelecionado() === 'CARTAO_CREDITO'"
+                            (click)="selecionarMeioPagamento('CARTAO_CREDITO')">
+                            <span class="pag-icon">💳</span>
+                            <span>Crédito</span>
+                        </button>
+                        <button
+                            class="pagamento-opcao"
+                            [class.ativa]="meioPagamentoSelecionado() === 'CARTAO_DEBITO'"
+                            (click)="selecionarMeioPagamento('CARTAO_DEBITO')">
+                            <span class="pag-icon">💳</span>
+                            <span>Débito</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Botão Enviar -->
+                <button
+                    class="btn-enviar-pedido"
+                    [disabled]="!podeEnviarPedido() || enviando()"
+                    (click)="enviarPedido()">
+                    @if (enviando()) {
+                        <span class="spinner-mini"></span> Enviando...
+                    } @else {
+                        Enviar Pedido
+                    }
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- ========== ETAPA: SUCESSO ========== -->
+    @if (!carregando() && etapaAtual() === 'sucesso') {
+        <div class="sucesso-screen">
+            <div class="sucesso-header">
+                <div class="sucesso-icon">🎉</div>
+                <h1>Pedido Enviado!</h1>
+                <p class="sucesso-subtitulo">Acompanhe o status abaixo</p>
+            </div>
+
+            @if (statusPedido()) {
+                <div class="status-container">
+                    <div class="status-atual">
+                        <span class="status-icon">{{ getStatusIcon(statusPedido()!.status) }}</span>
+                        <span class="status-label">{{ getStatusLabel(statusPedido()!.status) }}</span>
+                    </div>
+
+                    @if (statusPedido()!.tipoPedido === 'DELIVERY') {
+                        <div class="info-delivery">
+                            <h3>📍 Entregar em:</h3>
+                            <p>{{ statusPedido()!.enderecoEntrega }}</p>
+
+                            @if (statusPedido()!.nomeMotoboyAtribuido) {
+                                <div class="motoboy-info">
+                                    <h3>🏍️ Motoboy:</h3>
+                                    <p>{{ statusPedido()!.nomeMotoboyAtribuido }}</p>
+                                    @if (statusPedido()!.telefoneMotoboyAtribuido) {
+                                        <a href="tel:{{ statusPedido()!.telefoneMotoboyAtribuido }}" class="btn-ligar">
+                                            📞 Ligar
+                                        </a>
+                                    }
+                                </div>
+                            }
+
+                            @if (statusPedido()!.taxaEntrega) {
+                                <p class="taxa-entrega">Taxa de entrega: {{ formatarPreco(statusPedido()!.taxaEntrega!) }}</p>
+                            }
+                        </div>
+                    } @else {
+                        <div class="info-retirada">
+                            <h3>🏪 Retirada no local</h3>
+                            <p>Aguarde seu pedido ficar pronto para buscar.</p>
+                        </div>
+                    }
+
+                    @if (statusPedido()!.previsaoEntrega) {
+                        <div class="previsao-info">
+                            <span class="previsao-label">Previsão:</span>
+                            <span class="previsao-valor">{{ statusPedido()!.previsaoEntrega }}</span>
+                        </div>
+                    }
+
+                    @if (statusPedido()!.numeroPedido) {
+                        <div class="numero-pedido">
+                            <span>Pedido #{{ statusPedido()!.numeroPedido }}</span>
+                        </div>
+                    }
+                </div>
+            } @else {
+                <div class="loading-status">
+                    <div class="spinner-mini"></div>
+                    <p>Carregando status...</p>
+                </div>
+            }
+
+            <button class="btn-novo-pedido" (click)="novoPedido()">
+                Fazer novo pedido
+            </button>
+        </div>
+    }
+
+    <!-- ========== MODAL: DETALHES DO PRODUTO ========== -->
+    @if (mostrarDetalhes() && produtoSelecionado()) {
+        <div class="modal-overlay" (click)="fecharDetalhes()">
+            <div class="modal-detalhes" (click)="$event.stopPropagation()">
+                <button class="modal-fechar" (click)="fecharDetalhes()">✕</button>
+
+                @if (produtoSelecionado()!.foto) {
+                    <div class="modal-imagem">
+                        <img [src]="produtoSelecionado()!.foto" [alt]="produtoSelecionado()!.nome">
+                    </div>
+                }
+
+                <div class="modal-content">
+                    <h2>{{ produtoSelecionado()!.nome }}</h2>
+                    @if (produtoSelecionado()!.descricao) {
+                        <p class="modal-descricao">{{ produtoSelecionado()!.descricao }}</p>
+                    }
+                    <span class="modal-preco">{{ formatarPreco(produtoSelecionado()!.preco) }}</span>
+
+                    <!-- Adicionais -->
+                    @if (carregandoAdicionais()) {
+                        <div class="adicionais-loading">
+                            <span class="spinner-mini"></span> Carregando adicionais...
+                        </div>
+                    } @else if (adicionaisDisponiveis().length > 0) {
+                        <div class="adicionais-section">
+                            <h3>Adicionais</h3>
+                            @for (adicional of adicionaisDisponiveis(); track adicional.id) {
+                                <button
+                                    class="adicional-item"
+                                    [class.selecionado]="isAdicionalSelecionado(adicional.id)"
+                                    (click)="toggleAdicional(adicional)">
+                                    <span class="adicional-nome">{{ adicional.nome }}</span>
+                                    <span class="adicional-preco">+ {{ formatarPreco(adicional.preco) }}</span>
+                                    <span class="adicional-check">{{ isAdicionalSelecionado(adicional.id) ? '✓' : '' }}</span>
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    <!-- Observação -->
+                    <div class="observacao-section">
+                        <label>Observação (opcional)</label>
+                        <textarea
+                            [ngModel]="observacaoItem()"
+                            (ngModelChange)="observacaoItem.set($event)"
+                            placeholder="Ex: Sem cebola, bem passado..."
+                            rows="2"
+                            maxlength="200"></textarea>
+                    </div>
+
+                    <!-- Quantidade -->
+                    <div class="quantidade-section">
+                        <span>Quantidade:</span>
+                        <div class="quantidade-controle">
+                            <button class="btn-qtd" (click)="decrementarQuantidade()" [disabled]="quantidadeSelecionada() <= 1">−</button>
+                            <span class="quantidade-valor">{{ quantidadeSelecionada() }}</span>
+                            <button class="btn-qtd" (click)="incrementarQuantidade()">+</button>
+                        </div>
+                    </div>
+
+                    <button class="btn-adicionar-carrinho" (click)="adicionarAoCarrinho()">
+                        Adicionar ao carrinho
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ========== MODAL: CARRINHO ========== -->
+    @if (mostrarCarrinho()) {
+        <div class="modal-overlay" (click)="fecharCarrinho()">
+            <div class="modal-carrinho" (click)="$event.stopPropagation()">
+                <header class="carrinho-header">
+                    <h2>🛒 Meu Carrinho</h2>
+                    <button class="modal-fechar" (click)="fecharCarrinho()">✕</button>
+                </header>
+
+                <div class="carrinho-content">
+                    @if (carrinhoVazio()) {
+                        <div class="carrinho-vazio">
+                            <span class="vazio-icon">🛒</span>
+                            <p>Seu carrinho está vazio</p>
+                        </div>
+                    } @else {
+                        <div class="carrinho-itens">
+                            @for (item of itensCarrinho(); track $index; let i = $index) {
+                                <div class="carrinho-item">
+                                    <div class="item-main">
+                                        <span class="item-nome">{{ item.produto.nome }}</span>
+                                        @if (item.observacao) {
+                                            <span class="item-obs">{{ item.observacao }}</span>
+                                        }
+                                        @if (item.adicionais && item.adicionais.length > 0) {
+                                            <span class="item-adicionais">
+                                                + {{ item.adicionais.map(a => a.adicional.nome).join(', ') }}
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="item-acoes">
+                                        <div class="item-quantidade">
+                                            <button class="btn-qtd-mini" (click)="alterarQuantidadeCarrinho(i, -1)">−</button>
+                                            <span>{{ item.quantidade }}</span>
+                                            <button class="btn-qtd-mini" (click)="alterarQuantidadeCarrinho(i, 1)">+</button>
+                                        </div>
+                                        <span class="item-preco">{{ formatarPreco(calcularPrecoItemCarrinho(item)) }}</span>
+                                        <button class="btn-remover" (click)="removerDoCarrinho(i)">🗑️</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="carrinho-footer">
+                            <div class="carrinho-total">
+                                <span>Total</span>
+                                <strong>{{ formatarPreco(totalCarrinho()) }}</strong>
+                            </div>
+                            <button class="btn-finalizar" (click)="irParaCheckout(); fecharCarrinho()">
+                                Finalizar Pedido
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -478,3 +478,121 @@
   cursor: not-allowed;
 }
 
+/* ========== Estilos de Delivery e Retirada ========== */
+
+/* Card com borda lateral colorida para delivery */
+.pedido-card.delivery {
+  border-left: 4px solid #FF6B35;
+}
+
+.pedido-card.delivery::before {
+  background: linear-gradient(90deg, #FF6B35, #F7931E);
+}
+
+/* Card com borda lateral colorida para retirada */
+.pedido-card.retirada {
+  border-left: 4px solid #9B59B6;
+}
+
+.pedido-card.retirada::before {
+  background: linear-gradient(90deg, #9B59B6, #6B5B95);
+}
+
+/* Badges de tipo de pedido */
+.tipo-pedido-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.tipo-pedido-badge.delivery {
+  background: linear-gradient(135deg, #FF6B35, #F7931E);
+  color: white;
+}
+
+.tipo-pedido-badge.retirada {
+  background: linear-gradient(135deg, #9B59B6, #6B5B95);
+  color: white;
+}
+
+/* Info box de delivery */
+.delivery-info-box {
+  background: linear-gradient(135deg, #fff5f0, #ffeee5);
+  border: 1px solid #FF6B35;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.delivery-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.delivery-label {
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.delivery-value {
+  color: #333;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+/* Info box de retirada */
+.retirada-info-box {
+  background: linear-gradient(135deg, #f5f0ff, #ede5ff);
+  border: 1px solid #9B59B6;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.retirada-info {
+  font-size: 0.85rem;
+  color: #6B5B95;
+  font-weight: 600;
+}
+
+.retirada-previsao {
+  font-size: 0.75rem;
+  color: #9B59B6;
+  font-weight: 500;
+}
+
+/* Estilos para total com taxa de entrega */
+.pedido-total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.subtotal-produtos {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.taxa-entrega {
+  font-size: 0.75rem;
+  color: #FF6B35;
+  font-weight: 500;
+}

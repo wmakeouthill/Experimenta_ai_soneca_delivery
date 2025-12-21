@@ -65,6 +65,18 @@ public class PedidoPendenteEntity {
     @Column(name = "pedido_real_id", length = 36)
     private String pedidoRealId;
 
+    // ========== Campos de Delivery ==========
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_pedido", length = 20)
+    @Builder.Default
+    private com.snackbar.pedidos.domain.entities.TipoPedido tipoPedido = com.snackbar.pedidos.domain.entities.TipoPedido.MESA;
+
+    @Column(name = "endereco_entrega", columnDefinition = "TEXT")
+    private String enderecoEntrega;
+
+    @Column(name = "previsao_entrega_cliente", length = 100)
+    private String previsaoEntregaCliente;
+
     @OneToMany(mappedBy = "pedidoPendente", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private Set<ItemPedidoPendenteEntity> itens = new HashSet<>();

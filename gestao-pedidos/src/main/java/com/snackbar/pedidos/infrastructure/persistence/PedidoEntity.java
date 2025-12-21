@@ -64,6 +64,24 @@ public class PedidoEntity {
     @Column(name = "nome_cliente_mesa", length = 100)
     private String nomeClienteMesa;
 
+    // ========== Campos de Delivery ==========
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_pedido", length = 20)
+    @Builder.Default
+    private com.snackbar.pedidos.domain.entities.TipoPedido tipoPedido = com.snackbar.pedidos.domain.entities.TipoPedido.BALCAO;
+
+    @Column(name = "endereco_entrega", columnDefinition = "TEXT")
+    private String enderecoEntrega;
+
+    @Column(name = "motoboy_id", length = 36)
+    private String motoboyId;
+
+    @Column(name = "taxa_entrega", precision = 10, scale = 2)
+    private BigDecimal taxaEntrega;
+
+    @Column(name = "previsao_entrega")
+    private LocalDateTime previsaoEntrega;
+
     @Column(nullable = false)
     private LocalDateTime dataPedido;
 

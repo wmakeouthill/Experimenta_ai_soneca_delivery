@@ -15,6 +15,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/politica-privacidade/politica-privacidade.component').then(m => m.PoliticaPrivacidadeComponent)
   },
   {
+    path: 'delivery',
+    loadComponent: () => import('./components/pedido-delivery/pedido-delivery.component').then(m => m.PedidoDeliveryComponent)
+  },
+  {
     path: '',
     loadComponent: () => import('./components/home/home.component').then(m => m.HomeComponent),
     canActivate: [authGuard]
@@ -70,6 +74,11 @@ export const routes: Routes = [
     canActivate: [adminGuard]
   },
   {
+    path: 'gestao-motoboys',
+    loadComponent: () => import('./components/gestao-motoboys/gestao-motoboys.component').then(m => m.GestaoMotoboysComponent),
+    canActivate: [adminGuard]
+  },
+  {
     path: 'mesa/:token',
     loadComponent: () => import('./components/pedido-cliente-mesa/pedido-cliente-mesa.component').then(m => m.PedidoClienteMesaComponent)
   },
@@ -80,11 +89,6 @@ export const routes: Routes = [
   {
     path: 'lobby-pedidos',
     loadComponent: () => import('./components/lobby-pedidos/lobby-pedidos.component').then(m => m.LobbyPedidosComponent),
-    canActivate: [operadorGuard]
-  },
-  {
-    path: 'autoatendimento',
-    loadComponent: () => import('./components/autoatendimento/autoatendimento.component').then(m => m.AutoatendimentoComponent),
     canActivate: [operadorGuard]
   },
   {

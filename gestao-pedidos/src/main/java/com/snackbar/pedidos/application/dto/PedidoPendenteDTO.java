@@ -34,6 +34,11 @@ public class PedidoPendenteDTO {
     private LocalDateTime dataHoraSolicitacao;
     private long tempoEsperaSegundos;
 
+    // ========== Campos de Delivery ==========
+    private String tipoPedido; // MESA, DELIVERY, RETIRADA
+    private String enderecoEntrega;
+    private String previsaoEntregaCliente;
+
     /**
      * Calcula o tempo de espera em segundos.
      */

@@ -21,6 +21,8 @@ export interface ItemPedidoPendente {
     adicionais?: AdicionalPedidoPendente[];
 }
 
+export type TipoPedido = 'BALCAO' | 'MESA' | 'DELIVERY' | 'RETIRADA';
+
 export interface PedidoPendente {
     id: string;
     mesaToken: string;
@@ -34,6 +36,16 @@ export interface PedidoPendente {
     valorTotal: number;
     dataHoraSolicitacao: string;
     tempoEsperaSegundos: number;
+    // Campos de delivery
+    tipoPedido?: TipoPedido;
+    enderecoEntrega?: string;
+    previsaoEntregaCliente?: string;
+}
+
+export interface AceitarPedidoDeliveryRequest {
+    motoboyId?: string;
+    taxaEntrega?: number;
+    previsaoEntrega?: string;
 }
 
 export interface QuantidadePendentes {
@@ -83,9 +95,10 @@ export class FilaPedidosMesaService {
 
     /**
      * Aceita um pedido pendente - cria o pedido real
+     * Para pedidos de delivery/retirada, pode incluir motoboyId, taxaEntrega e previsaoEntrega
      */
-    aceitarPedido(pedidoId: string): Observable<any> {
-        return this.http.post(`${this.API_URL}/${pedidoId}/aceitar`, {});
+    aceitarPedido(pedidoId: string, dadosDelivery?: AceitarPedidoDeliveryRequest): Observable<any> {
+        return this.http.post(`${this.API_URL}/${pedidoId}/aceitar`, dadosDelivery || {});
     }
 
     /**

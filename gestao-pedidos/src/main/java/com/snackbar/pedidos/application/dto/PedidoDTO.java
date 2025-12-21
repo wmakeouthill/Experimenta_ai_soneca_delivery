@@ -35,6 +35,14 @@ public class PedidoDTO {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
+        // ========== Campos de Delivery ==========
+        private String tipoPedido;
+        private String enderecoEntrega;
+        private String motoboyId;
+        private String motoboyNome;
+        private BigDecimal taxaEntrega;
+        private LocalDateTime previsaoEntrega;
+
         public static PedidoDTO de(Pedido pedido) {
                 return PedidoDTO.builder()
                                 .id(pedido.getId())
@@ -78,10 +86,26 @@ public class PedidoDTO {
                                 .mesaId(pedido.getMesaId())
                                 .numeroMesa(pedido.getNumeroMesa())
                                 .nomeClienteMesa(pedido.getNomeClienteMesa())
+                                .tipoPedido(pedido.getTipoPedido() != null ? pedido.getTipoPedido().name() : "BALCAO")
+                                .enderecoEntrega(pedido.getEnderecoEntrega())
+                                .motoboyId(pedido.getMotoboyId())
+                                .taxaEntrega(pedido.getTaxaEntrega() != null ? pedido.getTaxaEntrega().getAmount()
+                                                : null)
+                                .previsaoEntrega(pedido.getPrevisaoEntrega())
                                 .dataPedido(pedido.getDataPedido())
                                 .dataFinalizacao(pedido.getDataFinalizacao())
                                 .createdAt(pedido.getCreatedAt())
                                 .updatedAt(pedido.getUpdatedAt())
                                 .build();
+        }
+
+        /**
+         * Converte um Pedido de domínio para DTO, incluindo o nome do motoboy.
+         * Use este método quando tiver acesso ao nome do motoboy.
+         */
+        public static PedidoDTO de(Pedido pedido, String motoboyNome) {
+                PedidoDTO dto = de(pedido);
+                dto.setMotoboyNome(motoboyNome);
+                return dto;
         }
 }

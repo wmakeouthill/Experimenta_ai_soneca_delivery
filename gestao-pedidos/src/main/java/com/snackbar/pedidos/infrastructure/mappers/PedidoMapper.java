@@ -34,6 +34,11 @@ public class PedidoMapper {
                 .mesaId(pedido.getMesaId())
                 .numeroMesa(pedido.getNumeroMesa())
                 .nomeClienteMesa(pedido.getNomeClienteMesa())
+                .tipoPedido(pedido.getTipoPedido())
+                .enderecoEntrega(pedido.getEnderecoEntrega())
+                .motoboyId(pedido.getMotoboyId())
+                .taxaEntrega(pedido.getTaxaEntrega() != null ? pedido.getTaxaEntrega().getAmount() : null)
+                .previsaoEntrega(pedido.getPrevisaoEntrega())
                 .dataPedido(pedido.getDataPedido())
                 .dataFinalizacao(pedido.getDataFinalizacao())
                 .createdAt(pedido.getCreatedAt())
@@ -154,6 +159,15 @@ public class PedidoMapper {
 
         // Restaurar dados da mesa (se houver)
         pedido.restaurarMesaDoBanco(entity.getMesaId(), entity.getNumeroMesa(), entity.getNomeClienteMesa());
+
+        // Restaurar dados de delivery (se houver)
+        Preco taxaEntrega = entity.getTaxaEntrega() != null ? Preco.of(entity.getTaxaEntrega()) : null;
+        pedido.restaurarDeliveryDoBanco(
+                entity.getTipoPedido(),
+                entity.getEnderecoEntrega(),
+                entity.getMotoboyId(),
+                taxaEntrega,
+                entity.getPrevisaoEntrega());
 
         // Restaurar data do pedido do banco (preserva a data original de criação)
         pedido.restaurarDataPedidoDoBanco(entity.getDataPedido());

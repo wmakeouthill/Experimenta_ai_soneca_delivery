@@ -23,13 +23,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
   const usuarioStr = typeof localStorage !== 'undefined' ? localStorage.getItem('usuario') : null;
 
-  // Debug para autoatendimento
-  if (req.url.includes('/api/autoatendimento/')) {
-    console.log('[AUTH-INTERCEPTOR] Requisição autoatendimento:', req.url);
-    console.log('[AUTH-INTERCEPTOR] Token encontrado:', token ? `${token.substring(0, 20)}...` : 'NENHUM');
-    console.log('[AUTH-INTERCEPTOR] Usuario:', usuarioStr ? 'presente' : 'ausente');
-  }
-
   if (token) {
     // Remove espaços e quebras de linha do token (caso tenha sido salvo incorretamente)
     const tokenLimpo = token.trim();

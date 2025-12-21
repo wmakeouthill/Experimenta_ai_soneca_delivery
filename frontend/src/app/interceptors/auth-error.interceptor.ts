@@ -5,10 +5,7 @@ import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 // Rotas públicas que não devem redirecionar para login em caso de erro 401/403
-const ROTAS_PUBLICAS = ['/mesa/', '/pedido-mesa/', '/api/public/'];
-
-// Rotas que devem exibir erro em vez de redirecionar (usuário deve fazer login manualmente)
-const ROTAS_TOTEM = ['/autoatendimento'];
+const ROTAS_PUBLICAS = ['/mesa/', '/pedido-mesa/', '/delivery/', '/api/public/'];
 
 /**
  * Interceptor para tratar erros de autenticação (401, 403).
@@ -25,18 +22,8 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
       const isRotaPublica = typeof window !== 'undefined' &&
         ROTAS_PUBLICAS.some(rota => window.location.pathname.includes(rota));
 
-      // Verificar se é rota de totem (não redireciona automaticamente - exibe erro)
-      const isRotaTotem = typeof window !== 'undefined' &&
-        ROTAS_TOTEM.some(rota => window.location.pathname.includes(rota));
-
       // Verificar se a requisição é para endpoint público
       const isEndpointPublico = req.url.includes('/api/public/');
-
-      // Para rotas de totem, não fazer logout automático - deixa o componente tratar
-      if ((error.status === 401 || error.status === 403) && isRotaTotem) {
-        console.warn('[AUTH] Erro de autenticação no totem - verifique se o operador está logado');
-        return throwError(() => error);
-      }
 
       // Tratar apenas erros de autenticação/autorização em rotas protegidas
       if ((error.status === 401 || error.status === 403) && !isRotaPublica && !isEndpointPublico) {

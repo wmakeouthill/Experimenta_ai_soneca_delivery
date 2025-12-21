@@ -22,27 +22,6 @@
     </div>
   }
 
-  <!-- Seção Totem Auto-Atendimento -->
-  <div class="totem-section">
-    <div class="totem-card">
-      <div class="totem-icon">🖥️</div>
-      <div class="totem-info">
-        <h3>Totem de Auto-Atendimento</h3>
-      </div>
-      <div class="totem-url">
-        <input
-          type="text"
-          [value]="urlAutoAtendimento"
-          readonly
-          class="url-input"
-        />
-        <button class="btn-copy" (click)="copiarUrlAutoAtendimento()">
-          📋 Copiar Link
-        </button>
-      </div>
-    </div>
-  </div>
-
   <div class="resumo-mesas">
     <div class="resumo-card">
       <span class="resumo-numero">{{ totalMesas() }}</span>

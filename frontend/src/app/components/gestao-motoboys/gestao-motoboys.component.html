@@ -1,0 +1,256 @@
+<div class="gestao-motoboys-container">
+    <header class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>🏍️ Gestão de Motoboys</h1>
+                <p class="header-subtitle">Gerencie os entregadores do seu estabelecimento</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-novo" (click)="abrirModalNovo()">
+                    <span class="btn-icon">+</span>
+                    Novo Motoboy
+                </button>
+                <button class="btn-voltar" routerLink="/administracao">
+                    ← Voltar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Erro Global -->
+    @if (erro()) {
+        <div class="alert alert-error">
+            <span>⚠️ {{ erro() }}</span>
+            <button class="alert-close" (click)="erro.set(null)">✕</button>
+        </div>
+    }
+
+    <!-- Filtros -->
+    <div class="filtros-container">
+        <div class="filtros-grupo">
+            <button
+                class="filtro-btn"
+                [class.ativo]="filtroAtivos() === 'todos'"
+                (click)="filtroAtivos.set('todos')">
+                Todos
+            </button>
+            <button
+                class="filtro-btn"
+                [class.ativo]="filtroAtivos() === 'ativos'"
+                (click)="filtroAtivos.set('ativos')">
+                ✅ Ativos
+            </button>
+            <button
+                class="filtro-btn"
+                [class.ativo]="filtroAtivos() === 'inativos'"
+                (click)="filtroAtivos.set('inativos')">
+                ⏸️ Inativos
+            </button>
+        </div>
+        <button class="btn-atualizar" (click)="carregarMotoboys()">
+            🔄 Atualizar
+        </button>
+    </div>
+
+    <!-- Loading -->
+    @if (carregando()) {
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>Carregando motoboys...</p>
+        </div>
+    } @else {
+        <!-- Lista de Motoboys -->
+        @if (motoboysFiltrados().length > 0) {
+            <div class="motoboys-grid">
+                @for (motoboy of motoboysFiltrados(); track motoboy.id) {
+                    <div class="motoboy-card" [class.inativo]="!motoboy.ativo">
+                        <div class="card-header">
+                            <div class="motoboy-avatar">
+                                🏍️
+                            </div>
+                            <div class="motoboy-info">
+                                <h3 class="motoboy-nome">{{ motoboy.nome }}</h3>
+                                <span class="motoboy-telefone">📞 {{ formatarTelefone(motoboy.telefone) }}</span>
+                            </div>
+                            <span class="status-badge" [class.ativo]="motoboy.ativo" [class.inativo]="!motoboy.ativo">
+                                {{ motoboy.ativo ? 'Ativo' : 'Inativo' }}
+                            </span>
+                        </div>
+
+                        @if (motoboy.veiculo || motoboy.placa) {
+                            <div class="card-body">
+                                @if (motoboy.veiculo) {
+                                    <div class="info-item">
+                                        <span class="info-label">Veículo:</span>
+                                        <span class="info-valor">{{ motoboy.veiculo }}</span>
+                                    </div>
+                                }
+                                @if (motoboy.placa) {
+                                    <div class="info-item">
+                                        <span class="info-label">Placa:</span>
+                                        <span class="info-valor placa">{{ motoboy.placa }}</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="card-footer">
+                            <span class="data-cadastro">Desde {{ formatarData(motoboy.createdAt) }}</span>
+                            <div class="card-acoes">
+                                <button
+                                    class="btn-acao btn-toggle"
+                                    [class.desativar]="motoboy.ativo"
+                                    (click)="toggleAtivo(motoboy)"
+                                    [title]="motoboy.ativo ? 'Desativar' : 'Ativar'">
+                                    {{ motoboy.ativo ? '⏸️' : '▶️' }}
+                                </button>
+                                <button
+                                    class="btn-acao btn-editar"
+                                    (click)="abrirModalEditar(motoboy)"
+                                    title="Editar">
+                                    ✏️
+                                </button>
+                                <button
+                                    class="btn-acao btn-excluir"
+                                    (click)="confirmarExclusao(motoboy)"
+                                    title="Excluir">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        } @else {
+            <div class="empty-state">
+                <div class="empty-icon">🏍️</div>
+                <h2>Nenhum motoboy encontrado</h2>
+                <p>Adicione motoboys para gerenciar suas entregas</p>
+                <button class="btn-novo" (click)="abrirModalNovo()">
+                    <span class="btn-icon">+</span>
+                    Adicionar Motoboy
+                </button>
+            </div>
+        }
+    }
+
+    <!-- Modal de Criação/Edição -->
+    @if (mostrarModal()) {
+        <div class="modal-overlay" (click)="fecharModal()">
+            <div class="modal-content" (click)="$event.stopPropagation()">
+                <header class="modal-header">
+                    <h2>{{ modoEdicao() ? 'Editar Motoboy' : 'Novo Motoboy' }}</h2>
+                    <button class="modal-close" (click)="fecharModal()">✕</button>
+                </header>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nome">Nome *</label>
+                        <input
+                            type="text"
+                            id="nome"
+                            [ngModel]="formNome()"
+                            (ngModelChange)="formNome.set($event)"
+                            placeholder="Nome completo do motoboy"
+                            class="form-input"
+                            maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefone">Telefone *</label>
+                        <input
+                            type="tel"
+                            id="telefone"
+                            [ngModel]="formTelefone()"
+                            (ngModelChange)="formTelefone.set($event)"
+                            placeholder="(00) 00000-0000"
+                            class="form-input"
+                            maxlength="15">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="veiculo">Veículo</label>
+                            <input
+                                type="text"
+                                id="veiculo"
+                                [ngModel]="formVeiculo()"
+                                (ngModelChange)="formVeiculo.set($event)"
+                                placeholder="Ex: Honda CG 160"
+                                class="form-input"
+                                maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="placa">Placa</label>
+                            <input
+                                type="text"
+                                id="placa"
+                                [ngModel]="formPlaca()"
+                                (ngModelChange)="formPlaca.set($event)"
+                                placeholder="ABC-1234"
+                                class="form-input placa-input"
+                                maxlength="8">
+                        </div>
+                    </div>
+
+                    @if (modoEdicao()) {
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    [ngModel]="formAtivo()"
+                                    (ngModelChange)="formAtivo.set($event)">
+                                <span class="checkbox-text">Motoboy ativo</span>
+                            </label>
+                        </div>
+                    }
+                </div>
+
+                <footer class="modal-footer">
+                    <button class="btn-cancelar" (click)="fecharModal()">
+                        Cancelar
+                    </button>
+                    <button
+                        class="btn-salvar"
+                        (click)="salvar()"
+                        [disabled]="salvando()">
+                        @if (salvando()) {
+                            <span class="spinner-mini"></span> Salvando...
+                        } @else {
+                            {{ modoEdicao() ? 'Salvar Alterações' : 'Cadastrar' }}
+                        }
+                    </button>
+                </footer>
+            </div>
+        </div>
+    }
+
+    <!-- Modal de Confirmação de Exclusão -->
+    @if (mostrarConfirmacao()) {
+        <div class="modal-overlay" (click)="cancelarExclusao()">
+            <div class="modal-content modal-confirmacao" (click)="$event.stopPropagation()">
+                <div class="confirmacao-icon">⚠️</div>
+                <h2>Excluir Motoboy?</h2>
+                <p>Tem certeza que deseja excluir <strong>{{ motoboyExcluindo()?.nome }}</strong>?</p>
+                <p class="aviso">Esta ação não pode ser desfeita.</p>
+
+                <div class="confirmacao-acoes">
+                    <button class="btn-cancelar" (click)="cancelarExclusao()">
+                        Cancelar
+                    </button>
+                    <button
+                        class="btn-excluir-confirmar"
+                        (click)="excluir()"
+                        [disabled]="excluindo()">
+                        @if (excluindo()) {
+                            <span class="spinner-mini"></span> Excluindo...
+                        } @else {
+                            Sim, Excluir
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>

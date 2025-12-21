@@ -120,6 +120,12 @@ public class PedidoPendenteRepositoryAdapter implements PedidoPendenteRepository
                 .observacoes(dto.getObservacoes())
                 .valorTotal(dto.getValorTotal())
                 .dataHoraSolicitacao(dto.getDataHoraSolicitacao())
+                // Campos de delivery
+                .tipoPedido(dto.getTipoPedido() != null
+                        ? com.snackbar.pedidos.domain.entities.TipoPedido.valueOf(dto.getTipoPedido())
+                        : com.snackbar.pedidos.domain.entities.TipoPedido.MESA)
+                .enderecoEntrega(dto.getEnderecoEntrega())
+                .previsaoEntregaCliente(dto.getPrevisaoEntregaCliente())
                 .build();
 
         if (dto.getItens() != null) {
@@ -220,6 +226,10 @@ public class PedidoPendenteRepositoryAdapter implements PedidoPendenteRepository
                 .valorTotal(entity.getValorTotal())
                 .dataHoraSolicitacao(entity.getDataHoraSolicitacao())
                 .tempoEsperaSegundos(tempoEspera)
+                // Campos de delivery
+                .tipoPedido(entity.getTipoPedido() != null ? entity.getTipoPedido().name() : "MESA")
+                .enderecoEntrega(entity.getEnderecoEntrega())
+                .previsaoEntregaCliente(entity.getPrevisaoEntregaCliente())
                 .build();
     }
 }

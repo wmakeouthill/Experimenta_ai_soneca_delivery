@@ -428,6 +428,141 @@
   background: #b71c1c;
 }
 
+/* Estilos de Delivery/Retirada */
+.pedido-card.delivery {
+  border-left: 4px solid #FF6B35;
+}
+
+.pedido-card.retirada {
+  border-left: 4px solid #10B981;
+}
+
+.tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tipo-badge.delivery {
+  background: #FFF3EE;
+  color: #FF6B35;
+}
+
+.tipo-badge.retirada {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+.cliente-telefone {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.delivery-info,
+.retirada-info {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 3px solid #FF6B35;
+}
+
+.retirada-info {
+  border-left-color: #10B981;
+}
+
+.delivery-info h4,
+.retirada-info h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.delivery-info .endereco {
+  margin: 0;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.4;
+}
+
+.previsao-cliente {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* Modal de Aceitar Delivery */
+.modal-aceitar {
+  max-width: 500px;
+}
+
+.info-pedido {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.info-pedido p {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.info-pedido p:last-child {
+  margin-bottom: 0;
+}
+
+.loading-text {
+  color: #666;
+  font-style: italic;
+}
+
+.form-group select {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: white;
+}
+
+.form-group input[type="number"],
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.aviso {
+  color: #F59E0B;
+  font-size: 0.9rem;
+}
+
+.aviso a {
+  color: #FF6B35;
+  text-decoration: underline;
+}
+
+.btn-confirmar-aceitar {
+  padding: 0.7rem 1.2rem;
+  background: #10B981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-confirmar-aceitar:hover {
+  background: #059669;
+}
+
 /* Responsivo */
 @media (max-width: 600px) {
   .pedido-header {
