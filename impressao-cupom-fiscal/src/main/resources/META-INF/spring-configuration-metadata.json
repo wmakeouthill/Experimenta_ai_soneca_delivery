@@ -2,33 +2,33 @@
   "groups": [
     {
       "name": "impressao",
-      "type": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties",
-      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties"
+      "type": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties",
+      "sourceType": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties"
     },
     {
       "name": "impressao.epson",
-      "type": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig",
-      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig"
+      "type": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig",
+      "sourceType": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig"
     },
     {
       "name": "impressao.epson.tm-t20",
-      "type": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig$TmT20Config",
-      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig$TmT20Config"
+      "type": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig$TmT20Config",
+      "sourceType": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties$EpsonConfig$TmT20Config"
     },
     {
       "name": "impressao.daruma",
       "type": "java.util.Map",
-      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties"
+      "sourceType": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties"
     },
     {
       "name": "impressao.generica",
-      "type": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$GenericaConfig",
-      "sourceType": "com.snackbar.impressao.infrastructure.config.ImpressaoProperties$GenericaConfig"
+      "type": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties$GenericaConfig",
+      "sourceType": "com.sonecadelivery.impressao.infrastructure.config.ImpressaoProperties$GenericaConfig"
     },
     {
       "name": "estabelecimento",
-      "type": "com.snackbar.impressao.infrastructure.config.EstabelecimentoProperties",
-      "sourceType": "com.snackbar.impressao.infrastructure.config.EstabelecimentoProperties"
+      "type": "com.sonecadelivery.impressao.infrastructure.config.EstabelecimentoProperties",
+      "sourceType": "com.sonecadelivery.impressao.infrastructure.config.EstabelecimentoProperties"
     }
   ],
   "properties": [

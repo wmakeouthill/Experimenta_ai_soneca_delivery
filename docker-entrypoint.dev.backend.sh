@@ -139,6 +139,6 @@ echo ""
 # ✅ JVM otimizada para 8GB container: hot reload ultra rápido
 exec mvn spring-boot:run \
     -Dskip.frontend.build=true \
-    -Dspring-boot.run.jvmArguments="-Xmx3072m -Xms1536m -XX:+UseG1GC -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dspring.datasource.url=${DB_URL} -Dspring.datasource.username=${DB_USERNAME} -Dspring.datasource.password=${DB_PASSWORD} -Dserver.port=${SERVER_PORT:-8080} -Djwt.secret=${JWT_SECRET} -Djwt.expiration=${JWT_EXPIRATION:-86400} -Dlogging.level.com.snackbar=${LOG_LEVEL:-DEBUG} -Dspring.devtools.restart.enabled=true -Dspring.devtools.restart.poll-interval=500 -Dspring.devtools.restart.quiet-period=200" \
+    -Dspring-boot.run.jvmArguments="-Xmx3072m -Xms1536m -XX:+UseG1GC -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dspring.datasource.url=${DB_URL} -Dspring.datasource.username=${DB_USERNAME} -Dspring.datasource.password=${DB_PASSWORD} -Dserver.port=${SERVER_PORT:-8080} -Djwt.secret=${JWT_SECRET} -Djwt.expiration=${JWT_EXPIRATION:-86400} -Dlogging.level.com.sonecadelivery=${LOG_LEVEL:-DEBUG} -Dspring.devtools.restart.enabled=true -Dspring.devtools.restart.poll-interval=500 -Dspring.devtools.restart.quiet-period=200" \
     -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-dev} \
     -B

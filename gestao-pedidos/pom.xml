@@ -6,8 +6,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.snackbar</groupId>
-        <artifactId>snackbar-system</artifactId>
+        <groupId>com.sonecadelivery</groupId>
+        <artifactId>soneca-delivery-system</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
@@ -18,21 +18,21 @@
     <dependencies>
         <!-- Kernel Compartilhado -->
         <dependency>
-            <groupId>com.snackbar</groupId>
+            <groupId>com.sonecadelivery</groupId>
             <artifactId>kernel-compartilhado</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <!-- Módulo Gestão de Cardápio (para Preco e ProdutoDTO) -->
         <dependency>
-            <groupId>com.snackbar</groupId>
+            <groupId>com.sonecadelivery</groupId>
             <artifactId>gestao-cardapio</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <!-- Módulo Gestão de Clientes (para integração com clientes via mesa) -->
         <dependency>
-            <groupId>com.snackbar</groupId>
+            <groupId>com.sonecadelivery</groupId>
             <artifactId>gestao-clientes</artifactId>
             <version>${project.version}</version>
         </dependency>

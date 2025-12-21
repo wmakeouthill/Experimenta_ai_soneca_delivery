@@ -59,6 +59,6 @@ exec java -jar \
     -Dserver.port="${SERVER_PORT}" \
     -Djwt.secret="${JWT_SECRET}" \
     -Djwt.expiration="${JWT_EXPIRATION}" \
-    -Dlogging.level.com.snackbar="${LOG_LEVEL}" \
+    -Dlogging.level.com.sonecadelivery="${LOG_LEVEL}" \
     /app/app.jar
 

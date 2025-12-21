@@ -6,8 +6,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.snackbar</groupId>
-        <artifactId>snackbar-system</artifactId>
+        <groupId>com.sonecadelivery</groupId>
+        <artifactId>soneca-delivery-system</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 

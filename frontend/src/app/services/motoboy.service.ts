@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Motoboy {
@@ -39,7 +39,10 @@ export class MotoboyService {
      * Lista todos os motoboys.
      */
     listar(apenasAtivos: boolean = false): Observable<Motoboy[]> {
-        const params = apenasAtivos ? { apenasAtivos: 'true' } : {};
+        let params = new HttpParams();
+        if (apenasAtivos) {
+            params = params.set('apenasAtivos', 'true');
+        }
         return this.http.get<Motoboy[]>(this.apiUrl, { params });
     }
 

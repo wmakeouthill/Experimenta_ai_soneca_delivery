@@ -251,7 +251,7 @@
                                     }
                                     @if (item.adicionais && item.adicionais.length > 0) {
                                         <span class="item-adicionais">
-                                            + {{ item.adicionais.map(a => a.adicional.nome).join(', ') }}
+                                            + {{ formatarAdicionaisItem(item) }}
                                         </span>
                                     }
                                 </div>
@@ -471,7 +471,7 @@
                         </div>
                     } @else {
                         <div class="carrinho-itens">
-                            @for (item of itensCarrinho(); track $index; let i = $index) {
+                            @for (item of itensCarrinho(); track $index) {
                                 <div class="carrinho-item">
                                     <div class="item-main">
                                         <span class="item-nome">{{ item.produto.nome }}</span>
@@ -480,18 +480,18 @@
                                         }
                                         @if (item.adicionais && item.adicionais.length > 0) {
                                             <span class="item-adicionais">
-                                                + {{ item.adicionais.map(a => a.adicional.nome).join(', ') }}
+                                                + {{ formatarAdicionaisItem(item) }}
                                             </span>
                                         }
                                     </div>
                                     <div class="item-acoes">
                                         <div class="item-quantidade">
-                                            <button class="btn-qtd-mini" (click)="alterarQuantidadeCarrinho(i, -1)">−</button>
+                                            <button class="btn-qtd-mini" (click)="alterarQuantidadeCarrinho($index, -1)">−</button>
                                             <span>{{ item.quantidade }}</span>
-                                            <button class="btn-qtd-mini" (click)="alterarQuantidadeCarrinho(i, 1)">+</button>
+                                            <button class="btn-qtd-mini" (click)="alterarQuantidadeCarrinho($index, 1)">+</button>
                                         </div>
                                         <span class="item-preco">{{ formatarPreco(calcularPrecoItemCarrinho(item)) }}</span>
-                                        <button class="btn-remover" (click)="removerDoCarrinho(i)">🗑️</button>
+                                        <button class="btn-remover" (click)="removerDoCarrinho($index)">🗑️</button>
                                     </div>
                                 </div>
                             }

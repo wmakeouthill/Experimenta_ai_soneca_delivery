@@ -12,7 +12,7 @@ import {
 } from '../../services/delivery.service';
 import { Produto } from '../../services/produto.service';
 import { Categoria } from '../../services/categoria.service';
-import { AdicionalService, AdicionalProduto } from '../../services/adicional.service';
+import { AdicionalService, Adicional } from '../../services/adicional.service';
 
 type Etapa = 'identificacao' | 'cadastro' | 'cardapio' | 'carrinho' | 'checkout' | 'sucesso';
 
@@ -20,7 +20,7 @@ interface ItemCarrinho {
     produto: Produto;
     quantidade: number;
     observacao?: string;
-    adicionais?: { adicional: AdicionalProduto; quantidade: number }[];
+    adicionais?: { adicional: Adicional; quantidade: number }[];
 }
 
 type MeioPagamento = 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'VALE_REFEICAO' | 'DINHEIRO';
@@ -73,8 +73,8 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
     readonly quantidadeSelecionada = signal(1);
     readonly observacaoItem = signal('');
     readonly mostrarDetalhes = signal(false);
-    readonly adicionaisDisponiveis = signal<AdicionalProduto[]>([]);
-    readonly adicionaisSelecionados = signal<{ adicional: AdicionalProduto; quantidade: number }[]>([]);
+    readonly adicionaisDisponiveis = signal<Adicional[]>([]);
+    readonly adicionaisSelecionados = signal<{ adicional: Adicional; quantidade: number }[]>([]);
     readonly carregandoAdicionais = signal(false);
 
     // Pagamento
@@ -275,7 +275,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         this.quantidadeSelecionada.update(q => Math.max(1, q - 1));
     }
 
-    toggleAdicional(adicional: AdicionalProduto): void {
+    toggleAdicional(adicional: Adicional): void {
         const selecionados = this.adicionaisSelecionados();
         const index = selecionados.findIndex(a => a.adicional.id === adicional.id);
 
@@ -288,6 +288,17 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
 
     isAdicionalSelecionado(adicionalId: string): boolean {
         return this.adicionaisSelecionados().some(a => a.adicional.id === adicionalId);
+    }
+
+    /**
+     * Formata a lista de adicionais de um item do carrinho para exibição.
+     * Método auxiliar para evitar arrow functions no template.
+     */
+    formatarAdicionaisItem(item: ItemCarrinho): string {
+        if (!item.adicionais || item.adicionais.length === 0) {
+            return '';
+        }
+        return item.adicionais.map(a => a.adicional.nome).join(', ');
     }
 
     adicionarAoCarrinho(): void {
