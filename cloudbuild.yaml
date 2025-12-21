@@ -7,9 +7,9 @@ steps:
       - '-f'
       - 'Dockerfile.cloud-run'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/snackbar-app:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/soneca-delivery-app:$SHORT_SHA'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/snackbar-app:latest'
+      - 'gcr.io/$PROJECT_ID/soneca-delivery-app:latest'
       - '.'
     timeout: '1800s'
 
@@ -17,12 +17,12 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/snackbar-app:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/soneca-delivery-app:$SHORT_SHA'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/snackbar-app:latest'
+      - 'gcr.io/$PROJECT_ID/soneca-delivery-app:latest'
 
   # Deploy no Cloud Run com Cloud SQL
   # NOTA: Substitua CLOUD_SQL_CONNECTION_NAME pela sua instância Cloud SQL
@@ -32,9 +32,9 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'snackbar-app'
+      - 'soneca-delivery-app'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/snackbar-app:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/soneca-delivery-app:$SHORT_SHA'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -78,13 +78,13 @@ options:
 timeout: '2400s'
 
 images:
-  - 'gcr.io/$PROJECT_ID/snackbar-app:$SHORT_SHA'
-  - 'gcr.io/$PROJECT_ID/snackbar-app:latest'
+  - 'gcr.io/$PROJECT_ID/soneca-delivery-app:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/soneca-delivery-app:latest'
 
 # Variáveis de substituição (definir no Cloud Build)
 # Exemplo: gcloud builds submit --substitutions=_CLOUD_SQL_CONNECTION_NAME="proj:region:instance",_DB_NAME="snackbar_db",_DB_USERNAME="snackbar_user"
 substitutions:
   _CLOUD_SQL_CONNECTION_NAME: ''  # Formato: PROJECT_ID:REGION:INSTANCE_NAME
-  _DB_NAME: 'snackbar_db'
-  _DB_USERNAME: 'snackbar_user'
+  _DB_NAME: 'soneca_delivery_db'
+  _DB_USERNAME: 'soneca_delivery_user'
 

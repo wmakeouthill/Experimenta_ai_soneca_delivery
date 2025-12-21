@@ -89,8 +89,8 @@ gcloud auth configure-docker gcr.io --quiet
 # Build da imagem
 Write-Host ""
 Write-Host "[5/6] Fazendo build da imagem Docker..." -ForegroundColor Green
-$IMAGE_NAME = "gcr.io/$PROJECT_ID/snackbar-app:latest"
-$TIMESTAMP_TAG = "gcr.io/$PROJECT_ID/snackbar-app:$(Get-Date -Format 'yyyyMMddHHmmss')"
+$IMAGE_NAME = "gcr.io/$PROJECT_ID/soneca-delivery-app:latest"
+$TIMESTAMP_TAG = "gcr.io/$PROJECT_ID/soneca-delivery-app:$(Get-Date -Format 'yyyyMMddHHmmss')"
 
 Write-Host "   Usando Dockerfile.cloud-run" -ForegroundColor Yellow
 Write-Host "   Isso pode levar varios minutos..." -ForegroundColor Yellow

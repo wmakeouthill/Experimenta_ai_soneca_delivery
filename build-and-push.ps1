@@ -77,8 +77,8 @@ Write-Host "Configurando credenciais Docker..." -ForegroundColor Green
 gcloud auth configure-docker gcr.io --quiet
 
 # Nome da imagem
-$IMAGE_NAME = "gcr.io/$PROJECT_ID/snackbar-app:$TAG"
-$LATEST_TAG = "gcr.io/$PROJECT_ID/snackbar-app:latest"
+$IMAGE_NAME = "gcr.io/$PROJECT_ID/soneca-delivery-app:$TAG"
+$LATEST_TAG = "gcr.io/$PROJECT_ID/soneca-delivery-app:latest"
 
 # Build da imagem usando Dockerfile.cloud-run
 Write-Host "Fazendo build da imagem..." -ForegroundColor Blue

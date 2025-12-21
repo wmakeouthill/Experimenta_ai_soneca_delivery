@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.snackbar</groupId>
-    <artifactId>snackbar-system</artifactId>
+    <artifactId>soneca-delivery-system</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Snackbar System - Multi Module</name>
-    <description>Sistema de gestão para lanchonetes - Arquitetura modular com Clean Architecture</description>
+    <name>Soneca Delivery System - Multi Module</name>
+    <description>Sistema de delivery - Arquitetura modular com Clean Architecture</description>
 
     <properties>
         <java.version>17</java.version>

@@ -77,10 +77,10 @@ catch {
     Write-Host "`n3. Verifique se o usuário foi criado no banco:" -ForegroundColor Yellow
     $dbPassword = $env:DB_PASSWORD
     if ($dbPassword) {
-        Write-Host "   docker exec -it snackbar-mysql-dev mysql -u snackbar_user -p$dbPassword snackbar_db -e 'SELECT * FROM usuarios WHERE email = \"$testEmail\";'" -ForegroundColor Gray
+        Write-Host "   docker exec -it soneca-delivery-mysql-dev mysql -u soneca_delivery_user -p$dbPassword soneca_delivery_db -e 'SELECT * FROM usuarios WHERE email = \"$testEmail\";'" -ForegroundColor Gray
     }
     else {
-        Write-Host "   docker exec -it snackbar-mysql-dev mysql -u snackbar_user -p[SUA_SENHA] snackbar_db -e 'SELECT * FROM usuarios WHERE email = \"$testEmail\";'" -ForegroundColor Gray
+        Write-Host "   docker exec -it soneca-delivery-mysql-dev mysql -u soneca_delivery_user -p[SUA_SENHA] soneca_delivery_db -e 'SELECT * FROM usuarios WHERE email = \"$testEmail\";'" -ForegroundColor Gray
         Write-Host "   (Defina DB_PASSWORD como variável de ambiente ou substitua [SUA_SENHA])" -ForegroundColor Gray
     }
 }

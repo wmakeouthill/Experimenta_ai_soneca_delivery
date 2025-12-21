@@ -11,7 +11,7 @@ echo "⏳ Verificando conexão com MySQL..."
 MAX_RETRIES=30
 RETRY_COUNT=0
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if mysqladmin ping -h "${DB_HOST:-mysql-dev}" -u "${DB_USERNAME:-snackbar_user}" -p"${DB_PASSWORD:-dev_password}" --silent 2>/dev/null; then
+    if mysqladmin ping -h "${DB_HOST:-mysql-dev}" -u "${DB_USERNAME:-soneca_delivery_user}" -p"${DB_PASSWORD:-dev_password}" --silent 2>/dev/null; then
         echo "✅ MySQL está pronto para conexões!"
         break
     fi

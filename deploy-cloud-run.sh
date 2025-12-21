@@ -176,18 +176,18 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --quiet || echo -e "${YELLOW}⚠️  Permissão já configurada (continuando...)${NC}"
 
 # Solicitar informações do banco
-read -p "Digite o nome do banco de dados (default: snackbar_db): " DB_NAME
-DB_NAME=${DB_NAME:-snackbar_db}
+read -p "Digite o nome do banco de dados (default: soneca_delivery_db): " DB_NAME
+DB_NAME=${DB_NAME:-soneca_delivery_db}
 
-read -p "Digite o usuário do banco de dados (default: snackbar_user): " DB_USERNAME
-DB_USERNAME=${DB_USERNAME:-snackbar_user}
+read -p "Digite o usuário do banco de dados (default: soneca_delivery_user): " DB_USERNAME
+DB_USERNAME=${DB_USERNAME:-soneca_delivery_user}
 
 # Construir DB_URL para Cloud SQL
 # Formato: jdbc:mysql:///DATABASE_NAME?cloudSqlInstance=CONNECTION_NAME&socketFactory=com.google.cloud.sql.mysql.SocketFactory
 DB_URL="jdbc:mysql:///${DB_NAME}?cloudSqlInstance=${CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo"
 
 # Imagem a ser usada
-IMAGE_NAME="gcr.io/${PROJECT_ID}/snackbar-app:latest"
+IMAGE_NAME="gcr.io/${PROJECT_ID}/soneca-delivery-app:latest"
 
 # Verificar se a imagem existe
 echo ""
@@ -203,7 +203,7 @@ echo ""
 echo -e "${BLUE}🚀 Fazendo deploy no Cloud Run...${NC}"
 echo -e "${YELLOW}   Isso pode levar alguns minutos...${NC}"
 
-gcloud run deploy snackbar-app \
+gcloud run deploy soneca-delivery-app \
     --image "$IMAGE_NAME" \
     --region "$REGION" \
     --platform managed \
@@ -225,7 +225,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Obter URL do serviço
-SERVICE_URL=$(gcloud run services describe snackbar-app \
+SERVICE_URL=$(gcloud run services describe soneca-delivery-app \
     --region "$REGION" \
     --format="value(status.url)" \
     --project="$PROJECT_ID")
