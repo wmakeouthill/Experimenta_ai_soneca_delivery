@@ -1,6 +1,23 @@
 <div class="delivery-container"
     [class.auth-page]="etapaAtual() === 'boas-vindas' || etapaAtual() === 'login' || etapaAtual() === 'cadastro'">
 
+    <!-- PWA Install Banner -->
+    @if (mostrarBannerPwa()) {
+    <div class="pwa-install-banner">
+        <div class="pwa-content">
+            <img src="/assets/icons/icon-192x192.png" alt="App Icon" class="pwa-icon">
+            <div class="pwa-text">
+                <strong>Instalar App</strong>
+                <span>Adicione à tela inicial para acesso rápido</span>
+            </div>
+        </div>
+        <div class="pwa-actions">
+            <button class="btn-pwa-dismiss" (click)="fecharBannerPwa()">✕</button>
+            <button class="btn-pwa-install" (click)="instalarPwa()">Instalar</button>
+        </div>
+    </div>
+    }
+
     <!-- Erro Global -->
     @if (erro()) {
     <div class="error-toast">
@@ -308,9 +325,9 @@
         <!-- Destaques / Mais Populares -->
         <div class="inicio-section">
             <h2 class="section-titulo">🔥 Mais Populares</h2>
-            @if (produtos().length > 0) {
+            @if (inicio.produtosMaisPedidos().length > 0) {
             <div class="carrossel-horizontal">
-                @for (produto of produtos().slice(0, 5); track produto.id) {
+                @for (produto of inicio.produtosMaisPedidos(); track produto.id) {
                 <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
                     <button class="btn-favorito" [class.ativo]="favoritos.isFavorito(produto.id)"
                         (click)="toggleFavorito(produto.id, $event)"
@@ -337,6 +354,68 @@
             <p class="carrossel-vazio">Carregando produtos...</p>
             }
         </div>
+
+        <!-- Favoritos da Galera -->
+        @if (inicio.produtosMaisFavoritados().length > 0) {
+        <div class="inicio-section">
+            <h2 class="section-titulo">❤️ Favoritos da Galera</h2>
+            <div class="carrossel-horizontal">
+                @for (produto of inicio.produtosMaisFavoritados(); track produto.id) {
+                <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
+                    <button class="btn-favorito" [class.ativo]="favoritos.isFavorito(produto.id)"
+                        (click)="toggleFavorito(produto.id, $event)"
+                        [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                        {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
+                    </button>
+                    @if (produto.foto) {
+                    <div class="produto-imagem-mini">
+                        <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
+                    </div>
+                    } @else {
+                    <div class="produto-imagem-mini produto-sem-foto">
+                        <span>🍽️</span>
+                    </div>
+                    }
+                    <div class="produto-info-mini">
+                        <span class="produto-nome-mini">{{ produto.nome }}</span>
+                        <span class="produto-preco-mini">{{ produto.preco | currency:'BRL' }}</span>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+
+        <!-- Bem Avaliados -->
+        @if (inicio.produtosBemAvaliados().length > 0) {
+        <div class="inicio-section">
+            <h2 class="section-titulo">⭐ Bem Avaliados</h2>
+            <div class="carrossel-horizontal">
+                @for (produto of inicio.produtosBemAvaliados(); track produto.id) {
+                <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
+                    <button class="btn-favorito" [class.ativo]="favoritos.isFavorito(produto.id)"
+                        (click)="toggleFavorito(produto.id, $event)"
+                        [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                        {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
+                    </button>
+                    @if (produto.foto) {
+                    <div class="produto-imagem-mini">
+                        <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
+                    </div>
+                    } @else {
+                    <div class="produto-imagem-mini produto-sem-foto">
+                        <span>🍽️</span>
+                    </div>
+                    }
+                    <div class="produto-info-mini">
+                        <span class="produto-nome-mini">{{ produto.nome }}</span>
+                        <span class="produto-preco-mini">{{ produto.preco | currency:'BRL' }}</span>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
 
         <!-- Categorias Rápidas -->
         <div class="inicio-section">
@@ -821,5 +900,23 @@
             </button>
         </div>
     </div>
+    }
+    <!-- ========== CHAT IA ========== -->
+    @if (etapaAtual() !== 'boas-vindas' && etapaAtual() !== 'login' && etapaAtual() !== 'cadastro') {
+    <app-chat-ia-button-delivery [pulse]="(chatIA.mensagens().length <= 1) || !chatIA.isOpen()"
+        (onClick)="chatIA.toggleChat()">
+    </app-chat-ia-button-delivery>
+
+    <app-chat-ia-fullscreen-delivery [isOpen]="chatIA.isOpen()" [isLoading]="chatIA.isLoading()"
+        [inputText]="chatIA.inputText()" [canSend]="chatIA.canSend()" [mensagens]="chatIA.mensagens()"
+        [quantidadeItensCarrinho]="itensCarrinho().length" [historicoConversas]="chatIA.historicoConversas()"
+        [mostrarHistorico]="chatIA.mostrarHistorico()" [isHidden]="mostrarDetalhes() || mostrarCarrinho()"
+        (onClose)="chatIA.fecharChat()" (onSend)="chatIA.enviarMensagem()" (onInputChange)="chatIA.setInputText($event)"
+        (onNovaConversa)="chatIA.novaConversa()"
+        (onAdicionarProduto)="executarAcaoChat({tipo: 'ADICIONAR_CARRINHO', produtoId: $event.id, produtoNome: $event.nome, quantidade: 1, observacao: null})"
+        (onAbrirCarrinho)="navegarPara('carrinho'); chatIA.fecharChat()" (onToggleHistorico)="chatIA.toggleHistorico()"
+        (onCarregarConversa)="chatIA.carregarConversaDoHistorico($event)"
+        (onRemoverConversa)="chatIA.removerDoHistorico($event)">
+    </app-chat-ia-fullscreen-delivery>
     }
 </div>

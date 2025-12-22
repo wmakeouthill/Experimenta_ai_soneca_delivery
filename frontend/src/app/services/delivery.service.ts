@@ -109,6 +109,8 @@ export interface StatusPedidoDelivery {
     telefoneMotoboyAtribuido?: string;
     taxaEntrega?: number;
     previsaoEntrega?: string;
+    total?: number;
+    itens?: any[];
 }
 
 export interface ConfiguracaoDelivery {
@@ -175,4 +177,20 @@ export class DeliveryService {
         const noCache = `t=${Date.now()}`;
         return this.http.get<StatusPedidoDelivery>(`${this.publicApiUrl}/pedido/${pedidoId}/status?${noCache}`);
     }
+
+    /**
+     * Busca histórico de pedidos do cliente logado.
+     */
+    buscarHistoricoPedidos(pagina: number = 0, limite: number = 10): Observable<Page<StatusPedidoDelivery>> {
+        return this.http.get<Page<StatusPedidoDelivery>>(`/api/cliente/conta/pedidos?page=${pagina}&size=${limite}`);
+    }
+}
+
+export interface Page<T> {
+    content: T[];
+    totalPages: number;
+    totalElements: number;
+    number: number;
+    size: number; // Correção: size
+    // outros campos se necessário
 }

@@ -188,6 +188,10 @@ export function useFavoritos(
         }
     }
 
+    function limpar(): void {
+        favoritosIds.set(new Set());
+    }
+
     return {
         // Estado
         favoritosIds: favoritosIds.asReadonly(),
@@ -204,6 +208,7 @@ export function useFavoritos(
         adicionar,
         remover,
         toggle,
-        carregar
+        carregar,
+        limpar
     };
 }

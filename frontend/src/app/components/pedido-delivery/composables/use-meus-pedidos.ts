@@ -1,6 +1,7 @@
 import { signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DeliveryService, StatusPedidoDelivery } from '../../../services/delivery.service';
+import { firstValueFrom } from 'rxjs';
 
 const ITENS_POR_PAGINA = 10;
 
@@ -62,7 +63,7 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
     /**
      * Carrega a primeira página de pedidos.
      */
-    function carregar(): void {
+    async function carregar(): Promise<void> {
         const clienteId = clienteIdFn();
         if (!clienteId || !isBrowser) return;
 
@@ -70,13 +71,43 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
         erro.set(null);
         paginaAtual.set(0);
 
-        // TODO: Implementar chamada à API de delivery
-        // Por enquanto, simular lista vazia
-        setTimeout(() => {
-            carregando.set(false);
-            pedidos.set([]);
+        try {
+            const response: any = await firstValueFrom(deliveryService.buscarHistoricoPedidos(0, ITENS_POR_PAGINA));
+
+            let listaBruta: any[] = [];
+
+            if (Array.isArray(response)) {
+                listaBruta = response;
+                totalPaginas.set(1);
+                totalPedidos.set(response.length);
+            } else if (response && Array.isArray(response.content)) {
+                listaBruta = response.content;
+                totalPaginas.set(response.totalPages || 1);
+                totalPedidos.set(response.totalElements || listaBruta.length);
+            }
+
+            const listaMapeada: HistoricoPedidoDelivery[] = listaBruta.map(p => ({
+                id: p.pedidoId,
+                status: p.status,
+                total: p.total || 0,
+                tipoPedido: p.tipoPedido,
+                createdAt: p.dataHoraSolicitacao,
+                itens: p.itens ? p.itens.map((i: any) => ({
+                    produtoNome: i.nomeProduto || i.produto?.nome || 'Item',
+                    quantidade: i.quantidade,
+                    preco: i.precoUnitario || 0
+                })) : []
+            }));
+
+            pedidos.set(listaMapeada);
             carregado.set(true);
-        }, 500);
+        } catch (e) {
+            console.error('Erro ao carregar histórico de pedidos:', e);
+            erro.set('Não foi possível carregar seus pedidos.');
+            pedidos.set([]);
+        } finally {
+            carregando.set(false);
+        }
     }
 
     /**

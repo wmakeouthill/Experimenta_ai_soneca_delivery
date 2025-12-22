@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, ViewChild, ElementRef, AfterViewInit, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, ViewChild, ElementRef, AfterViewInit, AfterViewChecked, ChangeDetectorRef, effect, untracked } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, interval, switchMap, catchError, of, firstValueFrom } from 'rxjs';
@@ -18,6 +18,10 @@ import { CepService } from '../../services/cep.service';
 import { MenuPerfilComponent } from '../menu-perfil/menu-perfil.component';
 import { FooterNavComponent } from './components/footer-nav/footer-nav.component';
 import { useFavoritos, useInicio, useMeusPedidos } from './composables';
+import { useChatIA } from './composables/use-chat-ia';
+import { ChatIAButtonDeliveryComponent } from './components/chat-ia-button.component';
+import { ChatIAFullscreenDeliveryComponent } from './components/chat-ia-fullscreen.component';
+import { AcaoChat } from '../../services/chat-ia.service';
 
 type Etapa = 'boas-vindas' | 'login' | 'cadastro' | 'cardapio' | 'checkout' | 'sucesso';
 type AbaDelivery = 'inicio' | 'cardapio' | 'carrinho' | 'perfil';
@@ -51,7 +55,7 @@ interface FormCadastro {
 @Component({
     selector: 'app-pedido-delivery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MenuPerfilComponent, FooterNavComponent],
+    imports: [CommonModule, FormsModule, MenuPerfilComponent, FooterNavComponent, ChatIAButtonDeliveryComponent, ChatIAFullscreenDeliveryComponent],
     templateUrl: './pedido-delivery.component.html',
     styleUrls: [
         './styles/base.css',
@@ -75,6 +79,24 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     private readonly platformId = inject(PLATFORM_ID);
     private readonly isBrowser = isPlatformBrowser(this.platformId);
     private readonly destroy$ = new Subject<void>();
+
+    constructor() {
+        effect(() => {
+            const cliente = this.cliente();
+            untracked(() => {
+                if (cliente) {
+                    // Carregar dados dependentes do cliente
+                    this.favoritos.carregar();
+                    this.meusPedidos.carregar();
+                    this.inicio.carregar();
+                } else {
+                    // Limpar dados ao deslogar
+                    if (this.favoritos?.limpar) this.favoritos.limpar();
+                    if (this.meusPedidos?.limpar) this.meusPedidos.limpar();
+                }
+            });
+        }, { allowSignalWrites: true });
+    }
 
     protected readonly Math = Math;
 
@@ -144,6 +166,10 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     readonly adicionaisSelecionados = signal<{ adicional: Adicional; quantidade: number }[]>([]);
     readonly carregandoAdicionais = signal(false);
 
+    // PWA
+    readonly mostrarBannerPwa = signal(false);
+    private deferredPrompt: any = null;
+
     // Pagamento
     readonly meioPagamentoSelecionado = signal<MeioPagamento | null>(null);
 
@@ -166,11 +192,17 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     readonly inicio = useInicio(
         () => this.cliente()?.id,
-        () => this.favoritos.produtosFavoritos()
+        () => this.favoritos.produtosFavoritos(),
+        () => this.produtos()
     );
 
     readonly meusPedidos = useMeusPedidos(
         () => this.cliente()?.id
+    );
+
+    readonly chatIA = useChatIA(
+        () => this.cliente()?.id,
+        (acao: AcaoChat) => this.executarAcaoChat(acao)
     );
 
     // ========== COMPUTED ==========
@@ -246,10 +278,51 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     readonly enderecoObrigatorio = computed(() => this.tipoPedido() === 'DELIVERY');
 
+    executarAcaoChat(acao: AcaoChat): void {
+        console.log('Executando ação do chat:', acao);
+
+        switch (acao.tipo) {
+            case 'ADICIONAR_CARRINHO':
+            case 'VER_DETALHES':
+                if (acao.produtoId) {
+                    const produto = this.produtos().find(p => p.id === acao.produtoId);
+                    if (produto) {
+                        this.abrirDetalhesProduto(produto);
+                        this.chatIA.fecharChat();
+                    }
+                }
+                break;
+
+            case 'VER_CARRINHO':
+                this.navegarPara('carrinho');
+                this.chatIA.fecharChat();
+                break;
+
+            case 'FINALIZAR_PEDIDO':
+                if (this.itensCarrinho().length > 0) {
+                    this.irParaCheckout();
+                    this.chatIA.fecharChat();
+                } else {
+                    this.navegarPara('carrinho');
+                    this.chatIA.fecharChat();
+                }
+                break;
+        }
+    }
+
     // ========== LIFECYCLE ==========
 
     ngOnInit(): void {
         if (this.isBrowser) {
+            this.chatIA.inicializar(); // Inicializa o chat e histórico
+
+            // PWA Install Prompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                this.deferredPrompt = e;
+                this.mostrarBannerPwa.set(true);
+            });
+
             // Verificar se já está logado
             const clienteLogado = this.clienteAuthService.clienteLogado;
             if (clienteLogado) {
@@ -643,6 +716,23 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.favoritos.toggle(produtoId);
     }
 
+    // ========== PWA ==========
+
+    async instalarPwa(): Promise<void> {
+        if (this.deferredPrompt) {
+            this.deferredPrompt.prompt();
+            const { outcome } = await this.deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                this.deferredPrompt = null;
+            }
+            this.mostrarBannerPwa.set(false);
+        }
+    }
+
+    fecharBannerPwa(): void {
+        this.mostrarBannerPwa.set(false);
+    }
+
     abrirMenuPerfil(): void {
         this.navegarPara('perfil');
     }
@@ -676,6 +766,8 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                 this.categorias.set(cardapio.categorias);
                 this.produtos.set(cardapio.produtos.filter(p => p.disponivel));
                 this.carregando.set(false);
+                // Carregar destaques da home (agora que temos produtos para fallback)
+                this.inicio.carregar();
             },
             error: () => {
                 this.erro.set('Erro ao carregar cardápio. Tente novamente.');
