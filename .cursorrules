@@ -1,0 +1,908 @@
+# 🎯 Diretrizes de Desenvolvimento (Cursor Rules)
+## Arquitetura Limpa • SOLID • DDD • DRY • ACID • Clean Code • Clean Architecture
+
+> **Este documento serve como ponto de entrada para os padrões de desenvolvimento.**
+> As regras específicas estão organizadas em arquivos dedicados:
+
+| Arquivo | Escopo | Descrição |
+|---------|--------|-----------|
+| `.cursorrules` | Geral | Princípios fundamentais, OWASP Top 10, visão geral (este arquivo) |
+| `.cursorrules-frontend` | Angular 20+ Zoneless | Regras específicas frontend + Segurança Angular (CSP, XSS, XSRF) |
+| `.cursorrules-backend` | Java 21/25 LTS / Spring Boot 3.5.x | Regras específicas backend + Spring Security 6.x (OAuth2, JWT, RBAC) |
+
+---
+
+## 📋 VERSÕES LTS ESTÁVEIS OBRIGATÓRIAS
+
+### Stack Backend (Java)
+
+| Tecnologia | Versão LTS | Observação |
+|------------|------------|------------|
+| Java | **21 LTS** (obrigatório) / **25 LTS** (preferido quando disponível) | Java 25 LTS previsto para setembro 2025 |
+| Spring Boot | **3.4.x** / **3.5.x** (quando disponível) | Spring Boot 3.5 previsto para maio 2025 |
+| Spring Framework | **6.2.x** | Compatível com Spring Boot 3.4/3.5 |
+| Maven | **3.9.x** | Build tool padrão |
+| Gradle | **8.x** | Alternativa ao Maven |
+| MapStruct | **1.6.x** | Mapeamento de objetos (preferido sobre manual) |
+| Liquibase | **4.x** | Migrações de banco de dados |
+| JUnit | **5.11+** | Framework de testes |
+| Mockito | **5.x** | Framework de mocking |
+
+### Stack Frontend (Angular)
+
+| Tecnologia | Versão | Observação |
+|------------|--------|------------|
+| Angular | **20.x+** | Zoneless estável, standalone por padrão |
+| TypeScript | **5.7+** | Strict mode obrigatório |
+| Node.js | **22 LTS** | Toolchain e runtime |
+| RxJS | **7.8+** | Uso reduzido (preferir Signals) |
+| ESLint | **9.x** | Flat config obrigatório |
+
+---
+
+## ⚠️ PRINCÍPIOS FUNDAMENTAIS INEGOCIÁVEIS
+
+### 1. Clean Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       INFRASTRUCTURE                             │
+│          Frameworks, UI, DB, APIs Externas, Config               │
+│                                                                  │
+│    ┌───────────────────────────────────────────────────────┐    │
+│    │                    APPLICATION                         │    │
+│    │             Use Cases, DTOs, Ports, Services           │    │
+│    │                                                        │    │
+│    │    ┌───────────────────────────────────────────┐      │    │
+│    │    │               DOMAIN                       │      │    │
+│    │    │     Entidades, Value Objects,              │      │    │
+│    │    │     Regras de Negócio, Domain Services     │      │    │
+│    │    │     ❌ ZERO dependências externas          │      │    │
+│    │    └───────────────────────────────────────────┘      │    │
+│    │                                                        │    │
+│    └───────────────────────────────────────────────────────┘    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Regra de Dependência:** `Infrastructure → Application → Domain`
+
+❌ **NUNCA** inverta essa ordem!
+✅ **Camadas externas DEPENDEM de camadas internas**
+❌ **Camadas internas NUNCA dependem de camadas externas**
+
+| Camada | Pode Depender De | NÃO Pode Depender De |
+|--------|------------------|----------------------|
+| Domain | Nada (é o núcleo) | Application, Infrastructure |
+| Application | Domain | Infrastructure |
+| Infrastructure | Application, Domain | - |
+
+---
+
+### 2. SOLID (Todos Obrigatórios)
+
+| Princípio | Aplicação | Regra |
+|-----------|-----------|-------|
+| **S**ingle Responsibility | Classes/Componentes | Uma classe = uma responsabilidade única |
+| **O**pen/Closed | Extensibilidade | Aberto para extensão, fechado para modificação |
+| **L**iskov Substitution | Hierarquias | Subtipos devem ser substituíveis pelo tipo base |
+| **I**nterface Segregation | Interfaces | Interfaces pequenas, específicas e coesas |
+| **D**ependency Inversion | Acoplamento | Dependa de abstrações, não de implementações |
+
+#### Exemplos SOLID
+
+```java
+// ✅ Single Responsibility - Uma classe, uma responsabilidade
+public class CriarPedidoUseCase { /* apenas criação */ }
+public class CancelarPedidoUseCase { /* apenas cancelamento */ }
+
+// ✅ Open/Closed - Extensível via interface
+public interface ValidadorPedido { void validar(Pedido pedido); }
+public class ValidadorPreco implements ValidadorPedido { }
+public class ValidadorEstoque implements ValidadorPedido { }
+
+// ✅ Interface Segregation - Interfaces pequenas
+public interface Listavel<T> { List<T> listar(); }
+public interface Persistivel<T> { T salvar(T entity); }
+
+// ✅ Dependency Inversion - Depende de abstrações
+@RequiredArgsConstructor
+public class PedidoService {
+    private final PedidoRepositoryPort repository; // Interface, não implementação
+}
+```
+
+---
+
+### 3. DRY (Don't Repeat Yourself)
+
+#### Regras Obrigatórias
+
+- ✅ **SEMPRE** verificar antes de criar:
+  - Backend → bibliotecas comuns, módulos compartilhados, utils
+  - Frontend → `shared/`, `utils/`, composables existentes
+- ✅ **SEMPRE** centralizar conversões e mapeamentos:
+  - Backend → Mappers via DI (Spring) + JacksonConfig / MapStruct
+  - Frontend → Composables, Adapters, Facades reutilizáveis
+- ✅ **SEMPRE** reutilizar antes de duplicar
+- ❌ **NUNCA** duplicar código existente
+- ❌ **NUNCA** criar utilitários sem verificar se já existem
+
+#### Reutilização de Mappers (JacksonConfig / Factories)
+
+**REGRAS CRÍTICAS PARA EVITAR MEMORY LEAK:**
+
+- ❌ **PROIBIDO** `new ObjectMapper()` espalhado no código
+- ❌ **PROIBIDO** singleton manual/registry global (`getInstance()`, `static final` com cache)
+- ✅ `ObjectMapper` deve ser configurado em **um único ponto** (JacksonConfig) e **injetado**
+- ✅ Mappers devem ser **stateless** e providos por **DI** (singleton controlado pelo container)
+- ✅ Para variações, expor via **factories** (ex.: `ObjectReaderFactory`, `ObjectWriterFactory`)
+
+```java
+// ✅ CORRETO - Injeção via DI
+@Configuration
+public class JacksonConfig {
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        return JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .build();
+    }
+}
+
+@Service
+@RequiredArgsConstructor
+public class MeuService {
+    private final ObjectMapper objectMapper; // Injetado, singleton do Spring
+}
+
+// ❌ ERRADO - Singleton manual
+public class JsonUtil {
+    private static final ObjectMapper MAPPER = new ObjectMapper(); // Memory leak!
+    public static ObjectMapper getInstance() { return MAPPER; }
+}
+```
+
+---
+
+### 4. Clean Code
+
+#### Limites de Tamanho
+
+| Escopo | Limite Recomendado | Limite Máximo |
+|--------|-------------------|---------------|
+| Classe/Componente | 150 linhas | 300 linhas |
+| Método/Função | 15 linhas | 20 linhas |
+| Parâmetros | 3 parâmetros | 5 parâmetros |
+| Níveis de indentação | 2 níveis | 3 níveis |
+
+#### Nomenclatura Universal
+
+| Tipo | Padrão | Exemplo |
+|------|--------|---------|
+| Classes | PascalCase | `ProdutoService`, `CriarPedidoUseCase` |
+| Interfaces | PascalCase (sem prefixo I) | `PedidoRepository`, `ValidadorPedido` |
+| Métodos/Funções | camelCase (verbos) | `buscarProduto()`, `salvarCliente()` |
+| Variáveis | camelCase | `produtoSelecionado`, `listaItens` |
+| Constantes | UPPER_SNAKE_CASE | `MAX_UPLOAD_SIZE`, `API_URL` |
+| Arquivos Angular | kebab-case | `produto-lista.component.ts` |
+| Pacotes Java | lowercase | `br.com.empresa.modulo` |
+
+#### Proibições Absolutas de Nomenclatura
+
+```
+❌ Abreviações: prod, cat, svc, usr, btn, msg
+❌ Nomes genéricos: data, info, util, helper, manager, handler
+❌ Código comentado no repositório
+❌ Catch vazio ou genérico demais
+❌ Variáveis com nomes de uma letra (exceto loops: i, j, k)
+❌ Prefixo I para interfaces (IRepository)
+❌ Sufixo Impl desnecessário (RepositoryImpl quando há só uma impl)
+```
+
+---
+
+### 5. DDD (Domain-Driven Design)
+
+#### Building Blocks Obrigatórios
+
+| Bloco | Descrição | Localização |
+|-------|-----------|-------------|
+| **Entities** | Objetos com identidade única e ciclo de vida | `domain/entities/` |
+| **Value Objects** | Objetos imutáveis sem identidade | `domain/valueobjects/` |
+| **Aggregates** | Clusters de entidades com raiz | `domain/aggregates/` |
+| **Domain Services** | Lógica que não pertence a uma entidade | `domain/services/` |
+| **Domain Events** | Eventos de domínio | `domain/events/` |
+| **Repositories** | Interfaces de persistência | `domain/repositories/` ou `application/ports/` |
+
+#### Regras DDD
+
+- ✅ **Entidades Ricas**: Contêm comportamento, não apenas dados
+- ✅ **Value Objects Imutáveis**: Validação no construtor, sem setters
+- ✅ **Use Cases na Application**: Orquestração, não no controller
+- ✅ **Ports/Adapters**: Para integrações externas
+- ❌ **Entidades Anêmicas**: Apenas getters/setters (proibido)
+
+```java
+// ✅ Entidade Rica
+public class Pedido {
+    private StatusPedido status;
+    
+    public void confirmar() {
+        if (this.status != StatusPedido.PENDENTE) {
+            throw new EstadoInvalidoException("Pedido não pode ser confirmado");
+        }
+        this.status = StatusPedido.CONFIRMADO;
+    }
+    
+    public BigDecimal calcularTotal() {
+        return itens.stream()
+            .map(ItemPedido::getSubtotal)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+}
+
+// ❌ Entidade Anêmica (PROIBIDO)
+public class Pedido {
+    private StatusPedido status;
+    public void setStatus(StatusPedido status) { this.status = status; }
+}
+```
+
+---
+
+### 6. ACID (Persistência e Transações)
+
+| Propriedade | Descrição | Regra |
+|-------------|-----------|-------|
+| **A**tomicidade | Operações são tudo-ou-nada | Mudanças relacionadas na mesma transação |
+| **C**onsistência | Dados sempre em estado válido | Invariantes e constraints respeitadas |
+| **I**solamento | Transações independentes | Escolha consciente do nível; evitar suposições |
+| **D**urabilidade | Dados persistidos são permanentes | Commit + migrações versionadas (Liquibase/Flyway) |
+
+#### Regras Práticas ACID
+
+- ✅ Use transações no nível do **use case/application service**
+- ✅ Evite transações longas (I/O externo dentro de transação)
+- ✅ Para integração confiável (mensageria/eventos), avalie padrão **Outbox**
+- ✅ Valide invariantes no domínio E reforce com constraints no banco
+- ✅ Use **Idempotency Keys** para operações que podem ser repetidas
+- ✅ Considere **Event Sourcing** para auditoria completa de mudanças
+- ✅ Isole operações de leitura (`@Transactional(readOnly = true)`)
+- ❌ NUNCA faça chamadas HTTP/externas dentro de transações ativas
+- ❌ NUNCA misture transações de diferentes agregados sem coordenação
+
+#### Padrões de Confiabilidade
+
+```java
+// ✅ Outbox Pattern - Garantia de entrega de eventos
+@Entity
+@Table(name = "outbox_events")
+public class OutboxEvent {
+    @Id
+    private UUID id;
+    private String aggregateType;
+    private String aggregateId;
+    private String eventType;
+    private String payload;
+    private LocalDateTime createdAt;
+    private boolean processed;
+}
+
+// ✅ Idempotency Key - Evitar processamento duplicado
+@Service
+@RequiredArgsConstructor
+public class ProcessarPagamentoUseCase {
+    private final IdempotencyKeyRepository idempotencyRepo;
+    
+    @Transactional
+    public ResultadoPagamento executar(String idempotencyKey, PagamentoRequest request) {
+        // Verifica se já foi processado
+        var existente = idempotencyRepo.findByKey(idempotencyKey);
+        if (existente.isPresent()) {
+            return existente.get().getResultado();
+        }
+        
+        // Processa e salva com idempotency key
+        var resultado = processarPagamento(request);
+        idempotencyRepo.save(new IdempotencyRecord(idempotencyKey, resultado));
+        return resultado;
+    }
+}
+```
+
+---
+
+### 7. Design Patterns (Usar Quando Aplicável)
+
+#### Backend
+
+| Pattern | Quando Usar | Exemplo |
+|---------|------------|---------|
+| **Factory** | Criação complexa de objetos | `PedidoFactory.criarComItens()` |
+| **Strategy** | Algoritmos intercambiáveis | `ValidadorStrategy`, `CalculoFreteStrategy` |
+| **Adapter** | Integração com sistemas externos | `PagamentoGatewayAdapter` |
+| **Facade** | Simplificar subsistemas complexos | `RelatorioFacade` |
+| **Repository** | Abstração de persistência | `PedidoRepository` (interface no domain) |
+| **Specification** | Regras de negócio combináveis | `PedidoAtivoSpecification` |
+| **Builder** | Construção de objetos com muitos parâmetros | `Pedido.builder().comCliente()...` |
+| **Decorator** | Adicionar comportamento dinamicamente | `LoggingServiceDecorator` |
+| **Template Method** | Algoritmo com passos customizáveis | `AbstractExportador` |
+| **Observer** | Notificação de eventos de domínio | `DomainEventPublisher` |
+| **Chain of Responsibility** | Pipeline de validações | `ValidadorChain` |
+
+#### Frontend
+
+| Pattern | Quando Usar | Exemplo |
+|---------|------------|---------|
+| **Facade** | Simplificar APIs complexas | `AuthFacade` |
+| **Adapter** | Transformar dados do backend | `ProdutoAdapter` |
+| **Container/Presentational** | Separar lógica de apresentação | Smart/Dumb Components |
+| **Composition (Composables)** | Reutilizar lógica entre componentes | `use-paginacao.ts` |
+| **Observer** | Comunicação reativa (Signals/RxJS) | `signal()`, `effect()` |
+| **State Machine** | Estados complexos de UI | `useStateMachine()` |
+| **Mediator** | Comunicação entre componentes desacoplados | `EventBusService` |
+
+#### Exemplos de Patterns
+
+```java
+// ✅ Strategy Pattern - Algoritmos intercambiáveis
+public interface CalculoFreteStrategy {
+    BigDecimal calcular(Pedido pedido);
+}
+
+@Component
+public class FreteCorreiosStrategy implements CalculoFreteStrategy {
+    public BigDecimal calcular(Pedido pedido) { /* implementação */ }
+}
+
+@Component  
+public class FreteTransportadoraStrategy implements CalculoFreteStrategy {
+    public BigDecimal calcular(Pedido pedido) { /* implementação */ }
+}
+
+// ✅ Specification Pattern - Regras combináveis
+public interface Specification<T> {
+    boolean isSatisfiedBy(T entity);
+    Specification<T> and(Specification<T> other);
+    Specification<T> or(Specification<T> other);
+}
+
+public class PedidoAtivoSpecification implements Specification<Pedido> {
+    public boolean isSatisfiedBy(Pedido pedido) {
+        return pedido.getStatus() == StatusPedido.ATIVO;
+    }
+}
+
+// ✅ Decorator Pattern
+public class LoggingPedidoService implements PedidoServicePort {
+    private final PedidoServicePort delegate;
+    private final Logger logger;
+    
+    public Pedido criar(CriarPedidoRequest request) {
+        logger.info("Criando pedido: {}", request);
+        var pedido = delegate.criar(request);
+        logger.info("Pedido criado: {}", pedido.getId());
+        return pedido;
+    }
+}
+```
+
+```typescript
+// ✅ Composable Pattern (Angular)
+// composables/use-paginacao.ts
+export function usePaginacao<T>(
+  fetchFn: (page: number) => Observable<ResultadoPaginado<T>>
+) {
+  const dados = signal<T[]>([]);
+  const paginaAtual = signal(1);
+  const total = signal(0);
+  const carregando = signal(false);
+
+  const carregar = (page: number) => {
+    carregando.set(true);
+    fetchFn(page).subscribe({
+      next: (resultado) => {
+        dados.set(resultado.dados);
+        total.set(resultado.total);
+        paginaAtual.set(page);
+        carregando.set(false);
+      },
+      error: () => carregando.set(false)
+    });
+  };
+
+  return { dados, paginaAtual, total, carregando, carregar };
+}
+
+// Uso no componente
+const paginacao = usePaginacao((page) => this.produtoService.listar(page));
+```
+
+---
+
+## 🏗️ ARQUITETURA UNIFICADA
+
+### Backend (DDD + Clean Architecture)
+
+```
+src/main/java/br/com/empresa/{modulo}/
+├── domain/                     # NÚCLEO - Regras de negócio puras
+│   ├── entities/               # Entidades com comportamento
+│   ├── valueobjects/           # Objetos de valor imutáveis
+│   ├── services/               # Serviços de domínio
+│   ├── repositories/           # Interfaces de repositório
+│   ├── events/                 # Eventos de domínio
+│   └── exceptions/             # Exceções de domínio
+│
+├── application/                # CASOS DE USO - Orquestração
+│   ├── usecases/               # Casos de uso específicos
+│   ├── dtos/                   # Data Transfer Objects
+│   ├── ports/                  # Interfaces (in/out)
+│   │   ├── in/                 # Portas de entrada
+│   │   └── out/                # Portas de saída
+│   └── services/               # Serviços de aplicação
+│
+├── infrastructure/             # ADAPTADORES - Implementações técnicas
+│   ├── persistence/            # JPA entities, repositories
+│   │   ├── entities/           # Entidades JPA
+│   │   ├── repositories/       # Implementações JPA
+│   │   └── mappers/            # Mappers Domain ↔ Entity
+│   ├── web/                    # Controllers, handlers
+│   │   ├── controllers/        # REST Controllers
+│   │   └── handlers/           # Exception handlers
+│   ├── external/               # Clientes externos (Feign, REST)
+│   ├── messaging/              # JMS, Kafka, RabbitMQ
+│   └── config/                 # Configurações Spring
+│
+└── interfaces/                 # INTERFACE - Contratos de API (opcional)
+    └── rest/
+        └── v1/                 # Versionamento de API
+            └── *API.java       # Interfaces OpenAPI
+```
+
+### Frontend (Clean Architecture Adaptada)
+
+```
+src/app/
+├── core/                       # Singleton services, guards, interceptors
+│   ├── guards/
+│   ├── interceptors/
+│   └── services/
+│
+├── shared/                     # Módulo compartilhado
+│   ├── components/             # Componentes reutilizáveis (Dumb)
+│   ├── directives/
+│   ├── pipes/
+│   ├── models/                 # Interfaces compartilhadas
+│   └── utils/                  # Utilitários puros
+│
+├── features/                   # Módulos de feature (por domínio)
+│   └── {feature}/
+│       ├── pages/              # Smart Components (containers)
+│       ├── components/         # Componentes da feature
+│       ├── services/           # Serviços HTTP
+│       ├── models/             # Interfaces/Types da feature
+│       ├── composables/        # Lógica reutilizável (use-*.ts)
+│       └── {feature}.routes.ts # Rotas da feature
+│
+├── app.component.ts
+├── app.config.ts
+└── app.routes.ts
+```
+
+---
+
+## ✅ CHECKLIST UNIVERSAL
+
+### Antes de Iniciar uma Feature
+
+- [ ] Li e entendi a arquitetura do módulo
+- [ ] Verifiquei se existe código similar que pode ser reutilizado
+- [ ] Defini as camadas onde o código será criado
+- [ ] Planejei a divisão de responsabilidades (SOLID)
+- [ ] Identifiquei entidades, value objects e use cases necessários
+
+### Antes de Commitar
+
+#### Arquitetura
+
+- [ ] Clean Architecture respeitada (dependências corretas)
+- [ ] Domain sem dependências de frameworks
+- [ ] Responsabilidade única por classe/componente (S de SOLID)
+- [ ] Interfaces segregadas corretamente (I de SOLID)
+- [ ] Dependências invertidas (D de SOLID)
+
+#### Qualidade de Código
+
+- [ ] Arquivos com menos de 300 linhas
+- [ ] Funções/métodos com menos de 20 linhas
+- [ ] Nomes descritivos e autoexplicativos
+- [ ] Sem código duplicado (DRY)
+- [ ] Sem magic numbers/strings (usar constantes)
+- [ ] Sem código comentado
+
+#### Frontend (Angular 20+ Zoneless)
+
+- [ ] Usando `inject()`, não constructor injection
+- [ ] Usando `signal()`, `computed()`, `input()`, `output()`
+- [ ] Usando `@if`, `@for`, `@switch`, `@defer` nos templates
+- [ ] Standalone components apenas
+- [ ] ChangeDetection.OnPush habilitado (obrigatório para Zoneless)
+- [ ] `provideExperimentalZonelessChangeDetection()` configurado (quando zoneless)
+- [ ] `provideHttpClient(withInterceptors([...]))` para HTTP
+- [ ] Sem `zone.js` no polyfills (modo zoneless)
+- [ ] `effect()` para side effects reativos
+- [ ] Signals para gerenciamento de estado local
+
+#### Backend (Java 21+ / Spring Boot 3.4+)
+
+- [ ] Usando `@RequiredArgsConstructor` (Lombok)
+- [ ] Usando mappers/factories via DI (JacksonConfig / MapStruct), sem singleton manual
+- [ ] Entidades ricas (com comportamento)
+- [ ] Value Objects como **Java Records** (imutáveis por padrão)
+- [ ] Exceções específicas e tratadas
+- [ ] Optional ao invés de null
+- [ ] Pattern Matching (`instanceof`, `switch expressions`)
+- [ ] Sealed classes para hierarquias fechadas
+- [ ] Virtual Threads para I/O blocking (Spring Boot 3.2+)
+- [ ] `@Transactional(readOnly = true)` para queries
+
+#### Testes
+
+- [ ] Testes unitários para lógica de negócio
+- [ ] Testes de casos de erro
+- [ ] Padrão AAA (Arrange, Act, Assert)
+- [ ] Mocks para dependências externas
+
+---
+
+## 🚫 ANTI-PATTERNS UNIVERSAIS (PROIBIDOS)
+
+### Código
+
+1. ❌ **God Classes** - Classes fazendo muitas coisas
+2. ❌ **Entidades Anêmicas** - Apenas getters/setters, sem comportamento
+3. ❌ **Código Duplicado** - Violar DRY
+4. ❌ **Nomes Genéricos** - `data`, `info`, `util`, `helper`
+5. ❌ **Abreviações** - `prod`, `cat`, `svc`, `usr`
+6. ❌ **Magic Numbers/Strings** - Valores hardcoded sem constantes
+7. ❌ **Catch Vazio** - Engolir exceções
+8. ❌ **Retornar null** - Usar Optional
+
+### Arquitetura
+
+9. ❌ **Dependências Invertidas** - Domain dependendo de Infrastructure
+10. ❌ **Lógica no Controller** - Regras de negócio na camada web
+11. ❌ **Framework no Domain** - JPA, Spring annotations no domínio
+12. ❌ **Use Cases Gigantes** - Casos de uso fazendo muitas coisas
+13. ❌ **Singleton Manual** - `getInstance()`, static cache
+
+### Frontend Específico
+
+14. ❌ **Sintaxe Antiga** - `*ngIf`, `*ngFor`, `@Input()`, `@Output()`
+15. ❌ **Constructor Injection** - Ao invés de `inject()`
+16. ❌ **BehaviorSubject para Estado** - Ao invés de Signals
+17. ❌ **NgModules** - Ao invés de Standalone Components
+18. ❌ **Zone.js em modo Zoneless** - Remover do polyfills
+19. ❌ **HttpClientModule** - Usar `provideHttpClient()` standalone
+20. ❌ **Subscribe manual sem cleanup** - Sempre usar `takeUntilDestroyed()` ou `async` pipe
+
+### Backend Específico
+
+21. ❌ **Construtor Manual** - Ao invés de `@RequiredArgsConstructor`
+22. ❌ **new ObjectMapper()** - Ao invés de injeção via JacksonConfig
+23. ❌ **SQL no Controller** - Queries diretamente na camada web
+24. ❌ **Mappers manuais repetidos** - Use MapStruct
+25. ❌ **Classes para Value Objects** - Use Java Records
+26. ❌ **null returns** - Use Optional
+27. ❌ **Checked exceptions em domain** - Use RuntimeException específicas
+28. ❌ **Thread.sleep()** - Use Virtual Threads ou scheduling
+29. ❌ **Chamadas externas em transação** - Extraia para fora da @Transactional
+
+---
+
+## � SEGURANÇA (OWASP TOP 10 - 2024)
+
+> **Segurança é responsabilidade de TODOS. Nunca assuma que está seguro.**
+> Consulte `.cursorrules-backend` e `.cursorrules-frontend` para regras específicas.
+
+### Princípios Fundamentais
+
+| Princípio | Descrição | Aplicação |
+|-----------|-----------|----------|
+| **Defense in Depth** | Múltiplas camadas de proteção | Validação em todas as camadas |
+| **Least Privilege** | Mínimo de permissões necessárias | Roles específicos, não admin para tudo |
+| **Fail Secure** | Falhas devem ser seguras | Negar acesso em caso de erro |
+| **Zero Trust** | Nunca confie, sempre verifique | Validar TODAS as requisições |
+| **Secure by Default** | Segurança como padrão | Configurações restritivas por padrão |
+
+### OWASP Top 10 - 2024 (Checklist)
+
+| # | Vulnerabilidade | Mitigação Backend | Mitigação Frontend |
+|---|-----------------|-------------------|--------------------|
+| **A01** | Broken Access Control | RBAC, @PreAuthorize, Method Security | Guards, Route Protection |
+| **A02** | Cryptographic Failures | TLS 1.3, bcrypt, AES-256, secrets em vault | HTTPS only, no sensitive data in storage |
+| **A03** | Injection | Prepared Statements, Bean Validation | Sanitização, DomSanitizer |
+| **A04** | Insecure Design | Threat Modeling, Security Reviews | Secure defaults, CSP |
+| **A05** | Security Misconfiguration | Hardening, disable debug, CORS restrito | Strict CSP, no source maps em prod |
+| **A06** | Vulnerable Components | Dependabot, OWASP Dependency Check | npm audit, renovate |
+| **A07** | Auth Failures | OAuth2/OIDC, MFA, session management | Secure token storage, auto-logout |
+| **A08** | Data Integrity | HMAC, assinaturas digitais, checksums | Verificação de integridade |
+| **A09** | Logging Failures | Audit logs, SIEM, não logar PII | Error boundaries, sanitize logs |
+| **A10** | SSRF | Whitelist URLs, validar destinos | N/A (backend) |
+
+### Regras de Segurança Universais
+
+#### Autenticação e Autorização
+
+```java
+// ✅ BACKEND - Spring Security 6.x com OAuth2/OIDC
+@Configuration
+@EnableMethodSecurity(prePostEnabled = true)
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/api/public/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .build();
+    }
+}
+
+// ✅ Method Security - SEMPRE validar autorização
+@PreAuthorize("hasRole('ADMIN') or @authService.isOwner(#id, authentication)")
+public void deletar(UUID id) { ... }
+```
+
+```typescript
+// ✅ FRONTEND - Auth Guard funcional (Angular 20+)
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  
+  if (authService.isAuthenticated()) {
+    return true;
+  }
+  
+  return router.createUrlTree(['/login'], {
+    queryParams: { returnUrl: state.url }
+  });
+};
+```
+
+#### Input Validation (Nunca Confie em Input Externo)
+
+```java
+// ✅ BACKEND - Bean Validation + Custom Validators
+public record CriarUsuarioRequest(
+    @NotBlank @Size(min = 3, max = 100) String nome,
+    @NotBlank @Email String email,
+    @NotBlank @ValidSenha String senha,  // Custom validator
+    @NotNull @ValidCpf String cpf        // Custom validator
+) {}
+```
+
+#### HTTP Security Headers
+
+```yaml
+# ✅ BACKEND - Headers obrigatórios (application.yml)
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+        http-only: true
+        same-site: strict
+
+# ✅ Via Spring Security ou filtro
+# Content-Security-Policy: default-src 'self'; script-src 'self'
+# X-Content-Type-Options: nosniff
+# X-Frame-Options: DENY
+# Strict-Transport-Security: max-age=31536000; includeSubDomains
+# Referrer-Policy: strict-origin-when-cross-origin
+# Permissions-Policy: geolocation=(), microphone=()
+```
+
+### Checklist de Segurança (Obrigatório)
+
+- [ ] **HTTPS** obrigatório em produção (TLS 1.3)
+- [ ] **CORS** configurado com whitelist de origens
+- [ ] **CSRF** proteção habilitada para formulários
+- [ ] **Rate Limiting** configurado para prevenir DDoS
+- [ ] **Secrets** em variáveis de ambiente ou vault (nunca no código)
+- [ ] **Logs** não contêm dados sensíveis (PII, senhas, tokens)
+- [ ] **Dependências** verificadas com Dependabot/Snyk
+- [ ] **Input Validation** em TODAS as camadas
+- [ ] **Output Encoding** para prevenir XSS
+- [ ] **SQL Injection** prevenido (prepared statements, JPA)
+
+> 📚 Consulte seções específicas em `.cursorrules-backend` e `.cursorrules-frontend`
+
+---
+
+## �📚 REFERÊNCIA RÁPIDA
+
+### Criar Novo Componente Angular (Zoneless)
+
+```typescript
+@Component({
+  selector: 'app-exemplo',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './exemplo.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class ExemploComponent {
+  // 1. Injeções
+  private readonly service = inject(ExemploService);
+  private readonly destroyRef = inject(DestroyRef);
+  
+  // 2. Inputs/Outputs (Signal-based)
+  readonly item = input.required<Item>();
+  readonly destaque = input(false);
+  readonly onSalvar = output<Item>();
+  
+  // 3. State (Signals)
+  readonly carregando = signal(false);
+  readonly erro = signal<string | null>(null);
+  
+  // 4. Computeds
+  readonly itemValido = computed(() => this.validar(this.item()));
+  
+  // 5. Effects (side effects reativos)
+  constructor() {
+    effect(() => {
+      console.log('Item mudou:', this.item());
+    });
+  }
+  
+  // 6. Methods
+  salvar(): void {
+    this.onSalvar.emit(this.item());
+  }
+  
+  private validar(item: Item): boolean {
+    return item.nome.length > 0;
+  }
+}
+```
+
+### Template com Control Flow Moderno
+
+```html
+@if (carregando()) {
+  <app-loading />
+} @else if (erro()) {
+  <app-error [message]="erro()" />
+} @else {
+  @for (item of itens(); track item.id) {
+    <app-item-card 
+      [item]="item"
+      [destaque]="item.destaque"
+      (selecionar)="onSelecionar($event)"
+    />
+  } @empty {
+    <p>Nenhum item encontrado</p>
+  }
+}
+
+@defer (on viewport) {
+  <app-grafico [dados]="dados()" />
+} @placeholder {
+  <div class="skeleton"></div>
+}
+```
+
+### Criar Novo Use Case Java
+
+```java
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class CriarExemploUseCase {
+    
+    private final ExemploRepositoryPort repository;
+    private final ValidadorService validador;
+    private final ExemploMapper mapper;
+    private final ApplicationEventPublisher eventPublisher;
+    
+    @Transactional
+    public ExemploResponse executar(CriarExemploRequest request) {
+        log.info("Criando exemplo: {}", request);
+        
+        // 1. Validar
+        validador.validar(request);
+        
+        // 2. Criar entidade rica
+        var exemplo = Exemplo.criar(
+            request.nome(),
+            new Email(request.email())
+        );
+        
+        // 3. Persistir
+        var salvo = repository.salvar(exemplo);
+        
+        // 4. Publicar evento
+        eventPublisher.publishEvent(new ExemploCriadoEvent(salvo.getId()));
+        
+        // 5. Mapear e retornar
+        return mapper.toResponse(salvo);
+    }
+}
+```
+
+### Java Record (Value Object)
+
+```java
+public record Email(String valor) {
+    public Email {
+        Objects.requireNonNull(valor, "Email é obrigatório");
+        if (!valor.contains("@")) {
+            throw new IllegalArgumentException("Email inválido: " + valor);
+        }
+    }
+}
+
+public record Dinheiro(BigDecimal valor, String moeda) {
+    public static final Dinheiro ZERO = new Dinheiro(BigDecimal.ZERO, "BRL");
+    
+    public Dinheiro {
+        Objects.requireNonNull(valor);
+        Objects.requireNonNull(moeda);
+        if (valor.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Valor não pode ser negativo");
+        }
+    }
+    
+    public Dinheiro somar(Dinheiro outro) {
+        if (!this.moeda.equals(outro.moeda)) {
+            throw new IllegalArgumentException("Moedas diferentes");
+        }
+        return new Dinheiro(this.valor.add(outro.valor), this.moeda);
+    }
+}
+```
+
+### MapStruct Mapper
+
+```java
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
+public interface ExemploMapper {
+    
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "dataCriacao", expression = "java(java.time.LocalDateTime.now())")
+    Exemplo toDomain(CriarExemploRequest request);
+    
+    @Mapping(target = "emailFormatado", source = "email.valor")
+    ExemploResponse toResponse(Exemplo exemplo);
+    
+    List<ExemploResponse> toResponseList(List<Exemplo> exemplos);
+}
+```
+
+---
+
+## 🔗 DOCUMENTAÇÃO DETALHADA
+
+| Documento | Conteúdo |
+|-----------|----------|
+| `.cursorrules-frontend` | Angular 20+ Zoneless, Signals, Composables, SSR |
+| `.cursorrules-backend` | Java 21/25 LTS, Spring Boot 3.4/3.5, Records, DDD, Clean Architecture |
+
+---
+
+**🚨 ESTAS DIRETRIZES SÃO INEGOCIÁVEIS**
+
+Sempre siga todas as regras antes de implementar qualquer funcionalidade.
+Em caso de dúvida, consulte os arquivos específicos de frontend ou backend.

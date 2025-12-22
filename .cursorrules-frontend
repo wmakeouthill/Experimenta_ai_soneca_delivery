@@ -1,0 +1,1468 @@
+# 🎨 Diretrizes de Desenvolvimento Frontend — Angular 20+ Zoneless / TypeScript 5.7+
+
+> **Este documento define os princípios, padrões e regras OBRIGATÓRIAS para desenvolvimento frontend moderno.**
+> Consulte `.cursorrules` para visão geral e `.cursorrules-backend` para regras do backend.
+
+---
+
+## 1. STACK TECNOLÓGICA
+
+| Tecnologia   | Versão      | Observação                           |
+|--------------|-------------|--------------------------------------|
+| Angular      | **20.x+**   | Zoneless estável, standalone padrão  |
+| TypeScript   | **5.7+**    | Strict mode obrigatório              |
+| Node.js      | **22 LTS**  | Toolchain/bundler                    |
+| RxJS         | **7.8+**    | Uso reduzido (preferir Signals)      |
+| ESLint       | **9.x**     | Flat config obrigatório              |
+| Vitest       | **2.x**     | Alternativa moderna ao Jasmine       |
+
+---
+
+## 2. CONFIGURAÇÃO ZONELESS (OBRIGATÓRIO)
+
+### 2.1 Bootstrap da Aplicação
+
+```typescript
+// main.ts
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideExperimentalZonelessChangeDetection } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { AppComponent } from './app/app.component';
+import { routes } from './app/app.routes';
+import { authInterceptor } from './app/core/interceptors/auth.interceptor';
+import { errorInterceptor } from './app/core/interceptors/error.interceptor';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    // ✅ ZONELESS - Angular 20+
+    provideExperimentalZonelessChangeDetection(),
+    
+    // ✅ Routing
+    provideRouter(routes),
+    
+    // ✅ HTTP com interceptors funcionais
+    provideHttpClient(
+      withInterceptors([authInterceptor, errorInterceptor])
+    ),
+  ]
+}).catch(err => console.error(err));
+```
+
+### 2.2 Remover Zone.js
+
+```json
+// angular.json - Remover zone.js dos polyfills
+{
+  "projects": {
+    "app": {
+      "architect": {
+        "build": {
+          "options": {
+            "polyfills": []  // ✅ Sem zone.js
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+## 3. SINTAXE MODERNA OBRIGATÓRIA
+
+### 3.1 Injeção de Dependência
+
+```typescript
+// ✅ CORRETO - inject()
+export class ProdutoService {
+  private readonly http = inject(HttpClient);
+  private readonly config = inject(APP_CONFIG);
+}
+
+// ❌ ERRADO - Constructor injection
+export class ProdutoService {
+  constructor(private http: HttpClient) {} // PROIBIDO!
+}
+```
+
+### 3.2 Signals e Reactive State
+
+```typescript
+// ✅ CORRETO - Signals para estado
+export class ProdutoListaComponent {
+  private readonly produtoService = inject(ProdutoService);
+  
+  // State
+  readonly produtos = signal<Produto[]>([]);
+  readonly carregando = signal(false);
+  readonly erro = signal<string | null>(null);
+  readonly filtro = signal('');
+  
+  // Computed
+  readonly produtosFiltrados = computed(() => {
+    const termo = this.filtro().toLowerCase();
+    return this.produtos().filter(p => 
+      p.nome.toLowerCase().includes(termo)
+    );
+  });
+  
+  readonly totalProdutos = computed(() => this.produtosFiltrados().length);
+  
+  // Effects
+  constructor() {
+    effect(() => {
+      console.log('Produtos atualizados:', this.produtos().length);
+    });
+  }
+}
+
+// ❌ ERRADO - BehaviorSubject para estado local
+export class ProdutoListaComponent {
+  produtos$ = new BehaviorSubject<Produto[]>([]); // PROIBIDO!
+}
+```
+
+### 3.3 Input/Output com Signals
+
+```typescript
+// ✅ CORRETO - input() e output()
+@Component({
+  selector: 'app-produto-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div class="card" (click)="onSelecionar()">
+      <h3>{{ produto().nome }}</h3>
+      <p>{{ produto().preco | currency }}</p>
+      @if (destaque()) {
+        <span class="badge">Destaque</span>
+      }
+    </div>
+  `
+})
+export class ProdutoCardComponent {
+  // Inputs
+  readonly produto = input.required<Produto>();
+  readonly destaque = input(false);
+  
+  // Outputs
+  readonly selecionar = output<Produto>();
+  
+  onSelecionar(): void {
+    this.selecionar.emit(this.produto());
+  }
+}
+
+// ❌ ERRADO - Decorators antigos
+@Component({...})
+export class ProdutoCardComponent {
+  @Input() produto!: Produto; // PROIBIDO!
+  @Output() selecionar = new EventEmitter<Produto>(); // PROIBIDO!
+}
+```
+
+### 3.4 Control Flow Moderno
+
+```html
+<!-- ✅ CORRETO - @if, @for, @switch, @defer -->
+@if (carregando()) {
+  <app-loading />
+} @else if (erro()) {
+  <app-error [message]="erro()" />
+} @else {
+  @for (produto of produtosFiltrados(); track produto.id) {
+    <app-produto-card 
+      [produto]="produto"
+      [destaque]="produto.destaque"
+      (selecionar)="onProdutoSelecionado($event)"
+    />
+  } @empty {
+    <p>Nenhum produto encontrado</p>
+  }
+}
+
+@switch (status()) {
+  @case ('pendente') {
+    <span class="badge-warning">Pendente</span>
+  }
+  @case ('aprovado') {
+    <span class="badge-success">Aprovado</span>
+  }
+  @default {
+    <span class="badge-secondary">Desconhecido</span>
+  }
+}
+
+<!-- Lazy loading com @defer -->
+@defer (on viewport) {
+  <app-grafico-vendas [dados]="vendas()" />
+} @placeholder {
+  <div class="skeleton-chart"></div>
+} @loading (minimum 300ms) {
+  <app-spinner />
+}
+
+<!-- ❌ ERRADO - Diretivas antigas -->
+<div *ngIf="carregando">...</div>  <!-- PROIBIDO! -->
+<div *ngFor="let p of produtos">...</div>  <!-- PROIBIDO! -->
+```
+
+---
+
+## 4. ARQUITETURA DE COMPONENTES
+
+### 4.1 Estrutura de Pastas
+
+```
+src/app/
+├── core/                       # Singleton services, guards, interceptors
+│   ├── guards/
+│   │   └── auth.guard.ts
+│   ├── interceptors/
+│   │   ├── auth.interceptor.ts
+│   │   └── error.interceptor.ts
+│   ├── services/
+│   │   └── auth.service.ts
+│   └── tokens/
+│       └── app-config.token.ts
+│
+├── shared/                     # Módulo compartilhado
+│   ├── components/             # Dumb components
+│   │   ├── button/
+│   │   ├── modal/
+│   │   ├── data-table/
+│   │   └── form-field/
+│   ├── directives/
+│   │   └── tooltip.directive.ts
+│   ├── pipes/
+│   │   ├── cpf-cnpj.pipe.ts
+│   │   └── currency-br.pipe.ts
+│   ├── models/                 # Interfaces compartilhadas
+│   │   └── pagination.model.ts
+│   └── utils/                  # Utilitários puros
+│       └── validators.ts
+│
+├── features/                   # Feature modules (por domínio)
+│   ├── produtos/
+│   │   ├── pages/              # Smart components
+│   │   │   ├── produto-lista/
+│   │   │   │   ├── produto-lista.component.ts
+│   │   │   │   └── produto-lista.component.html
+│   │   │   └── produto-detalhe/
+│   │   ├── components/         # Componentes da feature
+│   │   │   └── produto-card/
+│   │   ├── services/
+│   │   │   └── produto.service.ts
+│   │   ├── models/
+│   │   │   ├── produto.model.ts
+│   │   │   └── filtro-produto.model.ts
+│   │   ├── composables/        # Lógica reutilizável
+│   │   │   └── use-produto-filtro.ts
+│   │   └── produtos.routes.ts
+│   │
+│   └── pedidos/
+│       └── ...
+│
+├── app.component.ts
+├── app.config.ts
+└── app.routes.ts
+```
+
+### 4.2 Smart vs Dumb Components
+
+| Aspecto | Smart (Pages) | Dumb (Shared/Components) |
+|---------|---------------|--------------------------|
+| Localização | `features/{feature}/pages/` | `shared/components/` |
+| Injeta services | ✅ Sim | ❌ Não |
+| Conhece negócio | ✅ Sim | ❌ Não |
+| Estado | Gerencia estado | Recebe via `input()` |
+| Comunicação | Chama services | Emite via `output()` |
+| Reutilização | Específico | Alto reuso |
+
+```typescript
+// ✅ Smart Component (Page)
+@Component({
+  selector: 'app-pedido-lista',
+  standalone: true,
+  imports: [DataTableComponent, PedidoFiltroComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <app-pedido-filtro 
+      (filtrar)="onFiltrar($event)" 
+    />
+    <app-data-table 
+      [dados]="pedidos()"
+      [colunas]="colunas"
+      [carregando]="carregando()"
+      (paginar)="onPaginar($event)"
+    />
+  `
+})
+export class PedidoListaComponent {
+  private readonly pedidoService = inject(PedidoService);
+  
+  readonly pedidos = signal<Pedido[]>([]);
+  readonly carregando = signal(false);
+  readonly colunas = COLUNAS_PEDIDO;
+  
+  onFiltrar(filtro: FiltroPedido): void {
+    this.carregando.set(true);
+    this.pedidoService.listar(filtro).subscribe({
+      next: (dados) => {
+        this.pedidos.set(dados);
+        this.carregando.set(false);
+      },
+      error: () => this.carregando.set(false)
+    });
+  }
+}
+
+// ✅ Dumb Component (Shared)
+@Component({
+  selector: 'app-data-table',
+  standalone: true,
+  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    @if (carregando()) {
+      <app-loading />
+    } @else {
+      <table>
+        <thead>...</thead>
+        <tbody>
+          @for (item of dados(); track trackFn) {
+            <tr (click)="onSelecionar(item)">...</tr>
+          }
+        </tbody>
+      </table>
+    }
+  `
+})
+export class DataTableComponent<T> {
+  readonly dados = input.required<T[]>();
+  readonly colunas = input.required<Coluna[]>();
+  readonly carregando = input(false);
+  readonly trackFn = input<TrackByFunction<T>>((_, item) => item);
+  
+  readonly selecionar = output<T>();
+  readonly paginar = output<EventoPaginacao>();
+  
+  onSelecionar(item: T): void {
+    this.selecionar.emit(item);
+  }
+}
+```
+
+---
+
+## 5. COMPOSABLES (REUTILIZAÇÃO DE LÓGICA)
+
+```typescript
+// composables/use-paginacao.ts
+export function usePaginacao<T>(
+  fetchFn: (page: number, pageSize: number) => Observable<ResultadoPaginado<T>>,
+  options?: { pageSize?: number }
+) {
+  const dados = signal<T[]>([]);
+  const paginaAtual = signal(1);
+  const totalItens = signal(0);
+  const totalPaginas = signal(0);
+  const carregando = signal(false);
+  const pageSize = options?.pageSize ?? 10;
+
+  const carregar = (page: number = 1) => {
+    carregando.set(true);
+    fetchFn(page, pageSize).subscribe({
+      next: (resultado) => {
+        dados.set(resultado.dados);
+        totalItens.set(resultado.total);
+        totalPaginas.set(Math.ceil(resultado.total / pageSize));
+        paginaAtual.set(page);
+        carregando.set(false);
+      },
+      error: () => carregando.set(false)
+    });
+  };
+
+  const proximaPagina = () => {
+    if (paginaAtual() < totalPaginas()) {
+      carregar(paginaAtual() + 1);
+    }
+  };
+
+  const paginaAnterior = () => {
+    if (paginaAtual() > 1) {
+      carregar(paginaAtual() - 1);
+    }
+  };
+
+  return {
+    dados: dados.asReadonly(),
+    paginaAtual: paginaAtual.asReadonly(),
+    totalItens: totalItens.asReadonly(),
+    totalPaginas: totalPaginas.asReadonly(),
+    carregando: carregando.asReadonly(),
+    carregar,
+    proximaPagina,
+    paginaAnterior
+  };
+}
+
+// Uso no componente
+@Component({...})
+export class ProdutoListaComponent {
+  private readonly produtoService = inject(ProdutoService);
+  
+  readonly paginacao = usePaginacao(
+    (page, size) => this.produtoService.listar({ page, size })
+  );
+  
+  ngOnInit(): void {
+    this.paginacao.carregar();
+  }
+}
+```
+
+```typescript
+// composables/use-form.ts
+export function useForm<T extends Record<string, any>>(initialValues: T) {
+  const valores = signal<T>(initialValues);
+  const erros = signal<Partial<Record<keyof T, string>>>({});
+  const tocado = signal<Partial<Record<keyof T, boolean>>>({});
+  const submetendo = signal(false);
+
+  const setValor = <K extends keyof T>(campo: K, valor: T[K]) => {
+    valores.update(v => ({ ...v, [campo]: valor }));
+    tocado.update(t => ({ ...t, [campo]: true }));
+  };
+
+  const setErro = <K extends keyof T>(campo: K, erro: string | null) => {
+    erros.update(e => {
+      const novos = { ...e };
+      if (erro) {
+        novos[campo] = erro;
+      } else {
+        delete novos[campo];
+      }
+      return novos;
+    });
+  };
+
+  const reset = () => {
+    valores.set(initialValues);
+    erros.set({});
+    tocado.set({});
+    submetendo.set(false);
+  };
+
+  const isValido = computed(() => Object.keys(erros()).length === 0);
+
+  return {
+    valores: valores.asReadonly(),
+    erros: erros.asReadonly(),
+    tocado: tocado.asReadonly(),
+    submetendo,
+    isValido,
+    setValor,
+    setErro,
+    reset
+  };
+}
+```
+
+---
+
+## 6. SERVICES E HTTP
+
+### 6.1 Service Base
+
+```typescript
+// core/services/base-http.service.ts
+export abstract class BaseHttpService {
+  protected readonly http = inject(HttpClient);
+  protected readonly config = inject(APP_CONFIG);
+  
+  protected get baseUrl(): string {
+    return this.config.apiUrl;
+  }
+  
+  protected handleError<T>(operation: string) {
+    return (error: HttpErrorResponse): Observable<never> => {
+      console.error(`${operation} falhou:`, error);
+      
+      const mensagem = error.error?.message ?? 'Erro desconhecido';
+      return throwError(() => new Error(mensagem));
+    };
+  }
+}
+```
+
+### 6.2 Feature Service
+
+```typescript
+// features/produtos/services/produto.service.ts
+@Injectable({ providedIn: 'root' })
+export class ProdutoService extends BaseHttpService {
+  
+  private readonly url = `${this.baseUrl}/produtos`;
+  
+  listar(filtro?: FiltroProduto): Observable<ResultadoPaginado<Produto>> {
+    const params = this.buildParams(filtro);
+    return this.http.get<ResultadoPaginado<Produto>>(this.url, { params }).pipe(
+      catchError(this.handleError('listar produtos'))
+    );
+  }
+  
+  buscarPorId(id: string): Observable<Produto> {
+    return this.http.get<Produto>(`${this.url}/${id}`).pipe(
+      catchError(this.handleError('buscar produto'))
+    );
+  }
+  
+  criar(produto: CriarProdutoRequest): Observable<Produto> {
+    return this.http.post<Produto>(this.url, produto).pipe(
+      catchError(this.handleError('criar produto'))
+    );
+  }
+  
+  atualizar(id: string, produto: AtualizarProdutoRequest): Observable<Produto> {
+    return this.http.put<Produto>(`${this.url}/${id}`, produto).pipe(
+      catchError(this.handleError('atualizar produto'))
+    );
+  }
+  
+  excluir(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`).pipe(
+      catchError(this.handleError('excluir produto'))
+    );
+  }
+  
+  private buildParams(filtro?: FiltroProduto): HttpParams {
+    let params = new HttpParams();
+    if (filtro) {
+      Object.entries(filtro).forEach(([key, value]) => {
+        if (value != null) {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+    return params;
+  }
+}
+```
+
+### 6.3 Interceptors Funcionais
+
+```typescript
+// core/interceptors/auth.interceptor.ts
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const token = authService.token();
+  
+  if (token) {
+    req = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+  
+  return next(req);
+};
+
+// core/interceptors/error.interceptor.ts
+export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  const notificationService = inject(NotificationService);
+  
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        notificationService.erro('Sessão expirada. Faça login novamente.');
+      } else if (error.status >= 500) {
+        notificationService.erro('Erro interno do servidor.');
+      }
+      return throwError(() => error);
+    })
+  );
+};
+```
+
+---
+
+## 7. MODELS E TIPOS
+
+```typescript
+// shared/models/pagination.model.ts
+export interface ResultadoPaginado<T> {
+  dados: T[];
+  total: number;
+  pagina: number;
+  tamanhoPagina: number;
+}
+
+export interface EventoPaginacao {
+  pagina: number;
+  tamanhoPagina: number;
+}
+
+// features/produtos/models/produto.model.ts
+export interface Produto {
+  id: string;
+  nome: string;
+  descricao: string;
+  preco: number;
+  estoque: number;
+  categoria: Categoria;
+  ativo: boolean;
+  dataCriacao: string;
+}
+
+export interface CriarProdutoRequest {
+  nome: string;
+  descricao: string;
+  preco: number;
+  estoque: number;
+  categoriaId: string;
+}
+
+export interface AtualizarProdutoRequest extends Partial<CriarProdutoRequest> {}
+
+export interface FiltroProduto {
+  nome?: string;
+  categoriaId?: string;
+  ativo?: boolean;
+  page?: number;
+  size?: number;
+}
+
+// ✅ Type guard para validação em runtime
+export function isProduto(obj: unknown): obj is Produto {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'nome' in obj &&
+    'preco' in obj
+  );
+}
+```
+
+---
+
+## 8. ROTAS E LAZY LOADING
+
+```typescript
+// app.routes.ts
+export const routes: Routes = [
+  {
+    path: '',
+    redirectTo: 'dashboard',
+    pathMatch: 'full'
+  },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./features/dashboard/pages/dashboard.component')
+      .then(m => m.DashboardComponent)
+  },
+  {
+    path: 'produtos',
+    loadChildren: () => import('./features/produtos/produtos.routes')
+      .then(m => m.PRODUTOS_ROUTES),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'pedidos',
+    loadChildren: () => import('./features/pedidos/pedidos.routes')
+      .then(m => m.PEDIDOS_ROUTES),
+    canActivate: [authGuard]
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./shared/components/not-found/not-found.component')
+      .then(m => m.NotFoundComponent)
+  }
+];
+
+// features/produtos/produtos.routes.ts
+export const PRODUTOS_ROUTES: Routes = [
+  {
+    path: '',
+    loadComponent: () => import('./pages/produto-lista/produto-lista.component')
+      .then(m => m.ProdutoListaComponent)
+  },
+  {
+    path: 'novo',
+    loadComponent: () => import('./pages/produto-form/produto-form.component')
+      .then(m => m.ProdutoFormComponent)
+  },
+  {
+    path: ':id',
+    loadComponent: () => import('./pages/produto-detalhe/produto-detalhe.component')
+      .then(m => m.ProdutoDetalheComponent)
+  },
+  {
+    path: ':id/editar',
+    loadComponent: () => import('./pages/produto-form/produto-form.component')
+      .then(m => m.ProdutoFormComponent)
+  }
+];
+```
+
+---
+
+## 9. SSR E HIDRATAÇÃO
+
+```typescript
+// Verificação de plataforma
+import { isPlatformBrowser, isPlatformServer } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
+
+@Component({...})
+export class ProdutoListaComponent {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly produtoService = inject(ProdutoService);
+  
+  readonly produtos = signal<Produto[]>([]);
+  
+  ngOnInit(): void {
+    // ✅ Só executa no browser
+    if (isPlatformBrowser(this.platformId)) {
+      this.carregarProdutos();
+    }
+  }
+  
+  private carregarProdutos(): void {
+    this.produtoService.listar().subscribe(resultado => {
+      this.produtos.set(resultado.dados);
+    });
+  }
+}
+
+// Timers e subscriptions
+@Component({...})
+export class DashboardComponent implements OnInit, OnDestroy {
+  private readonly ngZone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
+  
+  ngOnInit(): void {
+    // ✅ Polling fora do Angular
+    this.ngZone.runOutsideAngular(() => {
+      const interval = setInterval(() => {
+        this.ngZone.run(() => this.atualizarDados());
+      }, 30000);
+      
+      this.destroyRef.onDestroy(() => clearInterval(interval));
+    });
+  }
+}
+```
+
+---
+
+## 10. TESTES
+
+### Estrutura de Testes
+
+```typescript
+// produto.service.spec.ts
+describe('ProdutoService', () => {
+  let service: ProdutoService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: APP_CONFIG, useValue: { apiUrl: '/api' } }
+      ]
+    });
+    
+    service = TestBed.inject(ProdutoService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('deve listar produtos', () => {
+    const mockProdutos: ResultadoPaginado<Produto> = {
+      dados: [{ id: '1', nome: 'Produto 1', preco: 100 } as Produto],
+      total: 1,
+      pagina: 1,
+      tamanhoPagina: 10
+    };
+
+    service.listar().subscribe(resultado => {
+      expect(resultado.dados.length).toBe(1);
+      expect(resultado.dados[0].nome).toBe('Produto 1');
+    });
+
+    const req = httpMock.expectOne('/api/produtos');
+    expect(req.request.method).toBe('GET');
+    req.flush(mockProdutos);
+  });
+});
+```
+
+```typescript
+// produto-card.component.spec.ts
+describe('ProdutoCardComponent', () => {
+  let fixture: ComponentFixture<ProdutoCardComponent>;
+  let component: ProdutoCardComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ProdutoCardComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProdutoCardComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('deve emitir evento ao selecionar', () => {
+    const produto: Produto = { id: '1', nome: 'Teste', preco: 100 } as Produto;
+    fixture.componentRef.setInput('produto', produto);
+    
+    const spy = jest.spyOn(component.selecionar, 'emit');
+    
+    component.onSelecionar();
+    
+    expect(spy).toHaveBeenCalledWith(produto);
+  });
+});
+```
+
+---
+
+## 11. CHECKLIST DE QUALIDADE
+
+### Antes de Commitar
+
+#### Arquitetura
+
+- [ ] Standalone components apenas
+- [ ] Smart/Dumb components separados corretamente
+- [ ] Services na camada correta (core vs feature)
+- [ ] Models bem tipados (sem `any`)
+- [ ] Composables para lógica reutilizável
+
+#### Sintaxe Moderna
+
+- [ ] `inject()` para DI (não constructor)
+- [ ] `signal()`, `computed()`, `effect()` para estado
+- [ ] `input()`, `output()` (não decorators)
+- [ ] `@if`, `@for`, `@switch`, `@defer` (não diretivas)
+- [ ] `ChangeDetectionStrategy.OnPush` em todos componentes
+
+#### Zoneless
+
+- [ ] `provideExperimentalZonelessChangeDetection()` configurado
+- [ ] `zone.js` removido dos polyfills
+- [ ] Signals para reatividade
+- [ ] `markForCheck()` se necessário manualmente
+
+#### Qualidade
+
+- [ ] Arquivos com menos de 300 linhas
+- [ ] Funções com menos de 20 linhas
+- [ ] Sem código duplicado (DRY)
+- [ ] Nomes descritivos
+- [ ] Testes cobrindo lógica
+
+---
+
+## 12. 🔐 SEGURANÇA FRONTEND (OWASP / Angular Security)
+
+### 12.1 Content Security Policy (CSP)
+
+```typescript
+// ✅ main.ts - Configurar CSP Nonce (Angular 20+)
+import { bootstrapApplication, CSP_NONCE } from '@angular/platform-browser';
+import { provideExperimentalZonelessChangeDetection } from '@angular/core';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideExperimentalZonelessChangeDetection(),
+    
+    // ✅ CSP Nonce para scripts inline
+    {
+      provide: CSP_NONCE,
+      useValue: (globalThis as any).cspNonce // Fornecido pelo servidor
+    }
+  ]
+});
+```
+
+```json
+// ✅ angular.json - Habilitar CSP automático
+{
+  "projects": {
+    "app": {
+      "architect": {
+        "build": {
+          "options": {
+            "autoCsp": true  // Angular 20+ gera nonces automaticamente
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+```
+# ✅ Headers CSP (configurar no servidor/proxy)
+Content-Security-Policy: 
+  default-src 'self'; 
+  script-src 'self' 'nonce-{RANDOM_NONCE}'; 
+  style-src 'self' 'nonce-{RANDOM_NONCE}'; 
+  img-src 'self' data: https:; 
+  font-src 'self'; 
+  connect-src 'self' https://api.meudominio.com.br; 
+  frame-ancestors 'none'; 
+  base-uri 'self'; 
+  form-action 'self';
+```
+
+### 12.2 XSS Prevention (Cross-Site Scripting)
+
+```typescript
+// ✅ Angular sanitiza automaticamente - NÃO desabilite sem necessidade
+@Component({
+  template: `
+    <!-- ✅ SEGURO - Angular sanitiza automaticamente -->
+    <div>{{ userInput }}</div>
+    <div [textContent]="userInput"></div>
+    
+    <!-- ⚠️ CUIDADO - innerHTML é sanitizado, mas evite quando possível -->
+    <div [innerHTML]="htmlContent"></div>
+    
+    <!-- ❌ NUNCA - Bypass de segurança sem validação -->
+    <!-- <div [innerHTML]="trustedHtml"></div> -->
+  `
+})
+export class ExemploComponent {
+  private readonly sanitizer = inject(DomSanitizer);
+  
+  userInput = signal('<script>alert("xss")</script>');
+  
+  // ⚠️ CUIDADO - Só usar quando absolutamente necessário
+  // e APENAS com conteúdo que você controla
+  get trustedHtml() {
+    // ❌ NUNCA fazer isso com input do usuário!
+    return this.sanitizer.bypassSecurityTrustHtml(this.htmlContent);
+  }
+}
+
+// ✅ Se precisar de HTML dinâmico, use DomSanitizer.sanitize()
+@Injectable({ providedIn: 'root' })
+export class SafeHtmlService {
+  private readonly sanitizer = inject(DomSanitizer);
+  
+  sanitizeHtml(html: string): SafeHtml {
+    // ✅ Sanitiza mas mantém tags HTML seguras
+    return this.sanitizer.sanitize(SecurityContext.HTML, html) || '';
+  }
+}
+```
+
+### 12.3 CSRF/XSRF Protection
+
+```typescript
+// ✅ main.ts - Configurar XSRF
+import { provideHttpClient, withXsrfConfiguration } from '@angular/common/http';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideHttpClient(
+      // ✅ XSRF automático - Angular lê cookie e envia header
+      withXsrfConfiguration({
+        cookieName: 'XSRF-TOKEN',      // Nome do cookie (padrão)
+        headerName: 'X-XSRF-TOKEN'      // Nome do header (padrão)
+      })
+    )
+  ]
+});
+
+// ⚠️ NOTA: O backend deve:
+// 1. Enviar cookie XSRF-TOKEN em respostas
+// 2. Validar header X-XSRF-TOKEN em requisições POST/PUT/DELETE
+```
+
+### 12.4 Authentication & Token Storage
+
+```typescript
+// ✅ Serviço de autenticação seguro
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  
+  // ✅ Estado de autenticação
+  private readonly _isAuthenticated = signal(false);
+  private readonly _currentUser = signal<User | null>(null);
+  
+  readonly isAuthenticated = this._isAuthenticated.asReadonly();
+  readonly currentUser = this._currentUser.asReadonly();
+  
+  constructor() {
+    // ✅ Verificar token ao inicializar (se usar localStorage)
+    this.checkStoredToken();
+    
+    // ✅ Auto-logout em inatividade (15 minutos)
+    this.setupInactivityLogout(15 * 60 * 1000);
+  }
+  
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>('/api/auth/login', credentials).pipe(
+      tap(response => {
+        // ⚠️ OPÇÃO 1: Memory only (mais seguro, perde no refresh)
+        this.storeTokenInMemory(response.accessToken);
+        
+        // ⚠️ OPÇÃO 2: sessionStorage (persiste na aba, vulnerável a XSS)
+        // sessionStorage.setItem('accessToken', response.accessToken);
+        
+        // ❌ EVITAR: localStorage (persiste sempre, vulnerável a XSS)
+        // localStorage.setItem('accessToken', response.accessToken);
+        
+        // ✅ IDEAL: HttpOnly Cookie (configurado pelo backend)
+        // Backend retorna token em cookie HttpOnly, Secure, SameSite=Strict
+        
+        this._isAuthenticated.set(true);
+        this._currentUser.set(response.user);
+      })
+    );
+  }
+  
+  logout(): void {
+    // ✅ Limpar estado
+    this._isAuthenticated.set(false);
+    this._currentUser.set(null);
+    this.accessToken = null;
+    
+    // ✅ Limpar storage
+    sessionStorage.removeItem('accessToken');
+    
+    // ✅ Notificar backend para invalidar token
+    this.http.post('/api/auth/logout', {}).subscribe();
+    
+    this.router.navigate(['/login']);
+  }
+  
+  // ✅ Token em memória (mais seguro)
+  private accessToken: string | null = null;
+  
+  private storeTokenInMemory(token: string): void {
+    this.accessToken = token;
+  }
+  
+  getAccessToken(): string | null {
+    return this.accessToken;
+  }
+  
+  // ✅ Auto-logout por inatividade
+  private setupInactivityLogout(timeout: number): void {
+    let inactivityTimer: number;
+    
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = window.setTimeout(() => {
+        if (this._isAuthenticated()) {
+          this.logout();
+          alert('Sessão expirada por inatividade');
+        }
+      }, timeout);
+    };
+    
+    ['click', 'keydown', 'scroll', 'mousemove'].forEach(event => {
+      document.addEventListener(event, resetTimer);
+    });
+    
+    resetTimer();
+  }
+}
+```
+
+### 12.5 Auth Interceptor Seguro
+
+```typescript
+// ✅ core/interceptors/auth.interceptor.ts
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  
+  // ✅ URLs públicas - não adicionar token
+  const publicUrls = ['/api/auth/login', '/api/auth/register', '/api/public'];
+  if (publicUrls.some(url => req.url.includes(url))) {
+    return next(req);
+  }
+  
+  const token = authService.getAccessToken();
+  
+  if (token) {
+    // ✅ Clonar request e adicionar header
+    const authReq = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    
+    return next(authReq).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401) {
+          // ✅ Token expirado - fazer logout
+          authService.logout();
+          router.navigate(['/login']);
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+  
+  return next(req);
+};
+```
+
+### 12.6 Route Guards
+
+```typescript
+// ✅ core/guards/auth.guard.ts - Funcional (Angular 20+)
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  
+  if (authService.isAuthenticated()) {
+    return true;
+  }
+  
+  // ✅ Redirecionar para login com returnUrl
+  return router.createUrlTree(['/login'], {
+    queryParams: { returnUrl: state.url }
+  });
+};
+
+// ✅ core/guards/role.guard.ts - Verificação de roles
+export const roleGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  
+  const requiredRoles = route.data['roles'] as string[];
+  const user = authService.currentUser();
+  
+  if (!user) {
+    return router.createUrlTree(['/login']);
+  }
+  
+  const hasRole = requiredRoles.some(role => user.roles.includes(role));
+  
+  if (!hasRole) {
+    // ✅ Usuário não tem permissão
+    return router.createUrlTree(['/unauthorized']);
+  }
+  
+  return true;
+};
+
+// ✅ Uso nas rotas
+export const routes: Routes = [
+  {
+    path: 'admin',
+    loadComponent: () => import('./admin/admin.component'),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMIN'] }
+  },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./dashboard/dashboard.component'),
+    canActivate: [authGuard]
+  }
+];
+```
+
+### 12.7 Secure HTTP Service Base
+
+```typescript
+// ✅ core/services/base-http.service.ts
+@Injectable({ providedIn: 'root' })
+export abstract class BaseHttpService {
+  protected readonly http = inject(HttpClient);
+  protected readonly config = inject(APP_CONFIG);
+  
+  protected get baseUrl(): string {
+    return this.config.apiUrl;
+  }
+  
+  // ✅ Handler de erros padronizado - não expõe detalhes sensíveis
+  protected handleError(operation: string) {
+    return (error: HttpErrorResponse): Observable<never> => {
+      // ✅ Log interno (não enviar para console em produção)
+      if (!environment.production) {
+        console.error(`${operation} failed:`, error);
+      }
+      
+      // ✅ Mensagem genérica para o usuário
+      let userMessage = 'Ocorreu um erro. Tente novamente.';
+      
+      if (error.status === 0) {
+        userMessage = 'Erro de conexão. Verifique sua internet.';
+      } else if (error.status === 403) {
+        userMessage = 'Você não tem permissão para esta ação.';
+      } else if (error.status === 404) {
+        userMessage = 'Recurso não encontrado.';
+      } else if (error.status >= 500) {
+        userMessage = 'Erro no servidor. Tente novamente mais tarde.';
+      }
+      
+      // ❌ NUNCA expor stack trace ou detalhes técnicos
+      return throwError(() => new Error(userMessage));
+    };
+  }
+}
+```
+
+### 12.8 Input Sanitization
+
+```typescript
+// ✅ shared/utils/sanitize.util.ts
+export class SanitizeUtil {
+  
+  // ✅ Sanitizar input de texto
+  static sanitizeText(input: string): string {
+    if (!input) return '';
+    
+    return input
+      .trim()
+      .replace(/[<>]/g, '') // Remove < e >
+      .substring(0, 1000);  // Limita tamanho
+  }
+  
+  // ✅ Sanitizar para uso em URLs
+  static sanitizeUrlParam(input: string): string {
+    if (!input) return '';
+    
+    return encodeURIComponent(
+      input.trim().replace(/[^\w\s-]/g, '')
+    );
+  }
+  
+  // ✅ Validar email
+  static isValidEmail(email: string): boolean {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  }
+  
+  // ✅ Validar CPF (apenas formato, não validação matemática)
+  static isValidCpfFormat(cpf: string): boolean {
+    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+    return cpfRegex.test(cpf);
+  }
+}
+
+// ✅ Uso em formulários
+@Component({...})
+export class FormComponent {
+  readonly nome = signal('');
+  readonly email = signal('');
+  
+  onNomeChange(event: Event): void {
+    const input = (event.target as HTMLInputElement).value;
+    this.nome.set(SanitizeUtil.sanitizeText(input));
+  }
+  
+  onSubmit(): void {
+    if (!SanitizeUtil.isValidEmail(this.email())) {
+      // Mostrar erro
+      return;
+    }
+    // Continuar...
+  }
+}
+```
+
+### 12.9 Secure Environment Configuration
+
+```typescript
+// ✅ environments/environment.ts (desenvolvimento)
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8080/api',
+  // ❌ NUNCA incluir secrets aqui
+};
+
+// ✅ environments/environment.prod.ts (produção)
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.meudominio.com.br/api',
+  // ✅ Em produção, URLs vêm do servidor ou build time
+};
+```
+
+```json
+// ✅ angular.json - Desabilitar source maps em produção
+{
+  "projects": {
+    "app": {
+      "architect": {
+        "build": {
+          "configurations": {
+            "production": {
+              "sourceMap": false,        // ✅ Não expor código fonte
+              "optimization": true,
+              "namedChunks": false,
+              "budgets": [...]
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### 12.10 Checklist de Segurança Frontend
+
+#### Antes do Deploy
+
+- [ ] **HTTPS** obrigatório em produção
+- [ ] **CSP** (Content Security Policy) configurado
+- [ ] **Source maps** desabilitados em produção
+- [ ] **Console.log** removidos ou condicionais
+- [ ] **Tokens** não armazenados em localStorage (preferir memory/HttpOnly cookie)
+- [ ] **Sanitização** de inputs do usuário
+- [ ] **Validação** client-side + server-side
+- [ ] **XSRF** configurado para formulários
+- [ ] **Guards** protegendo rotas sensíveis
+- [ ] **Error handling** não expõe detalhes técnicos
+- [ ] **Dependencies** verificadas (npm audit)
+- [ ] **Trusted Types** habilitado (quando possível)
+- [ ] **AOT compilation** habilitado (padrão Angular)
+- [ ] **Strict mode** TypeScript habilitado
+- [ ] **@angular-eslint/security** regras habilitadas
+
+#### Verificação de Dependências
+
+```bash
+# ✅ Verificar vulnerabilidades
+npm audit
+
+# ✅ Corrigir automaticamente quando possível
+npm audit fix
+
+# ✅ Usar renovate/dependabot para updates automáticos
+```
+
+---
+
+## 13. ANTI-PATTERNS (PROIBIDOS)
+
+### Código
+
+1. ❌ Constructor injection (`constructor(private http: HttpClient)`)
+2. ❌ Decorators `@Input()` e `@Output()`
+3. ❌ Diretivas `*ngIf`, `*ngFor`, `*ngSwitch`
+4. ❌ NgModules (exceto bibliotecas externas)
+5. ❌ BehaviorSubject para estado local
+6. ❌ `any` sem tipagem adequada
+7. ❌ Subscribe sem cleanup
+8. ❌ Mutação direta de signals (`signal().push()`)
+9. ❌ Lógica de negócio em templates
+10. ❌ Magic strings/numbers
+
+### Arquitetura
+
+11. ❌ Service injection em Dumb Components
+12. ❌ Estado global espalhado
+13. ❌ HTTP direto em components (sem service)
+14. ❌ Componentes gigantes (>300 linhas)
+15. ❌ Zone.js em modo zoneless
+
+### Segurança
+
+16. ❌ Armazenar tokens em localStorage (use memory ou HttpOnly cookie)
+17. ❌ Bypass de DomSanitizer sem validação
+18. ❌ Console.log em produção com dados sensíveis
+19. ❌ Source maps habilitados em produção
+20. ❌ Expor stack traces em mensagens de erro
+
+---
+
+## 14. REFERÊNCIA RÁPIDA
+
+### Novo Componente
+
+```typescript
+@Component({
+  selector: 'app-exemplo',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './exemplo.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class ExemploComponent {
+  // 1. Injeções
+  private readonly service = inject(ExemploService);
+  
+  // 2. Inputs/Outputs
+  readonly item = input.required<Item>();
+  readonly opcional = input('default');
+  readonly onSalvar = output<Item>();
+  
+  // 3. State
+  readonly carregando = signal(false);
+  readonly dados = signal<Dados[]>([]);
+  
+  // 4. Computeds
+  readonly itemValido = computed(() => this.validar(this.item()));
+  readonly totalDados = computed(() => this.dados().length);
+  
+  // 5. Effects
+  constructor() {
+    effect(() => {
+      console.log('Item mudou:', this.item());
+    });
+  }
+  
+  // 6. Methods
+  salvar(): void {
+    this.onSalvar.emit(this.item());
+  }
+}
+```
+
+### Novo Service
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ExemploService extends BaseHttpService {
+  
+  private readonly url = `${this.baseUrl}/exemplos`;
+  
+  listar(): Observable<Exemplo[]> {
+    return this.http.get<Exemplo[]>(this.url).pipe(
+      catchError(this.handleError('listar exemplos'))
+    );
+  }
+  
+  buscarPorId(id: string): Observable<Exemplo> {
+    return this.http.get<Exemplo>(`${this.url}/${id}`).pipe(
+      catchError(this.handleError('buscar exemplo'))
+    );
+  }
+  
+  salvar(exemplo: CriarExemploRequest): Observable<Exemplo> {
+    return this.http.post<Exemplo>(this.url, exemplo).pipe(
+      catchError(this.handleError('salvar exemplo'))
+    );
+  }
+}
+```
+
+---
+
+**🚨 Siga TODAS as regras antes de implementar qualquer funcionalidade.**
+
+Em caso de dúvida, consulte `.cursorrules` ou peça revisão de arquitetura.

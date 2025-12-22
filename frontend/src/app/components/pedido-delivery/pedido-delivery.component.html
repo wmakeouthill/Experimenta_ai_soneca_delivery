@@ -1,674 +1,576 @@
-<div class="delivery-container" [class.auth-page]="etapaAtual() === 'boas-vindas' || etapaAtual() === 'login' || etapaAtual() === 'cadastro'">
+<div class="delivery-container"
+    [class.auth-page]="etapaAtual() === 'boas-vindas' || etapaAtual() === 'login' || etapaAtual() === 'cadastro'">
 
     <!-- Erro Global -->
     @if (erro()) {
-        <div class="error-toast">
-            <span>⚠️ {{ erro() }}</span>
-            <button (click)="erro.set(null)">✕</button>
-        </div>
+    <div class="error-toast">
+        <span>⚠️ {{ erro() }}</span>
+        <button (click)="erro.set(null)">✕</button>
+    </div>
     }
 
     <!-- ========== BOAS-VINDAS ========== -->
     @if (etapaAtual() === 'boas-vindas') {
-        <div class="auth-screen">
-            <div class="auth-header">
-                <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-grande">
-                <h1>Soneca Delivery</h1>
-                <p class="subtitulo">Peça seu lanche favorito e receba em casa!</p>
-            </div>
-
-            <div class="auth-content">
-                <div class="auth-buttons">
-                    <button class="btn-primary btn-large" (click)="irParaLogin()">
-                        Já tenho conta
-                    </button>
-                    <button class="btn-secondary btn-large" (click)="irParaCadastro()">
-                        Criar minha conta
-                    </button>
-                </div>
-
-                <div class="divider">
-                    <span>ou continue com</span>
-                </div>
-
-                <div #googleButtonBoasVindas class="google-button-container"></div>
-            </div>
-
-            <div class="auth-footer">
-                <p>Ao continuar, você concorda com nossos <a href="/termos-uso">Termos de Uso</a> e <a href="/politica-privacidade">Política de Privacidade</a></p>
-            </div>
+    <div class="auth-screen">
+        <div class="auth-header">
+            <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-grande">
+            <h1>Soneca Delivery</h1>
+            <p class="subtitulo">Peça seu lanche favorito e receba em casa!</p>
         </div>
+
+        <div class="auth-content">
+            <div class="auth-buttons">
+                <button class="btn-primary btn-large" (click)="irParaLogin()">
+                    Já tenho conta
+                </button>
+                <button class="btn-secondary btn-large" (click)="irParaCadastro()">
+                    Criar minha conta
+                </button>
+            </div>
+
+            <div class="divider">
+                <span>ou continue com</span>
+            </div>
+
+            <div #googleButtonBoasVindas class="google-button-container"></div>
+        </div>
+
+        <div class="auth-footer">
+            <p>Ao continuar, você concorda com nossos <a href="/termos-uso">Termos de Uso</a> e <a
+                    href="/politica-privacidade">Política de Privacidade</a></p>
+        </div>
+    </div>
     }
 
     <!-- ========== LOGIN ========== -->
     @if (etapaAtual() === 'login') {
-        <div class="auth-screen">
-            <button class="btn-back" (click)="irParaBoasVindas()">← Voltar</button>
+    <div class="auth-screen">
+        <button class="btn-back" (click)="irParaBoasVindas()">← Voltar</button>
 
-            <div class="auth-header compact">
-                <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-media">
-                <h1>Entrar</h1>
-            </div>
+        <div class="auth-header compact">
+            <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-media">
+            <h1>Entrar</h1>
+        </div>
 
-            <div class="auth-content">
-                <form class="auth-form" (ngSubmit)="fazerLogin()">
-                    <div class="form-group">
-                        <label for="login-telefone">Telefone</label>
-                        <input
-                            type="tel"
-                            id="login-telefone"
-                            [value]="loginTelefone()"
-                            (input)="onLoginTelefoneChange($event)"
-                            placeholder="(00) 00000-0000"
-                            maxlength="15"
-                            inputmode="numeric"
-                            autocomplete="tel">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="login-senha">Senha</label>
-                        <input
-                            type="password"
-                            id="login-senha"
-                            [ngModel]="loginSenha()"
-                            (ngModelChange)="loginSenha.set($event)"
-                            placeholder="Sua senha"
-                            minlength="6"
-                            autocomplete="current-password">
-                    </div>
-
-                    <button
-                        type="submit"
-                        class="btn-primary btn-large"
-                        [disabled]="!loginValido() || loginCarregando()">
-                        @if (loginCarregando()) {
-                            <span class="spinner"></span> Entrando...
-                        } @else {
-                            Entrar
-                        }
-                    </button>
-                </form>
-
-                <div class="divider">
-                    <span>ou</span>
+        <div class="auth-content">
+            <form class="auth-form" (ngSubmit)="fazerLogin()">
+                <div class="form-group">
+                    <label for="login-telefone">Telefone</label>
+                    <input type="tel" id="login-telefone" [value]="loginTelefone()"
+                        (input)="onLoginTelefoneChange($event)" placeholder="(00) 00000-0000" maxlength="15"
+                        inputmode="numeric" autocomplete="tel">
                 </div>
 
-                <div #googleButtonLogin class="google-button-container"></div>
+                <div class="form-group">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" [ngModel]="loginSenha()"
+                        (ngModelChange)="loginSenha.set($event)" placeholder="Sua senha" minlength="6"
+                        autocomplete="current-password">
+                </div>
 
-                <p class="auth-link">
-                    Não tem conta? <a (click)="irParaCadastro()">Cadastre-se</a>
-                </p>
+                <button type="submit" class="btn-primary btn-large" [disabled]="!loginValido() || loginCarregando()">
+                    @if (loginCarregando()) {
+                    <span class="spinner"></span> Entrando...
+                    } @else {
+                    Entrar
+                    }
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>ou</span>
             </div>
+
+            <div #googleButtonLogin class="google-button-container"></div>
+
+            <p class="auth-link">
+                Não tem conta? <a (click)="irParaCadastro()">Cadastre-se</a>
+            </p>
         </div>
+    </div>
     }
 
     <!-- ========== CADASTRO ========== -->
     @if (etapaAtual() === 'cadastro') {
-        <div class="auth-screen">
-            @if (etapaCadastro() === 'dados') {
-                <button class="btn-back" (click)="irParaBoasVindas()">← Voltar</button>
-            } @else {
-                <button class="btn-back" (click)="voltarParaDados()">← Voltar</button>
-            }
+    <div class="auth-screen">
+        @if (etapaCadastro() === 'dados') {
+        <button class="btn-back" (click)="irParaBoasVindas()">← Voltar</button>
+        } @else {
+        <button class="btn-back" (click)="voltarParaDados()">← Voltar</button>
+        }
 
-            <div class="auth-header compact">
-                <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-media">
-                <h1>@if (cliente()) { Complete seu cadastro } @else { Criar conta }</h1>
+        <div class="auth-header compact">
+            <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-media">
+            <h1>@if (cliente()) { Complete seu cadastro } @else { Criar conta }</h1>
+        </div>
+
+        <div class="progress-steps">
+            <div class="step" [class.active]="etapaCadastro() === 'dados'"
+                [class.completed]="etapaCadastro() === 'endereco'">
+                <span class="step-number">1</span>
+                <span class="step-label">Dados</span>
             </div>
-
-            <div class="progress-steps">
-                <div class="step" [class.active]="etapaCadastro() === 'dados'" [class.completed]="etapaCadastro() === 'endereco'">
-                    <span class="step-number">1</span>
-                    <span class="step-label">Dados</span>
-                </div>
-                <div class="step-line" [class.active]="etapaCadastro() === 'endereco'"></div>
-                <div class="step" [class.active]="etapaCadastro() === 'endereco'">
-                    <span class="step-number">2</span>
-                    <span class="step-label">Endereço</span>
-                </div>
-            </div>
-
-            <div class="auth-content">
-                <!-- Etapa 1: Dados Pessoais -->
-                @if (etapaCadastro() === 'dados' && !cliente()) {
-                    <form class="auth-form" (ngSubmit)="avancarParaEndereco()">
-                        <div class="form-group">
-                            <label for="cad-nome">Nome completo *</label>
-                            <input
-                                type="text"
-                                id="cad-nome"
-                                [ngModel]="formCadastro().nome"
-                                (ngModelChange)="atualizarFormCadastro('nome', $event)"
-                                placeholder="Seu nome"
-                                maxlength="200"
-                                autocomplete="name">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cad-telefone">Telefone *</label>
-                            <input
-                                type="tel"
-                                id="cad-telefone"
-                                [value]="formCadastro().telefone"
-                                (input)="onCadastroTelefoneChange($event)"
-                                placeholder="(00) 00000-0000"
-                                maxlength="15"
-                                inputmode="numeric"
-                                autocomplete="tel">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cad-email">Email (opcional)</label>
-                            <input
-                                type="email"
-                                id="cad-email"
-                                [ngModel]="formCadastro().email"
-                                (ngModelChange)="atualizarFormCadastro('email', $event)"
-                                placeholder="seu@email.com"
-                                autocomplete="email">
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="cad-senha">Senha *</label>
-                                <input
-                                    type="password"
-                                    id="cad-senha"
-                                    [ngModel]="formCadastro().senha"
-                                    (ngModelChange)="atualizarFormCadastro('senha', $event)"
-                                    placeholder="Mínimo 6 caracteres"
-                                    minlength="6"
-                                    autocomplete="new-password">
-                            </div>
-                            <div class="form-group">
-                                <label for="cad-confirmar-senha">Confirmar *</label>
-                                <input
-                                    type="password"
-                                    id="cad-confirmar-senha"
-                                    [ngModel]="formCadastro().confirmarSenha"
-                                    (ngModelChange)="atualizarFormCadastro('confirmarSenha', $event)"
-                                    placeholder="Repita a senha"
-                                    minlength="6"
-                                    autocomplete="new-password">
-                            </div>
-                        </div>
-
-                        @if (formCadastro().senha && formCadastro().confirmarSenha && formCadastro().senha !== formCadastro().confirmarSenha) {
-                            <p class="error-text">As senhas não coincidem</p>
-                        }
-
-                        <button
-                            type="submit"
-                            class="btn-primary btn-large"
-                            [disabled]="!dadosCadastroValidos()">
-                            Continuar →
-                        </button>
-                    </form>
-
-                    <div class="divider">
-                        <span>ou cadastre-se com</span>
-                    </div>
-
-                    <div #googleButtonCadastro class="google-button-container"></div>
-
-                    <p class="auth-link">
-                        Já tem conta? <a (click)="irParaLogin()">Entrar</a>
-                    </p>
-                }
-
-                <!-- Etapa 2: Endereço -->
-                @if (etapaCadastro() === 'endereco') {
-                    <form class="auth-form" (ngSubmit)="finalizarCadastro()">
-                        <div class="form-group">
-                            <label for="cad-cep">CEP *</label>
-                            <div class="input-with-loading">
-                                <input
-                                    type="text"
-                                    id="cad-cep"
-                                    [value]="formCadastro().cep"
-                                    (input)="onCepChange($event)"
-                                    placeholder="00000-000"
-                                    maxlength="9"
-                                    inputmode="numeric"
-                                    autocomplete="postal-code"
-                                    [class.input-success]="cepEncontrado() === true"
-                                    [class.input-error]="cepEncontrado() === false">
-                                @if (buscandoCep()) {
-                                    <span class="input-spinner"></span>
-                                }
-                                @if (cepEncontrado() === true) {
-                                    <span class="input-icon success">✓</span>
-                                }
-                                @if (cepEncontrado() === false) {
-                                    <span class="input-icon error">✗</span>
-                                }
-                            </div>
-                            @if (cepEncontrado() === false) {
-                                <span class="form-hint error">CEP não encontrado. <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener">Não sabe seu CEP?</a></span>
-                            }
-                            @if (cepEncontrado() === true) {
-                                <span class="form-hint success">Endereço preenchido automaticamente!</span>
-                            }
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cad-logradouro">Rua / Avenida *</label>
-                            <input
-                                type="text"
-                                id="cad-logradouro"
-                                name="logradouro"
-                                [ngModel]="formCadastro().logradouro"
-                                (ngModelChange)="atualizarFormCadastro('logradouro', $event)"
-                                placeholder="Nome da rua"
-                                maxlength="255"
-                                autocomplete="street-address">
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group form-group-small">
-                                <label for="cad-numero">Número *</label>
-                                <input
-                                    type="text"
-                                    id="cad-numero"
-                                    name="numero"
-                                    [ngModel]="formCadastro().numero"
-                                    (ngModelChange)="atualizarFormCadastro('numero', $event)"
-                                    placeholder="Nº"
-                                    maxlength="20">
-                            </div>
-                            <div class="form-group">
-                                <label for="cad-complemento">Complemento</label>
-                                <input
-                                    type="text"
-                                    id="cad-complemento"
-                                    name="complemento"
-                                    [ngModel]="formCadastro().complemento"
-                                    (ngModelChange)="atualizarFormCadastro('complemento', $event)"
-                                    placeholder="Apto, bloco..."
-                                    maxlength="100">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cad-bairro">Bairro *</label>
-                            <input
-                                type="text"
-                                id="cad-bairro"
-                                name="bairro"
-                                [ngModel]="formCadastro().bairro"
-                                (ngModelChange)="atualizarFormCadastro('bairro', $event)"
-                                placeholder="Seu bairro"
-                                maxlength="100">
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="cad-cidade">Cidade *</label>
-                                <input
-                                    type="text"
-                                    id="cad-cidade"
-                                    name="cidade"
-                                    [ngModel]="formCadastro().cidade"
-                                    (ngModelChange)="atualizarFormCadastro('cidade', $event)"
-                                    placeholder="Sua cidade"
-                                    maxlength="100">
-                            </div>
-                            <div class="form-group form-group-small">
-                                <label for="cad-estado">UF *</label>
-                                <input
-                                    type="text"
-                                    id="cad-estado"
-                                    name="estado"
-                                    [ngModel]="formCadastro().estado"
-                                    (ngModelChange)="atualizarFormCadastro('estado', $event.toUpperCase())"
-                                    placeholder="SP"
-                                    maxlength="2"
-                                    style="text-transform: uppercase;">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cad-referencia">Ponto de referência</label>
-                            <input
-                                type="text"
-                                id="cad-referencia"
-                                name="pontoReferencia"
-                                [ngModel]="formCadastro().pontoReferencia"
-                                (ngModelChange)="atualizarFormCadastro('pontoReferencia', $event)"
-                                placeholder="Próximo ao mercado..."
-                                maxlength="255">
-                        </div>
-
-                        <button
-                            type="submit"
-                            class="btn-primary btn-large"
-                            [disabled]="!enderecoCadastroValido() || cadastroCarregando()">
-                            @if (cadastroCarregando()) {
-                                <span class="spinner"></span> Criando conta...
-                            } @else {
-                                Criar conta e pedir
-                            }
-                        </button>
-                    </form>
-                }
+            <div class="step-line" [class.active]="etapaCadastro() === 'endereco'"></div>
+            <div class="step" [class.active]="etapaCadastro() === 'endereco'">
+                <span class="step-number">2</span>
+                <span class="step-label">Endereço</span>
             </div>
         </div>
+
+        <div class="auth-content">
+            <!-- Etapa 1: Dados Pessoais -->
+            @if (etapaCadastro() === 'dados' && !cliente()) {
+            <form class="auth-form" (ngSubmit)="avancarParaEndereco()">
+                <div class="form-group">
+                    <label for="cad-nome">Nome completo *</label>
+                    <input type="text" id="cad-nome" [ngModel]="formCadastro().nome"
+                        (ngModelChange)="atualizarFormCadastro('nome', $event)" placeholder="Seu nome" maxlength="200"
+                        autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="cad-telefone">Telefone *</label>
+                    <input type="tel" id="cad-telefone" [value]="formCadastro().telefone"
+                        (input)="onCadastroTelefoneChange($event)" placeholder="(00) 00000-0000" maxlength="15"
+                        inputmode="numeric" autocomplete="tel">
+                </div>
+
+                <div class="form-group">
+                    <label for="cad-email">Email (opcional)</label>
+                    <input type="email" id="cad-email" [ngModel]="formCadastro().email"
+                        (ngModelChange)="atualizarFormCadastro('email', $event)" placeholder="seu@email.com"
+                        autocomplete="email">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cad-senha">Senha *</label>
+                        <input type="password" id="cad-senha" [ngModel]="formCadastro().senha"
+                            (ngModelChange)="atualizarFormCadastro('senha', $event)" placeholder="Mínimo 6 caracteres"
+                            minlength="6" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="cad-confirmar-senha">Confirmar *</label>
+                        <input type="password" id="cad-confirmar-senha" [ngModel]="formCadastro().confirmarSenha"
+                            (ngModelChange)="atualizarFormCadastro('confirmarSenha', $event)"
+                            placeholder="Repita a senha" minlength="6" autocomplete="new-password">
+                    </div>
+                </div>
+
+                @if (formCadastro().senha && formCadastro().confirmarSenha && formCadastro().senha !==
+                formCadastro().confirmarSenha) {
+                <p class="error-text">As senhas não coincidem</p>
+                }
+
+                <button type="submit" class="btn-primary btn-large" [disabled]="!dadosCadastroValidos()">
+                    Continuar →
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>ou cadastre-se com</span>
+            </div>
+
+            <div #googleButtonCadastro class="google-button-container"></div>
+
+            <p class="auth-link">
+                Já tem conta? <a (click)="irParaLogin()">Entrar</a>
+            </p>
+            }
+
+            <!-- Etapa 2: Endereço -->
+            @if (etapaCadastro() === 'endereco') {
+            <form class="auth-form" (ngSubmit)="finalizarCadastro()">
+                <div class="form-group">
+                    <label for="cad-cep">CEP *</label>
+                    <div class="input-with-loading">
+                        <input type="text" id="cad-cep" [value]="formCadastro().cep" (input)="onCepChange($event)"
+                            placeholder="00000-000" maxlength="9" inputmode="numeric" autocomplete="postal-code"
+                            [class.input-success]="cepEncontrado() === true"
+                            [class.input-error]="cepEncontrado() === false">
+                        @if (buscandoCep()) {
+                        <span class="input-spinner"></span>
+                        }
+                        @if (cepEncontrado() === true) {
+                        <span class="input-icon success">✓</span>
+                        }
+                        @if (cepEncontrado() === false) {
+                        <span class="input-icon error">✗</span>
+                        }
+                    </div>
+                    @if (cepEncontrado() === false) {
+                    <span class="form-hint error">CEP não encontrado. <a
+                            href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank"
+                            rel="noopener">Não sabe seu CEP?</a></span>
+                    }
+                    @if (cepEncontrado() === true) {
+                    <span class="form-hint success">Endereço preenchido automaticamente!</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="cad-logradouro">Rua / Avenida *</label>
+                    <input type="text" id="cad-logradouro" name="logradouro" [ngModel]="formCadastro().logradouro"
+                        (ngModelChange)="atualizarFormCadastro('logradouro', $event)" placeholder="Nome da rua"
+                        maxlength="255" autocomplete="street-address">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-group-small">
+                        <label for="cad-numero">Número *</label>
+                        <input type="text" id="cad-numero" name="numero" [ngModel]="formCadastro().numero"
+                            (ngModelChange)="atualizarFormCadastro('numero', $event)" placeholder="Nº" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="cad-complemento">Complemento</label>
+                        <input type="text" id="cad-complemento" name="complemento"
+                            [ngModel]="formCadastro().complemento"
+                            (ngModelChange)="atualizarFormCadastro('complemento', $event)" placeholder="Apto, bloco..."
+                            maxlength="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cad-bairro">Bairro *</label>
+                    <input type="text" id="cad-bairro" name="bairro" [ngModel]="formCadastro().bairro"
+                        (ngModelChange)="atualizarFormCadastro('bairro', $event)" placeholder="Seu bairro"
+                        maxlength="100">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cad-cidade">Cidade *</label>
+                        <input type="text" id="cad-cidade" name="cidade" [ngModel]="formCadastro().cidade"
+                            (ngModelChange)="atualizarFormCadastro('cidade', $event)" placeholder="Sua cidade"
+                            maxlength="100">
+                    </div>
+                    <div class="form-group form-group-small">
+                        <label for="cad-estado">UF *</label>
+                        <input type="text" id="cad-estado" name="estado" [ngModel]="formCadastro().estado"
+                            (ngModelChange)="atualizarFormCadastro('estado', $event.toUpperCase())" placeholder="SP"
+                            maxlength="2" style="text-transform: uppercase;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cad-referencia">Ponto de referência</label>
+                    <input type="text" id="cad-referencia" name="pontoReferencia"
+                        [ngModel]="formCadastro().pontoReferencia"
+                        (ngModelChange)="atualizarFormCadastro('pontoReferencia', $event)"
+                        placeholder="Próximo ao mercado..." maxlength="255">
+                </div>
+
+                <button type="submit" class="btn-primary btn-large"
+                    [disabled]="!enderecoCadastroValido() || cadastroCarregando()">
+                    @if (cadastroCarregando()) {
+                    <span class="spinner"></span> Criando conta...
+                    } @else {
+                    Criar conta e pedir
+                    }
+                </button>
+            </form>
+            }
+        </div>
+    </div>
     }
 
     <!-- ========== CARDÁPIO ========== -->
     @if (etapaAtual() === 'cardapio' && cliente()) {
-        <header class="header-delivery">
-            <div class="header-content">
-                <img src="/assets/experimenta_ai_banner_circular.webp" alt="Logo" class="logo-mini">
-                <div class="header-info">
-                    <span class="cliente-nome">Olá, {{ cliente()!.nome.split(' ')[0] }}!</span>
-                    <span class="tipo-badge">🛵 Delivery</span>
-                </div>
+    <header class="header-delivery">
+        <div class="header-content">
+            <img src="/assets/experimenta_ai_banner_circular.webp" alt="Logo" class="logo-mini">
+            <div class="header-info">
+                <span class="cliente-nome">Olá, {{ cliente()!.nome.split(' ')[0] }}!</span>
+                <span class="tipo-badge">🛵 Delivery</span>
+            </div>
+            <div class="header-actions">
                 <button class="btn-logout" (click)="logout()" title="Sair">
-                    🚪
+                    <span class="logout-icon">🚪</span>
+                    <span class="logout-badge">Sair</span>
+                </button>
+                <button class="btn-menu-perfil" (click)="abrirMenuPerfil()" title="Meus dados">
+                    <span class="menu-icon">☰</span>
                 </button>
             </div>
-        </header>
+        </div>
+    </header>
 
-        @if (carregando()) {
-            <div class="loading-container">
-                <div class="loading-spinner"></div>
-                <p>Carregando cardápio...</p>
-            </div>
-        } @else {
-            <!-- Categorias -->
-            <div class="categorias-scroll">
-                <button
-                    class="categoria-chip"
-                    [class.ativa]="categoriaSelecionada() === null"
-                    (click)="selecionarCategoria(null)">
-                    🍽️ Todos
-                </button>
-                @for (categoria of categorias(); track categoria.id) {
-                    <button
-                        class="categoria-chip"
-                        [class.ativa]="categoriaSelecionada() === categoria.nome"
-                        (click)="selecionarCategoria(categoria.nome)">
-                        {{ categoria.nome }}
-                    </button>
-                }
-            </div>
-
-            <!-- Lista de Produtos -->
-            <div class="produtos-grid">
-                @for (produto of produtosFiltrados(); track produto.id) {
-                    <div class="produto-card" (click)="abrirDetalhesProduto(produto)">
-                        @if (produto.foto) {
-                            <div class="produto-imagem">
-                                <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
-                            </div>
-                        } @else {
-                            <div class="produto-imagem produto-sem-foto">
-                                <span>🍔</span>
-                            </div>
-                        }
-                        <div class="produto-info">
-                            <h3>{{ produto.nome }}</h3>
-                            @if (produto.descricao) {
-                                <p class="produto-descricao">{{ produto.descricao }}</p>
-                            }
-                            <span class="produto-preco">{{ produto.preco | currency:'BRL' }}</span>
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <!-- Botão Carrinho Flutuante -->
-            @if (!carrinhoVazio()) {
-                <button class="btn-carrinho-flutuante" (click)="abrirCarrinho()">
-                    <span class="carrinho-badge">{{ quantidadeItensCarrinho() }}</span>
-                    🛒 Ver carrinho
-                    <span class="carrinho-total">{{ totalCarrinho() | currency:'BRL' }}</span>
-                </button>
-            }
+    @if (carregando()) {
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Carregando cardápio...</p>
+    </div>
+    } @else {
+    <!-- Categorias -->
+    <div class="categorias-scroll">
+        <button class="categoria-chip" [class.ativa]="categoriaSelecionada() === null"
+            (click)="selecionarCategoria(null)">
+            🍽️ Todos
+        </button>
+        @for (categoria of categorias(); track categoria.id) {
+        <button class="categoria-chip" [class.ativa]="categoriaSelecionada() === categoria.nome"
+            (click)="selecionarCategoria(categoria.nome)">
+            {{ categoria.nome }}
+        </button>
         }
+    </div>
+
+    <!-- Lista de Produtos -->
+    <div class="produtos-grid">
+        @for (produto of produtosFiltrados(); track produto.id) {
+        <div class="produto-card" (click)="abrirDetalhesProduto(produto)">
+            @if (produto.foto) {
+            <div class="produto-imagem">
+                <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
+            </div>
+            } @else {
+            <div class="produto-imagem produto-sem-foto">
+                <span>🍔</span>
+            </div>
+            }
+            <div class="produto-info">
+                <h3>{{ produto.nome }}</h3>
+                @if (produto.descricao) {
+                <p class="produto-descricao">{{ produto.descricao }}</p>
+                }
+                <span class="produto-preco">{{ produto.preco | currency:'BRL' }}</span>
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Botão Carrinho Flutuante -->
+    @if (!carrinhoVazio()) {
+    <button class="btn-carrinho-flutuante" (click)="abrirCarrinho()">
+        <span class="carrinho-badge">{{ quantidadeItensCarrinho() }}</span>
+        🛒 Ver carrinho
+        <span class="carrinho-total">{{ totalCarrinho() | currency:'BRL' }}</span>
+    </button>
+    }
+    }
     }
 
     <!-- ========== MODAL DETALHES PRODUTO ========== -->
     @if (mostrarDetalhes() && produtoSelecionado()) {
-        <div class="modal-overlay" (click)="fecharDetalhes()">
-            <div class="modal-content modal-produto" (click)="$event.stopPropagation()">
-                <button class="modal-close" (click)="fecharDetalhes()">✕</button>
+    <div class="modal-overlay" (click)="fecharDetalhes()">
+        <div class="modal-content modal-produto" (click)="$event.stopPropagation()">
+            <button class="modal-close" (click)="fecharDetalhes()">✕</button>
 
-                @if (produtoSelecionado()!.foto) {
-                    <div class="modal-produto-imagem">
-                        <img [src]="produtoSelecionado()!.foto" [alt]="produtoSelecionado()!.nome">
-                    </div>
+            @if (produtoSelecionado()!.foto) {
+            <div class="modal-produto-imagem">
+                <img [src]="produtoSelecionado()!.foto" [alt]="produtoSelecionado()!.nome">
+            </div>
+            }
+
+            <div class="modal-produto-info">
+                <h2>{{ produtoSelecionado()!.nome }}</h2>
+                @if (produtoSelecionado()!.descricao) {
+                <p class="descricao">{{ produtoSelecionado()!.descricao }}</p>
                 }
+                <span class="preco">{{ produtoSelecionado()!.preco | currency:'BRL' }}</span>
+            </div>
 
-                <div class="modal-produto-info">
-                    <h2>{{ produtoSelecionado()!.nome }}</h2>
-                    @if (produtoSelecionado()!.descricao) {
-                        <p class="descricao">{{ produtoSelecionado()!.descricao }}</p>
-                    }
-                    <span class="preco">{{ produtoSelecionado()!.preco | currency:'BRL' }}</span>
-                </div>
-
-                <!-- Adicionais -->
-                @if (adicionaisDisponiveis().length > 0) {
-                    <div class="adicionais-section">
-                        <h3>Adicionais</h3>
-                        @for (adicional of adicionaisDisponiveis(); track adicional.id) {
-                            <label class="adicional-item" [class.selecionado]="isAdicionalSelecionado(adicional.id)">
-                                <input
-                                    type="checkbox"
-                                    [checked]="isAdicionalSelecionado(adicional.id)"
-                                    (change)="toggleAdicional(adicional)">
-                                <span class="adicional-nome">{{ adicional.nome }}</span>
-                                <span class="adicional-preco">+{{ adicional.preco | currency:'BRL' }}</span>
-                            </label>
-                        }
-                    </div>
+            <!-- Adicionais -->
+            @if (adicionaisDisponiveis().length > 0) {
+            <div class="adicionais-section">
+                <h3>Adicionais</h3>
+                @for (adicional of adicionaisDisponiveis(); track adicional.id) {
+                <label class="adicional-item" [class.selecionado]="isAdicionalSelecionado(adicional.id)">
+                    <input type="checkbox" [checked]="isAdicionalSelecionado(adicional.id)"
+                        (change)="toggleAdicional(adicional)">
+                    <span class="adicional-nome">{{ adicional.nome }}</span>
+                    <span class="adicional-preco">+{{ adicional.preco | currency:'BRL' }}</span>
+                </label>
                 }
+            </div>
+            }
 
-                <!-- Observação -->
-                <div class="observacao-section">
-                    <label for="observacao">Alguma observação?</label>
-                    <textarea
-                        id="observacao"
-                        [ngModel]="observacaoItem()"
-                        (ngModelChange)="observacaoItem.set($event)"
-                        placeholder="Ex: sem cebola, bem passado..."
-                        rows="2"
-                        maxlength="500"></textarea>
-                </div>
+            <!-- Observação -->
+            <div class="observacao-section">
+                <label for="observacao">Alguma observação?</label>
+                <textarea id="observacao" [ngModel]="observacaoItem()" (ngModelChange)="observacaoItem.set($event)"
+                    placeholder="Ex: sem cebola, bem passado..." rows="2" maxlength="500"></textarea>
+            </div>
 
-                <!-- Quantidade e Adicionar -->
-                <div class="modal-footer">
-                    <div class="quantidade-control">
-                        <button (click)="decrementarQuantidade()" [disabled]="quantidadeSelecionada() <= 1">−</button>
-                        <span>{{ quantidadeSelecionada() }}</span>
-                        <button (click)="incrementarQuantidade()">+</button>
-                    </div>
-                    <button class="btn-adicionar" (click)="adicionarAoCarrinho()">
-                        Adicionar {{ (produtoSelecionado()!.preco * quantidadeSelecionada()) | currency:'BRL' }}
-                    </button>
+            <!-- Quantidade e Adicionar -->
+            <div class="modal-footer">
+                <div class="quantidade-control">
+                    <button (click)="decrementarQuantidade()" [disabled]="quantidadeSelecionada() <= 1">−</button>
+                    <span>{{ quantidadeSelecionada() }}</span>
+                    <button (click)="incrementarQuantidade()">+</button>
                 </div>
+                <button class="btn-adicionar" (click)="adicionarAoCarrinho()">
+                    Adicionar {{ (produtoSelecionado()!.preco * quantidadeSelecionada()) | currency:'BRL' }}
+                </button>
             </div>
         </div>
+    </div>
     }
 
     <!-- ========== MODAL CARRINHO ========== -->
     @if (mostrarCarrinho()) {
-        <div class="modal-overlay" (click)="fecharCarrinho()">
-            <div class="modal-content modal-carrinho" (click)="$event.stopPropagation()">
-                <div class="modal-header">
-                    <h2>🛒 Seu Carrinho</h2>
-                    <button class="modal-close" (click)="fecharCarrinho()">✕</button>
-                </div>
+    <div class="modal-overlay" (click)="fecharCarrinho()">
+        <div class="modal-content modal-carrinho" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>🛒 Seu Carrinho</h2>
+                <button class="modal-close" (click)="fecharCarrinho()">✕</button>
+            </div>
 
-                <div class="carrinho-items">
-                    @for (item of itensCarrinho(); track item.produto.id; let i = $index) {
-                        <div class="carrinho-item">
-                            <div class="item-info">
-                                <h4>{{ item.produto.nome }}</h4>
-                                @if (formatarAdicionaisItem(item)) {
-                                    <p class="item-adicionais">+ {{ formatarAdicionaisItem(item) }}</p>
-                                }
-                                @if (item.observacao) {
-                                    <p class="item-obs">📝 {{ item.observacao }}</p>
-                                }
-                            </div>
-                            <div class="item-controls">
-                                <div class="quantidade-mini">
-                                    <button (click)="decrementarItemCarrinho(i)">−</button>
-                                    <span>{{ item.quantidade }}</span>
-                                    <button (click)="incrementarItemCarrinho(i)">+</button>
-                                </div>
-                                <span class="item-preco">{{ (item.produto.preco * item.quantidade) | currency:'BRL' }}</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-                <div class="carrinho-footer">
-                    <div class="carrinho-total-row">
-                        <span>Total</span>
-                        <span class="total-valor">{{ totalCarrinho() | currency:'BRL' }}</span>
+            <div class="carrinho-items">
+                @for (item of itensCarrinho(); track item.produto.id; let i = $index) {
+                <div class="carrinho-item">
+                    <div class="item-info">
+                        <h4>{{ item.produto.nome }}</h4>
+                        @if (formatarAdicionaisItem(item)) {
+                        <p class="item-adicionais">+ {{ formatarAdicionaisItem(item) }}</p>
+                        }
+                        @if (item.observacao) {
+                        <p class="item-obs">📝 {{ item.observacao }}</p>
+                        }
                     </div>
-                    <button class="btn-primary btn-large" (click)="irParaCheckout()">
-                        Continuar →
-                    </button>
+                    <div class="item-controls">
+                        <div class="quantidade-mini">
+                            <button (click)="decrementarItemCarrinho(i)">−</button>
+                            <span>{{ item.quantidade }}</span>
+                            <button (click)="incrementarItemCarrinho(i)">+</button>
+                        </div>
+                        <span class="item-preco">{{ (item.produto.preco * item.quantidade) | currency:'BRL' }}</span>
+                    </div>
                 </div>
+                }
+            </div>
+
+            <div class="carrinho-footer">
+                <div class="carrinho-total-row">
+                    <span>Total</span>
+                    <span class="total-valor">{{ totalCarrinho() | currency:'BRL' }}</span>
+                </div>
+                <button class="btn-primary btn-large" (click)="irParaCheckout()">
+                    Continuar →
+                </button>
             </div>
         </div>
+    </div>
     }
 
     <!-- ========== CHECKOUT ========== -->
     @if (etapaAtual() === 'checkout') {
-        <div class="checkout-screen">
-            <header class="checkout-header">
-                <button class="btn-back" (click)="voltarParaCardapio()">← Voltar</button>
-                <h1>Finalizar Pedido</h1>
-            </header>
+    <div class="checkout-screen">
+        <header class="checkout-header">
+            <button class="btn-back" (click)="voltarParaCardapio()">← Voltar</button>
+            <h1>Finalizar Pedido</h1>
+        </header>
 
-            <div class="checkout-content">
-                <!-- Tipo de Pedido -->
-                <section class="checkout-section">
-                    <h3>Como deseja receber?</h3>
-                    <div class="tipo-pedido-options">
-                        <button
-                            class="tipo-option"
-                            [class.selected]="tipoPedido() === 'DELIVERY'"
-                            (click)="tipoPedido.set('DELIVERY')">
-                            🛵 Delivery
-                        </button>
-                        <button
-                            class="tipo-option"
-                            [class.selected]="tipoPedido() === 'RETIRADA'"
-                            (click)="tipoPedido.set('RETIRADA')">
-                            🏃 Retirar no local
-                        </button>
-                    </div>
-                </section>
+        <div class="checkout-content">
+            <!-- Tipo de Pedido -->
+            <section class="checkout-section">
+                <h3>Como deseja receber?</h3>
+                <div class="tipo-pedido-options">
+                    <button class="tipo-option" [class.selected]="tipoPedido() === 'DELIVERY'"
+                        (click)="tipoPedido.set('DELIVERY')">
+                        🛵 Delivery
+                    </button>
+                    <button class="tipo-option" [class.selected]="tipoPedido() === 'RETIRADA'"
+                        (click)="tipoPedido.set('RETIRADA')">
+                        🏃 Retirar no local
+                    </button>
+                </div>
+            </section>
 
-                <!-- Endereço -->
-                @if (tipoPedido() === 'DELIVERY') {
-                    <section class="checkout-section">
-                        <h3>📍 Endereço de entrega</h3>
-                        <div class="endereco-display">
-                            @if (cliente()?.enderecoFormatado) {
-                                <p>{{ cliente()!.enderecoFormatado }}</p>
-                                <button class="btn-link" (click)="enderecoEntrega.set('')">Alterar</button>
-                            } @else {
-                                <textarea
-                                    [ngModel]="enderecoEntrega()"
-                                    (ngModelChange)="enderecoEntrega.set($event)"
-                                    placeholder="Digite seu endereço completo"
-                                    rows="2"></textarea>
-                            }
-                        </div>
-                    </section>
-                }
-
-                <!-- Resumo do Pedido -->
-                <section class="checkout-section">
-                    <h3>📋 Resumo do pedido</h3>
-                    <div class="resumo-items">
-                        @for (item of itensCarrinho(); track $index) {
-                            <div class="resumo-item">
-                                <span>{{ item.quantidade }}x {{ item.produto.nome }}</span>
-                                <span>{{ (item.produto.preco * item.quantidade) | currency:'BRL' }}</span>
-                            </div>
-                        }
-                    </div>
-                    <div class="resumo-total">
-                        <span>Total</span>
-                        <span>{{ totalCarrinho() | currency:'BRL' }}</span>
-                    </div>
-                </section>
-
-                <!-- Forma de Pagamento -->
-                <section class="checkout-section">
-                    <h3>💳 Forma de pagamento</h3>
-                    <div class="pagamento-options">
-                        <button
-                            class="pagamento-option"
-                            [class.selected]="meioPagamentoSelecionado() === 'PIX'"
-                            (click)="selecionarMeioPagamento('PIX')">
-                            📱 PIX
-                        </button>
-                        <button
-                            class="pagamento-option"
-                            [class.selected]="meioPagamentoSelecionado() === 'CARTAO_CREDITO'"
-                            (click)="selecionarMeioPagamento('CARTAO_CREDITO')">
-                            💳 Crédito
-                        </button>
-                        <button
-                            class="pagamento-option"
-                            [class.selected]="meioPagamentoSelecionado() === 'CARTAO_DEBITO'"
-                            (click)="selecionarMeioPagamento('CARTAO_DEBITO')">
-                            💳 Débito
-                        </button>
-                        <button
-                            class="pagamento-option"
-                            [class.selected]="meioPagamentoSelecionado() === 'DINHEIRO'"
-                            (click)="selecionarMeioPagamento('DINHEIRO')">
-                            💵 Dinheiro
-                        </button>
-                    </div>
-                </section>
-            </div>
-
-            <div class="checkout-footer">
-                <button
-                    class="btn-primary btn-large"
-                    [disabled]="!podeEnviarPedido() || enviando()"
-                    (click)="enviarPedido()">
-                    @if (enviando()) {
-                        <span class="spinner"></span> Enviando...
+            <!-- Endereço -->
+            @if (tipoPedido() === 'DELIVERY') {
+            <section class="checkout-section">
+                <h3>📍 Endereço de entrega</h3>
+                <div class="endereco-display">
+                    @if (cliente()?.enderecoFormatado) {
+                    <p>{{ cliente()!.enderecoFormatado }}</p>
+                    <button class="btn-link" (click)="enderecoEntrega.set('')">Alterar</button>
                     } @else {
-                        Confirmar Pedido
+                    <textarea [ngModel]="enderecoEntrega()" (ngModelChange)="enderecoEntrega.set($event)"
+                        placeholder="Digite seu endereço completo" rows="2"></textarea>
                     }
-                </button>
-            </div>
+                </div>
+            </section>
+            }
+
+            <!-- Resumo do Pedido -->
+            <section class="checkout-section">
+                <h3>📋 Resumo do pedido</h3>
+                <div class="resumo-items">
+                    @for (item of itensCarrinho(); track $index) {
+                    <div class="resumo-item">
+                        <span>{{ item.quantidade }}x {{ item.produto.nome }}</span>
+                        <span>{{ (item.produto.preco * item.quantidade) | currency:'BRL' }}</span>
+                    </div>
+                    }
+                </div>
+                <div class="resumo-total">
+                    <span>Total</span>
+                    <span>{{ totalCarrinho() | currency:'BRL' }}</span>
+                </div>
+            </section>
+
+            <!-- Forma de Pagamento -->
+            <section class="checkout-section">
+                <h3>💳 Forma de pagamento</h3>
+                <div class="pagamento-options">
+                    <button class="pagamento-option" [class.selected]="meioPagamentoSelecionado() === 'PIX'"
+                        (click)="selecionarMeioPagamento('PIX')">
+                        📱 PIX
+                    </button>
+                    <button class="pagamento-option" [class.selected]="meioPagamentoSelecionado() === 'CARTAO_CREDITO'"
+                        (click)="selecionarMeioPagamento('CARTAO_CREDITO')">
+                        💳 Crédito
+                    </button>
+                    <button class="pagamento-option" [class.selected]="meioPagamentoSelecionado() === 'CARTAO_DEBITO'"
+                        (click)="selecionarMeioPagamento('CARTAO_DEBITO')">
+                        💳 Débito
+                    </button>
+                    <button class="pagamento-option" [class.selected]="meioPagamentoSelecionado() === 'DINHEIRO'"
+                        (click)="selecionarMeioPagamento('DINHEIRO')">
+                        💵 Dinheiro
+                    </button>
+                </div>
+            </section>
         </div>
+
+        <div class="checkout-footer">
+            <button class="btn-primary btn-large" [disabled]="!podeEnviarPedido() || enviando()"
+                (click)="enviarPedido()">
+                @if (enviando()) {
+                <span class="spinner"></span> Enviando...
+                } @else {
+                Confirmar Pedido
+                }
+            </button>
+        </div>
+    </div>
     }
 
     <!-- ========== SUCESSO ========== -->
     @if (etapaAtual() === 'sucesso') {
-        <div class="sucesso-screen">
-            <div class="sucesso-content">
-                <div class="sucesso-icon">🎉</div>
-                <h1>Pedido enviado!</h1>
-                <p>Seu pedido foi recebido e está sendo preparado.</p>
+    <div class="sucesso-screen">
+        <div class="sucesso-content">
+            <div class="sucesso-icon">🎉</div>
+            <h1>Pedido enviado!</h1>
+            <p>Seu pedido foi recebido e está sendo preparado.</p>
 
-                @if (statusPedido()) {
-                    <div class="status-card">
-                        <span class="status-icon">{{ getStatusIcon(statusPedido()!.status) }}</span>
-                        <span class="status-text">{{ getStatusDescricao(statusPedido()!.status) }}</span>
-                    </div>
-                }
-
-                <button class="btn-primary btn-large" (click)="novoPedido()">
-                    Fazer novo pedido
-                </button>
+            @if (statusPedido()) {
+            <div class="status-card">
+                <span class="status-icon">{{ getStatusIcon(statusPedido()!.status) }}</span>
+                <span class="status-text">{{ getStatusDescricao(statusPedido()!.status) }}</span>
             </div>
+            }
+
+            <button class="btn-primary btn-large" (click)="novoPedido()">
+                Fazer novo pedido
+            </button>
         </div>
+    </div>
+    }
+    <!-- ========== MODAL MENU PERFIL ========== -->
+    @if (mostrarMenuPerfil() && cliente()) {
+    <app-menu-perfil [cliente]="cliente()!" [visivel]="mostrarMenuPerfil()" (fechar)="fecharMenuPerfil()"
+        (clienteAtualizado)="onClienteAtualizado($event)" />
     }
 </div>

@@ -456,7 +456,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ========== Header Delivery ========== */
@@ -495,17 +497,64 @@
 }
 
 .btn-logout {
-    background: none;
-    border: none;
-    font-size: 1.25rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
     cursor: pointer;
-    padding: 0.5rem;
-    opacity: 0.7;
-    transition: opacity 0.2s;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: all 0.2s;
+    color: var(--text-secondary);
 }
 
 .btn-logout:hover {
-    opacity: 1;
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: var(--error-color);
+}
+
+.logout-icon {
+    font-size: 1rem;
+}
+
+.logout-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: inherit;
+}
+
+/* Header Actions Container */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Menu Perfil Button */
+.btn-menu-perfil {
+    background: var(--primary-light);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: var(--radius-full);
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-menu-perfil:hover {
+    background: rgba(255, 107, 53, 0.2);
+    border-color: var(--primary-color);
+}
+
+.menu-icon {
+    font-size: 1.25rem;
+    color: var(--primary-color);
 }
 
 /* ========== Loading Container ========== */
@@ -707,8 +756,13 @@
 }
 
 @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
 }
 
 .modal-close {

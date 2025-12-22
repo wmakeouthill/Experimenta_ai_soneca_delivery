@@ -1,0 +1,1212 @@
+# ☕ Diretrizes de Desenvolvimento Backend — Java 21/25 LTS / Spring Boot 3.4.x/3.5.x
+
+> **Este documento define os princípios, padrões e regras OBRIGATÓRIAS para desenvolvimento backend moderno.**
+> Consulte `.cursorrules` para visão geral e `.cursorrules-frontend` para regras do frontend.
+
+---
+
+## 1. STACK TECNOLÓGICA
+
+| Tecnologia   | Versão      | Observação                           |
+|--------------|-------------|--------------------------------------|
+| Java         | **21 LTS** (obrigatório) / **25 LTS** (preferido) | Java 25 LTS previsto set/2025 |
+| Spring Boot  | **3.4.x** / **3.5.x** | 3.5 previsto mai/2025 com melhorias |
+| Spring       | **6.2.x**   | Compatível com Spring Boot 3.4/3.5   |
+| Maven        | **3.9+**    | Build tool padrão                    |
+| Gradle       | **8.x**     | Alternativa ao Maven                 |
+| Liquibase    | **4.x**     | Migrações de banco                   |
+| Flyway       | **10.x**    | Alternativa ao Liquibase             |
+| Lombok       | **Latest**  | Redução de boilerplate               |
+| MapStruct    | **1.6.x**   | Mapeamento de objetos (preferido)    |
+| JUnit        | **5.11+**   | Framework de testes                  |
+| Mockito      | **5.x**     | Framework de mocking                 |
+| ArchUnit     | **1.3+**    | Validação de arquitetura             |
+
+---
+
+## 2. RECURSOS MODERNOS DO JAVA 21+ (OBRIGATÓRIOS)
+
+### 2.1 Java Records para Value Objects
+
+```java
+// ✅ CORRETO - Record imutável por padrão
+public record Email(String valor) {
+    public Email {
+        if (valor == null || !valor.contains("@")) {
+            throw new IllegalArgumentException("Email inválido");
+        }
+    }
+}
+
+public record Dinheiro(BigDecimal valor, String moeda) {
+    public static final Dinheiro ZERO = new Dinheiro(BigDecimal.ZERO, "BRL");
+    
+    public Dinheiro {
+        Objects.requireNonNull(valor, "Valor não pode ser nulo");
+        Objects.requireNonNull(moeda, "Moeda não pode ser nula");
+        if (valor.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Valor não pode ser negativo");
+        }
+    }
+    
+    public Dinheiro somar(Dinheiro outro) {
+        if (!this.moeda.equals(outro.moeda)) {
+            throw new IllegalArgumentException("Moedas diferentes");
+        }
+        return new Dinheiro(this.valor.add(outro.valor), this.moeda);
+    }
+}
+
+// ❌ ERRADO - Classe para Value Object
+public class Email {
+    private String valor;
+    public void setValor(String valor) { this.valor = valor; } // Mutável!
+}
+```
+
+### 2.2 Pattern Matching e Sealed Classes
+
+```java
+// ✅ Sealed classes para hierarquias fechadas
+public sealed interface Resultado<T> permits Sucesso, Falha {
+}
+
+public record Sucesso<T>(T valor) implements Resultado<T> {}
+public record Falha<T>(String erro, String codigo) implements Resultado<T> {}
+
+// ✅ Pattern matching com switch
+public String processar(Resultado<?> resultado) {
+    return switch (resultado) {
+        case Sucesso(var valor) -> "Sucesso: " + valor;
+        case Falha(var erro, var codigo) -> "Erro %s: %s".formatted(codigo, erro);
+    };
+}
+
+// ✅ Pattern matching com instanceof
+public void processar(Object obj) {
+    if (obj instanceof Pedido pedido && pedido.isAtivo()) {
+        processarPedido(pedido);
+    }
+}
+```
+
+### 2.3 Virtual Threads (Spring Boot 3.2+)
+
+```yaml
+# application.yml - Habilitar Virtual Threads
+spring:
+  threads:
+    virtual:
+      enabled: true
+```
+
+```java
+// ✅ Operações I/O blocking se beneficiam de Virtual Threads
+@Async
+public CompletableFuture<Relatorio> gerarRelatorio(FiltroRelatorio filtro) {
+    var dados = repositorio.buscarDados(filtro);
+    return CompletableFuture.completedFuture(gerador.gerar(dados));
+}
+```
+
+---
+
+## 3. CLEAN ARCHITECTURE E DDD
+
+### Regra de Dependência
+
+```
+Infrastructure → Application → Domain
+```
+
+- **Domain**: Regras de negócio puras, ZERO dependências de frameworks
+- **Application**: Orquestração, use cases, DTOs, ports
+- **Infrastructure**: Implementações técnicas, adapters, controllers, JPA, config
+
+### Estrutura de Pacotes (Hexagonal/Ports & Adapters)
+
+```
+src/main/java/br/com/empresa/{modulo}/
+├── domain/                     # NÚCLEO - Regras de negócio puras
+│   ├── entities/               # Entidades ricas com comportamento
+│   ├── valueobjects/           # Records imutáveis (Java Records)
+│   ├── services/               # Serviços de domínio
+│   ├── repositories/           # Interfaces de repositório (Ports)
+│   ├── events/                 # Eventos de domínio
+│   ├── specifications/         # Regras combináveis (Specification Pattern)
+│   └── exceptions/             # Exceções de domínio
+│
+├── application/                # CASOS DE USO - Orquestração
+│   ├── usecases/               # Casos de uso específicos
+│   ├── dtos/                   # Data Transfer Objects (Records)
+│   ├── ports/                  # Interfaces (Hexagonal)
+│   │   ├── in/                 # Portas de entrada (Driving)
+│   │   └── out/                # Portas de saída (Driven)
+│   ├── services/               # Serviços de aplicação
+│   └── mappers/                # MapStruct interfaces
+│
+├── infrastructure/             # ADAPTADORES - Implementações técnicas
+│   ├── persistence/            # JPA/JDBC
+│   │   ├── entities/           # Entidades JPA (@Entity)
+│   │   ├── repositories/       # Implementações JPA
+│   │   └── mappers/            # Mappers Domain ↔ JPA Entity
+│   ├── web/                    # REST API
+│   │   ├── controllers/        # REST Controllers
+│   │   ├── handlers/           # Exception handlers
+│   │   └── mappers/            # Mappers DTO ↔ Response
+│   ├── external/               # Clientes externos (Feign, REST, WebClient)
+│   ├── messaging/              # JMS, Kafka, RabbitMQ
+│   └── config/                 # Configurações Spring, Jackson, Security
+│
+└── interfaces/                 # CONTRATOS DE API (OpenAPI)
+    └── rest/
+        └── v1/
+            └── *API.java       # Interfaces com anotações OpenAPI
+```
+
+---
+
+## 4. PRINCÍPIOS SOLID
+
+| Princípio | Aplicação Prática | Regra |
+|-----------|-------------------|-------|
+| **S**ingle Responsibility | Uma classe = uma responsabilidade | Use cases separados por operação |
+| **O**pen/Closed | Extensível via interfaces | Strategies, Decorators, Specifications |
+| **L**iskov Substitution | Subtipos substituíveis | Sealed classes, herança consciente |
+| **I**nterface Segregation | Interfaces pequenas | Ports específicos (save, find, delete) |
+| **D**ependency Inversion | Depender de abstrações | Injeção via construtor, Ports no domain |
+
+```java
+// ✅ Interface Segregation - Ports específicos
+public interface SalvarPedidoPort {
+    Pedido salvar(Pedido pedido);
+}
+
+public interface BuscarPedidoPort {
+    Optional<Pedido> buscarPorId(PedidoId id);
+    List<Pedido> buscarPorCliente(ClienteId clienteId);
+}
+
+// ❌ ERRADO - Interface genérica demais
+public interface PedidoRepository extends JpaRepository<Pedido, Long> {
+    // Expõe tudo do JPA para o domain - PROIBIDO!
+}
+```
+
+---
+
+## 5. REUTILIZAÇÃO DE MAPPERS E JACKSON
+
+### 5.1 JacksonConfig (Singleton via DI)
+
+```java
+@Configuration
+public class JacksonConfig {
+    
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        return JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .addModule(new ParameterNamesModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .serializationInclusion(JsonInclude.Include.NON_NULL)
+            .build();
+    }
+    
+    @Bean
+    public ObjectReaderFactory objectReaderFactory(ObjectMapper objectMapper) {
+        return new ObjectReaderFactory(objectMapper);
+    }
+}
+
+// ✅ CORRETO - Injeção via DI
+@Service
+@RequiredArgsConstructor
+public class ImportacaoService {
+    private final ObjectMapper objectMapper; // Singleton do Spring
+    
+    public List<Produto> importar(InputStream input) throws IOException {
+        return objectMapper.readValue(input, new TypeReference<>() {});
+    }
+}
+
+// ❌ ERRADO - Singleton manual ou new
+public class JsonUtil {
+    private static final ObjectMapper MAPPER = new ObjectMapper(); // PROIBIDO!
+}
+```
+
+### 5.2 MapStruct (Preferido para Mapeamentos)
+
+```java
+// Configuração MapStruct com Spring
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
+public interface PedidoMapper {
+    
+    @Mapping(target = "clienteNome", source = "cliente.nome")
+    @Mapping(target = "valorTotal", expression = "java(pedido.calcularTotal())")
+    PedidoResponse toResponse(Pedido pedido);
+    
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "dataCriacao", expression = "java(java.time.LocalDateTime.now())")
+    Pedido toDomain(CriarPedidoRequest request);
+    
+    List<PedidoResponse> toResponseList(List<Pedido> pedidos);
+}
+
+// Uso no Use Case
+@Service
+@RequiredArgsConstructor
+public class CriarPedidoUseCase {
+    private final PedidoRepositoryPort repository;
+    private final PedidoMapper mapper; // Injetado automaticamente
+    
+    @Transactional
+    public PedidoResponse executar(CriarPedidoRequest request) {
+        var pedido = mapper.toDomain(request);
+        var salvo = repository.salvar(pedido);
+        return mapper.toResponse(salvo);
+    }
+}
+```
+
+---
+
+## 6. DTOs COMO RECORDS
+
+```java
+// ✅ Request DTO com validação
+public record CriarPedidoRequest(
+    @NotBlank(message = "Cliente é obrigatório")
+    String clienteId,
+    
+    @NotEmpty(message = "Itens são obrigatórios")
+    @Valid
+    List<ItemPedidoRequest> itens,
+    
+    @Size(max = 500, message = "Observação deve ter no máximo 500 caracteres")
+    String observacao
+) {}
+
+public record ItemPedidoRequest(
+    @NotBlank String produtoId,
+    @Positive int quantidade,
+    @PositiveOrZero BigDecimal desconto
+) {}
+
+// ✅ Response DTO
+public record PedidoResponse(
+    String id,
+    String clienteNome,
+    List<ItemPedidoResponse> itens,
+    BigDecimal valorTotal,
+    String status,
+    LocalDateTime dataCriacao
+) {}
+```
+
+---
+
+## 7. ACID E TRANSAÇÕES
+
+### Regras Obrigatórias
+
+- ✅ `@Transactional` no nível do Use Case/Application Service
+- ✅ `@Transactional(readOnly = true)` para queries
+- ❌ NUNCA chamadas HTTP/externas dentro de transações
+- ❌ NUNCA transações longas (>2 segundos)
+
+```java
+// ✅ CORRETO - Transação no Use Case
+@Service
+@RequiredArgsConstructor
+public class ProcessarPedidoUseCase {
+    private final PedidoRepositoryPort pedidoRepo;
+    private final ApplicationEventPublisher eventPublisher;
+    private final PedidoMapper mapper;
+    
+    @Transactional
+    public PedidoResponse executar(String pedidoId) {
+        // 1. Buscar e atualizar pedido (dentro da transação)
+        var pedido = pedidoRepo.buscarPorId(pedidoId)
+            .orElseThrow(() -> new PedidoNaoEncontradoException(pedidoId));
+        
+        pedido.confirmar();
+        pedidoRepo.salvar(pedido);
+        
+        // 2. Publicar evento para processamento assíncrono
+        eventPublisher.publishEvent(new PedidoConfirmadoEvent(pedido.getId()));
+        
+        return mapper.toResponse(pedido);
+    }
+}
+```
+
+### Outbox Pattern para Eventos
+
+```java
+@Entity
+@Table(name = "outbox_events")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class OutboxEvent {
+    @Id
+    private UUID id = UUID.randomUUID();
+    private String aggregateType;
+    private String aggregateId;
+    private String eventType;
+    
+    @Column(columnDefinition = "jsonb")
+    private String payload;
+    
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private boolean processed = false;
+    
+    public static OutboxEvent criar(DomainEvent event, ObjectMapper mapper) throws JsonProcessingException {
+        var outbox = new OutboxEvent();
+        outbox.aggregateType = event.getAggregateType();
+        outbox.aggregateId = event.getAggregateId();
+        outbox.eventType = event.getClass().getSimpleName();
+        outbox.payload = mapper.writeValueAsString(event);
+        return outbox;
+    }
+}
+```
+
+### Idempotency Key
+
+```java
+@Service
+@RequiredArgsConstructor
+public class ProcessarPagamentoUseCase {
+    private final IdempotencyKeyRepository idempotencyRepo;
+    
+    @Transactional
+    public ResultadoPagamento executar(String idempotencyKey, PagamentoRequest request) {
+        // Verifica se já foi processado
+        var existente = idempotencyRepo.findByKey(idempotencyKey);
+        if (existente.isPresent()) {
+            return existente.get().getResultado();
+        }
+        
+        // Processa e salva com idempotency key
+        var resultado = processarPagamento(request);
+        idempotencyRepo.save(new IdempotencyRecord(idempotencyKey, resultado));
+        return resultado;
+    }
+}
+```
+
+---
+
+## 8. ENTIDADES RICAS (DDD)
+
+```java
+@Entity
+@Table(name = "pedidos")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA
+public class Pedido {
+    
+    @EmbeddedId
+    private PedidoId id;
+    
+    @Embedded
+    private ClienteId clienteId;
+    
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemPedido> itens = new ArrayList<>();
+    
+    @Enumerated(EnumType.STRING)
+    private StatusPedido status = StatusPedido.RASCUNHO;
+    
+    private LocalDateTime dataCriacao;
+    private LocalDateTime dataConfirmacao;
+    
+    // ✅ Factory Method - Criação controlada
+    public static Pedido criar(ClienteId clienteId) {
+        var pedido = new Pedido();
+        pedido.id = PedidoId.gerar();
+        pedido.clienteId = clienteId;
+        pedido.dataCriacao = LocalDateTime.now();
+        return pedido;
+    }
+    
+    // ✅ Comportamento de negócio na entidade
+    public void adicionarItem(Produto produto, int quantidade) {
+        validarPodeSerAlterado();
+        
+        var itemExistente = itens.stream()
+            .filter(i -> i.getProdutoId().equals(produto.getId()))
+            .findFirst();
+        
+        if (itemExistente.isPresent()) {
+            itemExistente.get().incrementarQuantidade(quantidade);
+        } else {
+            itens.add(ItemPedido.criar(produto, quantidade));
+        }
+    }
+    
+    public void confirmar() {
+        if (this.status != StatusPedido.RASCUNHO) {
+            throw new EstadoInvalidoException("Pedido não pode ser confirmado");
+        }
+        if (this.itens.isEmpty()) {
+            throw new RegraDeNegocioException("Pedido deve ter pelo menos um item");
+        }
+        this.status = StatusPedido.CONFIRMADO;
+        this.dataConfirmacao = LocalDateTime.now();
+    }
+    
+    public Dinheiro calcularTotal() {
+        return itens.stream()
+            .map(ItemPedido::calcularSubtotal)
+            .reduce(Dinheiro.ZERO, Dinheiro::somar);
+    }
+    
+    public boolean isAtivo() {
+        return this.status != StatusPedido.CANCELADO;
+    }
+    
+    private void validarPodeSerAlterado() {
+        if (this.status != StatusPedido.RASCUNHO) {
+            throw new EstadoInvalidoException("Pedido confirmado não pode ser alterado");
+        }
+    }
+}
+```
+
+---
+
+## 9. DESIGN PATTERNS OBRIGATÓRIOS
+
+### Strategy Pattern
+
+```java
+public interface CalculoFreteStrategy {
+    BigDecimal calcular(Pedido pedido);
+    boolean suporta(TipoFrete tipo);
+}
+
+@Component
+public class FreteCorreiosStrategy implements CalculoFreteStrategy {
+    public BigDecimal calcular(Pedido pedido) { /* impl */ }
+    public boolean suporta(TipoFrete tipo) { return tipo == TipoFrete.CORREIOS; }
+}
+
+@Service
+@RequiredArgsConstructor
+public class CalculadorFrete {
+    private final List<CalculoFreteStrategy> strategies;
+    
+    public BigDecimal calcular(Pedido pedido, TipoFrete tipo) {
+        return strategies.stream()
+            .filter(s -> s.suporta(tipo))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Tipo não suportado: " + tipo))
+            .calcular(pedido);
+    }
+}
+```
+
+### Specification Pattern
+
+```java
+public interface Specification<T> {
+    boolean isSatisfiedBy(T entity);
+    
+    default Specification<T> and(Specification<T> other) {
+        return entity -> this.isSatisfiedBy(entity) && other.isSatisfiedBy(entity);
+    }
+    
+    default Specification<T> or(Specification<T> other) {
+        return entity -> this.isSatisfiedBy(entity) || other.isSatisfiedBy(entity);
+    }
+}
+
+public class PedidoAtivoSpec implements Specification<Pedido> {
+    public boolean isSatisfiedBy(Pedido pedido) {
+        return pedido.getStatus() != StatusPedido.CANCELADO;
+    }
+}
+
+public class PedidoComValorMinimoSpec implements Specification<Pedido> {
+    private final BigDecimal valorMinimo;
+    
+    public PedidoComValorMinimoSpec(BigDecimal valorMinimo) {
+        this.valorMinimo = valorMinimo;
+    }
+    
+    public boolean isSatisfiedBy(Pedido pedido) {
+        return pedido.calcularTotal().valor().compareTo(valorMinimo) >= 0;
+    }
+}
+
+// Uso combinado
+var spec = new PedidoAtivoSpec().and(new PedidoComValorMinimoSpec(new BigDecimal("100")));
+var pedidosValidos = pedidos.stream().filter(spec::isSatisfiedBy).toList();
+```
+
+---
+
+## 10. TESTES
+
+### Estrutura de Testes
+
+```
+src/test/java/
+├── unit/                       # Testes unitários (domain, use cases)
+│   ├── domain/
+│   │   └── PedidoTest.java
+│   └── application/
+│       └── CriarPedidoUseCaseTest.java
+├── integration/                # Testes de integração
+│   ├── persistence/
+│   │   └── PedidoRepositoryIT.java
+│   └── web/
+│       └── PedidoControllerIT.java
+└── architecture/               # Testes de arquitetura (ArchUnit)
+    └── ArchitectureTest.java
+```
+
+### Exemplo de Teste Unitário
+
+```java
+@ExtendWith(MockitoExtension.class)
+class CriarPedidoUseCaseTest {
+    
+    @Mock
+    private PedidoRepositoryPort repository;
+    
+    @Mock
+    private PedidoMapper mapper;
+    
+    @InjectMocks
+    private CriarPedidoUseCase useCase;
+    
+    @Test
+    @DisplayName("Deve criar pedido com sucesso")
+    void deveCriarPedidoComSucesso() {
+        // Arrange
+        var request = new CriarPedidoRequest("cliente-123", List.of(
+            new ItemPedidoRequest("produto-1", 2, BigDecimal.ZERO)
+        ), null);
+        
+        var pedidoEsperado = Pedido.criar(new ClienteId("cliente-123"));
+        var responseEsperado = new PedidoResponse("ped-1", "Cliente", List.of(), 
+            BigDecimal.TEN, "RASCUNHO", LocalDateTime.now());
+        
+        when(mapper.toDomain(request)).thenReturn(pedidoEsperado);
+        when(repository.salvar(any())).thenReturn(pedidoEsperado);
+        when(mapper.toResponse(pedidoEsperado)).thenReturn(responseEsperado);
+        
+        // Act
+        var resultado = useCase.executar(request);
+        
+        // Assert
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.id()).isEqualTo("ped-1");
+        verify(repository).salvar(any(Pedido.class));
+    }
+}
+```
+
+### ArchUnit - Validação de Arquitetura
+
+```java
+@AnalyzeClasses(packages = "br.com.empresa.modulo")
+class ArchitectureTest {
+    
+    @ArchTest
+    static final ArchRule domain_nao_deve_depender_de_infrastructure =
+        noClasses()
+            .that().resideInAPackage("..domain..")
+            .should().dependOnClassesThat()
+            .resideInAnyPackage("..infrastructure..", "..application..");
+    
+    @ArchTest
+    static final ArchRule use_cases_devem_ser_services =
+        classes()
+            .that().resideInAPackage("..application.usecases..")
+            .and().haveSimpleNameEndingWith("UseCase")
+            .should().beAnnotatedWith(Service.class);
+    
+    @ArchTest
+    static final ArchRule controllers_devem_estar_em_web =
+        classes()
+            .that().areAnnotatedWith(RestController.class)
+            .should().resideInAPackage("..infrastructure.web..");
+}
+```
+
+---
+
+## 11. CHECKLIST DE QUALIDADE
+
+### Antes de Commitar
+
+#### Arquitetura
+
+- [ ] Clean Architecture respeitada (Domain sem dependências)
+- [ ] Ports & Adapters implementados corretamente
+- [ ] Use Cases pequenos e focados (Single Responsibility)
+- [ ] MapStruct para mapeamentos
+- [ ] JacksonConfig centralizado (sem `new ObjectMapper()`)
+
+#### Código
+
+- [ ] Java Records para Value Objects e DTOs
+- [ ] `@RequiredArgsConstructor` para injeção
+- [ ] Sealed classes para hierarquias fechadas
+- [ ] Pattern matching onde aplicável
+- [ ] Optional ao invés de null
+- [ ] Exceções específicas de domínio
+- [ ] Entidades ricas com comportamento
+
+#### Transações
+
+- [ ] `@Transactional` no Use Case
+- [ ] `@Transactional(readOnly = true)` para queries
+- [ ] Sem chamadas externas dentro de transações
+- [ ] Outbox Pattern para eventos críticos
+
+#### Testes
+
+- [ ] Testes unitários para Use Cases e Domain
+- [ ] Testes de integração para Controllers e Repositories
+- [ ] ArchUnit validando arquitetura
+- [ ] Cobertura mínima 80%
+
+---
+
+## 12. ANTI-PATTERNS (PROIBIDOS)
+
+### Código
+
+1. ❌ Entidades anêmicas (apenas getters/setters)
+2. ❌ `new ObjectMapper()` espalhado no código
+3. ❌ Singleton manual (`getInstance()`, static cache)
+4. ❌ Construtor manual quando Lombok resolve
+5. ❌ Classes para Value Objects (use Records)
+6. ❌ Retornar null (use Optional)
+7. ❌ Catch vazio ou genérico
+8. ❌ Magic numbers/strings
+9. ❌ God Classes (>300 linhas)
+10. ❌ Métodos gigantes (>20 linhas)
+
+### Arquitetura
+
+11. ❌ Domain dependendo de Infrastructure
+12. ❌ Lógica de negócio no Controller
+13. ❌ JPA annotations expostas para Domain (use mapper separado)
+14. ❌ Use Cases fazendo muitas coisas
+15. ❌ Chamadas HTTP dentro de transações
+16. ❌ Queries SQL no Controller
+17. ❌ Mappers manuais repetidos (use MapStruct)
+
+---
+
+## 13. 🔐 SEGURANÇA BACKEND (OWASP / Spring Security 6.x)
+
+### 13.1 Configuração Spring Security 6.x
+
+```java
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            // ✅ CSRF - Habilitar para apps com sessão, desabilitar para APIs stateless
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+            )
+            
+            // ✅ CORS - Whitelist de origens permitidas
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // ✅ Session - STATELESS para APIs REST
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            
+            // ✅ OAuth2/JWT - Resource Server
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+            )
+            
+            // ✅ Headers de Segurança
+            .headers(headers -> headers
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives("default-src 'self'; frame-ancestors 'none'"))
+                .frameOptions(frame -> frame.deny())
+                .contentTypeOptions(Customizer.withDefaults())
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000))
+            )
+            
+            // ✅ Autorização - Deny by default
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                .requestMatchers("/api/v1/public/**").permitAll()
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            
+            // ✅ Exception Handling
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(new Http401EntryPoint())
+                .accessDeniedHandler(new Http403Handler())
+            )
+            .build();
+    }
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        var config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("https://meudominio.com.br")); // ✅ NUNCA usar "*" em produção
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Request-ID"));
+        config.setExposedHeaders(List.of("X-Request-ID", "X-Correlation-ID"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+        
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
+    }
+}
+```
+
+### 13.2 Method Security (Autorização Granular)
+
+```java
+// ✅ SEMPRE validar autorização no método - NUNCA confie apenas na URL
+@Service
+@RequiredArgsConstructor
+public class PedidoService {
+    
+    private final PedidoRepository repository;
+    private final AuthorizationService authService;
+    
+    // ✅ Role-based
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Pedido> listarTodos() { ... }
+    
+    // ✅ Permission-based
+    @PreAuthorize("hasAuthority('PEDIDO_LEITURA')")
+    public Pedido buscarPorId(UUID id) { ... }
+    
+    // ✅ Owner check - usuário só acessa seus recursos
+    @PreAuthorize("@authService.isOwner(#id, authentication.name)")
+    public void deletar(UUID id) { ... }
+    
+    // ✅ Combinação de roles
+    @PreAuthorize("hasRole('ADMIN') or @authService.isOwner(#id, authentication)")
+    public Pedido atualizar(UUID id, AtualizarPedidoRequest request) { ... }
+    
+    // ✅ Post-authorization - validar retorno
+    @PostAuthorize("returnObject.clienteId == authentication.name or hasRole('ADMIN')")
+    public Pedido buscar(UUID id) { ... }
+}
+
+// ✅ Service de autorização customizado
+@Service("authService")
+@RequiredArgsConstructor
+public class AuthorizationService {
+    
+    private final PedidoRepository pedidoRepository;
+    
+    public boolean isOwner(UUID resourceId, String username) {
+        return pedidoRepository.findById(resourceId)
+            .map(pedido -> pedido.getClienteId().equals(username))
+            .orElse(false);
+    }
+    
+    public boolean isOwner(UUID resourceId, Authentication auth) {
+        return isOwner(resourceId, auth.getName());
+    }
+}
+```
+
+### 13.3 Input Validation (Prevenção de Injection)
+
+```java
+// ✅ Bean Validation - SEMPRE validar inputs
+public record CriarUsuarioRequest(
+    @NotBlank(message = "Nome é obrigatório")
+    @Size(min = 2, max = 100, message = "Nome deve ter entre 2 e 100 caracteres")
+    @Pattern(regexp = "^[a-zA-ZÀ-ÿ\\s]+$", message = "Nome contém caracteres inválidos")
+    String nome,
+    
+    @NotBlank(message = "Email é obrigatório")
+    @Email(message = "Email inválido")
+    String email,
+    
+    @NotBlank(message = "Senha é obrigatória")
+    @ValidSenha  // Custom validator
+    String senha,
+    
+    @NotNull(message = "CPF é obrigatório")
+    @ValidCpf    // Custom validator
+    String cpf
+) {}
+
+// ✅ Custom Validator para senha forte
+@Target({FIELD, PARAMETER})
+@Retention(RUNTIME)
+@Constraint(validatedBy = SenhaValidator.class)
+public @interface ValidSenha {
+    String message() default "Senha deve ter mínimo 8 caracteres, incluindo maiúscula, minúscula, número e caractere especial";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+public class SenhaValidator implements ConstraintValidator<ValidSenha, String> {
+    private static final Pattern SENHA_PATTERN = Pattern.compile(
+        "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+    );
+    
+    @Override
+    public boolean isValid(String senha, ConstraintValidatorContext context) {
+        return senha != null && SENHA_PATTERN.matcher(senha).matches();
+    }
+}
+
+// ✅ Controller - @Valid obrigatório
+@PostMapping
+public ResponseEntity<UsuarioResponse> criar(@RequestBody @Valid CriarUsuarioRequest request) {
+    return ResponseEntity.status(CREATED).body(useCase.executar(request));
+}
+```
+
+### 13.4 Prevenção de SQL Injection
+
+```java
+// ✅ SEMPRE usar JPA/Hibernate com parâmetros nomeados
+@Repository
+public interface PedidoRepository extends JpaRepository<Pedido, UUID> {
+    
+    // ✅ JPQL com parâmetro - SEGURO
+    @Query("SELECT p FROM Pedido p WHERE p.clienteId = :clienteId AND p.status = :status")
+    List<Pedido> findByClienteAndStatus(
+        @Param("clienteId") UUID clienteId,
+        @Param("status") StatusPedido status
+    );
+    
+    // ✅ Native query com parâmetro - SEGURO
+    @Query(value = "SELECT * FROM pedidos WHERE valor > :valor", nativeQuery = true)
+    List<Pedido> findByValorMaiorQue(@Param("valor") BigDecimal valor);
+}
+
+// ❌ NUNCA - Concatenação de strings em queries
+String sql = "SELECT * FROM users WHERE id = " + userId; // VULNERÁVEL!
+```
+
+### 13.5 Password Storage (BCrypt)
+
+```java
+@Configuration
+public class PasswordConfig {
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        // ✅ BCrypt com strength 12 (padrão é 10)
+        return new BCryptPasswordEncoder(12);
+    }
+}
+
+@Service
+@RequiredArgsConstructor
+public class UsuarioService {
+    
+    private final PasswordEncoder passwordEncoder;
+    private final UsuarioRepository repository;
+    
+    public void criarUsuario(CriarUsuarioRequest request) {
+        var usuario = new Usuario();
+        // ✅ NUNCA armazenar senha em texto plano
+        usuario.setSenhaHash(passwordEncoder.encode(request.senha()));
+        repository.save(usuario);
+    }
+    
+    public boolean validarSenha(String senhaInformada, String senhaHash) {
+        return passwordEncoder.matches(senhaInformada, senhaHash);
+    }
+}
+```
+
+### 13.6 JWT Security
+
+```java
+@Configuration
+public class JwtConfig {
+    
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+    
+    @Value("${jwt.expiration:3600}") // 1 hora
+    private long jwtExpiration;
+    
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        // ✅ Usar chave assimétrica em produção (RS256)
+        return NimbusJwtDecoder.withSecretKey(getSecretKey()).build();
+    }
+    
+    private SecretKey getSecretKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+}
+
+// ✅ Validações obrigatórias de JWT
+// - iss (issuer): verificar emissor confiável
+// - aud (audience): verificar audiência esperada
+// - exp (expiration): verificar expiração
+// - nbf (not before): verificar validade inicial
+// - iat (issued at): verificar data de emissão
+// - jti (JWT ID): para revogação/blacklist
+```
+
+### 13.7 Audit Logging
+
+```java
+@Aspect
+@Component
+@Slf4j
+public class AuditAspect {
+    
+    @Around("@annotation(audited)")
+    public Object audit(ProceedingJoinPoint joinPoint, Audited audited) throws Throwable {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        var username = auth != null ? auth.getName() : "anonymous";
+        var action = audited.action();
+        var resourceType = audited.resourceType();
+        
+        // ✅ Log ANTES da operação
+        log.info("AUDIT: User={} Action={} Resource={} Args={}",
+            username, action, resourceType, sanitizeArgs(joinPoint.getArgs()));
+        
+        try {
+            var result = joinPoint.proceed();
+            
+            // ✅ Log de SUCESSO
+            log.info("AUDIT: User={} Action={} Resource={} Status=SUCCESS",
+                username, action, resourceType);
+            
+            return result;
+        } catch (Exception e) {
+            // ✅ Log de FALHA
+            log.warn("AUDIT: User={} Action={} Resource={} Status=FAILED Error={}",
+                username, action, resourceType, e.getMessage());
+            throw e;
+        }
+    }
+    
+    // ✅ NUNCA logar dados sensíveis
+    private Object[] sanitizeArgs(Object[] args) {
+        return Arrays.stream(args)
+            .map(this::sanitize)
+            .toArray();
+    }
+    
+    private Object sanitize(Object arg) {
+        if (arg == null) return null;
+        // ✅ Mascarar campos sensíveis
+        if (arg.toString().toLowerCase().contains("senha") ||
+            arg.toString().toLowerCase().contains("password")) {
+            return "[REDACTED]";
+        }
+        return arg;
+    }
+}
+
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Audited {
+    String action();
+    String resourceType();
+}
+
+// Uso
+@Audited(action = "DELETE", resourceType = "PEDIDO")
+@PreAuthorize("hasRole('ADMIN')")
+public void deletarPedido(UUID id) { ... }
+```
+
+### 13.8 Rate Limiting
+
+```java
+// ✅ Bucket4j para rate limiting
+@Configuration
+public class RateLimitConfig {
+    
+    @Bean
+    public Bucket createBucket() {
+        return Bucket.builder()
+            .addLimit(Bandwidth.classic(100, Refill.intervally(100, Duration.ofMinutes(1))))
+            .build();
+    }
+}
+
+@Component
+@RequiredArgsConstructor
+public class RateLimitFilter extends OncePerRequestFilter {
+    
+    private final Bucket bucket;
+    
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, 
+                                    HttpServletResponse response, 
+                                    FilterChain chain) throws ServletException, IOException {
+        if (bucket.tryConsume(1)) {
+            chain.doFilter(request, response);
+        } else {
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setHeader("Retry-After", "60");
+            response.getWriter().write("{\"error\": \"Rate limit exceeded\"}");
+        }
+    }
+}
+```
+
+### 13.9 Secrets Management
+
+```yaml
+# ✅ NUNCA commitar secrets no código
+# application.yml - usar variáveis de ambiente ou vault
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    
+  # ✅ Spring Cloud Vault (produção)
+  cloud:
+    vault:
+      enabled: true
+      uri: https://vault.empresa.com.br
+      authentication: KUBERNETES
+      kubernetes:
+        role: minha-aplicacao
+
+jwt:
+  secret: ${JWT_SECRET}
+
+# ✅ Azure Key Vault (alternativa)
+azure:
+  keyvault:
+    uri: https://meu-keyvault.vault.azure.net/
+```
+
+### 13.10 Checklist de Segurança Backend
+
+#### Antes do Deploy
+
+- [ ] **HTTPS** obrigatório (TLS 1.3)
+- [ ] **CORS** configurado com whitelist específica
+- [ ] **CSRF** habilitado para sessões, desabilitado para JWT stateless
+- [ ] **Rate Limiting** configurado
+- [ ] **Security Headers** (CSP, HSTS, X-Frame-Options, etc.)
+- [ ] **Secrets** em vault ou variáveis de ambiente
+- [ ] **Dependency check** (OWASP, Snyk, Dependabot)
+- [ ] **Logs** não contêm PII/senhas/tokens
+- [ ] **Method Security** (@PreAuthorize) em todos endpoints sensíveis
+- [ ] **Input Validation** (@Valid) em todas entradas
+- [ ] **Output Encoding** para prevenir XSS
+- [ ] **SQL Injection** prevenido (JPA + parâmetros)
+- [ ] **Actuator** protegido ou desabilitado em produção
+- [ ] **Debug** desabilitado em produção
+- [ ] **Stack traces** não expostas em respostas de erro
+
+---
+
+## 14. REFERÊNCIA RÁPIDA
+
+### Novo Use Case
+
+```java
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class CriarExemploUseCase {
+    
+    private final ExemploRepositoryPort repository;
+    private final ValidadorService validador;
+    private final ExemploMapper mapper;
+    private final ApplicationEventPublisher eventPublisher;
+    
+    @Transactional
+    public ExemploResponse executar(CriarExemploRequest request) {
+        log.info("Criando exemplo: {}", request);
+        
+        validador.validar(request);
+        
+        var exemplo = Exemplo.criar(
+            request.nome(),
+            new Email(request.email())
+        );
+        
+        var salvo = repository.salvar(exemplo);
+        
+        eventPublisher.publishEvent(new ExemploCriadoEvent(salvo.getId()));
+        
+        return mapper.toResponse(salvo);
+    }
+}
+```
+
+### Nova Entidade Rica
+
+```java
+@Entity
+@Table(name = "exemplos")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Exemplo {
+    
+    @EmbeddedId
+    private ExemploId id;
+    
+    @Column(nullable = false)
+    private String nome;
+    
+    @Embedded
+    private Email email;
+    
+    @Enumerated(EnumType.STRING)
+    private StatusExemplo status = StatusExemplo.ATIVO;
+    
+    private LocalDateTime dataCriacao;
+    
+    public static Exemplo criar(String nome, Email email) {
+        var exemplo = new Exemplo();
+        exemplo.id = ExemploId.gerar();
+        exemplo.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
+        exemplo.email = Objects.requireNonNull(email, "Email é obrigatório");
+        exemplo.dataCriacao = LocalDateTime.now();
+        return exemplo;
+    }
+    
+    public void desativar() {
+        if (this.status == StatusExemplo.INATIVO) {
+            throw new EstadoInvalidoException("Exemplo já está inativo");
+        }
+        this.status = StatusExemplo.INATIVO;
+    }
+}
+```
+
+---
+
+**🚨 Siga TODAS as regras antes de implementar qualquer funcionalidade.**
+
+Em caso de dúvida, consulte `.cursorrules` ou peça revisão de arquitetura.

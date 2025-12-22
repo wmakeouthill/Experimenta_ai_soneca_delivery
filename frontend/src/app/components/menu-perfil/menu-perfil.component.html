@@ -1,0 +1,170 @@
+<div class="modal-overlay" (click)="fecharModal()">
+    <div class="modal-content modal-perfil" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>👤 Meus Dados</h2>
+            <button class="modal-close" (click)="fecharModal()">✕</button>
+        </div>
+
+        <div class="perfil-content">
+            <!-- Erro -->
+            @if (erro()) {
+            <div class="erro-message">
+                <span>⚠️ {{ erro() }}</span>
+                <button (click)="erro.set(null)">✕</button>
+            </div>
+            }
+
+            @if (!editando()) {
+            <!-- Visualização dos dados -->
+            <div class="dados-cliente">
+                <div class="dado-item">
+                    <span class="dado-label">Nome</span>
+                    <span class="dado-valor">{{ cliente().nome }}</span>
+                </div>
+                <div class="dado-item">
+                    <span class="dado-label">Telefone</span>
+                    @if (cliente().telefone) {
+                    <span class="dado-valor">{{ telefoneFormatado() }}</span>
+                    } @else {
+                    <span class="dado-valor dado-vazio">Não cadastrado</span>
+                    }
+                </div>
+                @if (!cliente().telefone) {
+                <div class="cta-telefone">
+                    <span class="cta-icon">📱</span>
+                    <div class="cta-content">
+                        <strong>Cadastre seu telefone!</strong>
+                        <span>É importante para acompanhar seu pedido e receber atualizações.</span>
+                    </div>
+                    <button class="btn-cta" (click)="iniciarEdicao()">Cadastrar</button>
+                </div>
+                }
+                @if (cliente().email) {
+                <div class="dado-item">
+                    <span class="dado-label">Email</span>
+                    <span class="dado-valor">{{ cliente().email }}</span>
+                </div>
+                }
+                <div class="dado-item dado-endereco">
+                    <span class="dado-label">📍 Endereço</span>
+                    <span class="dado-valor">{{ cliente().enderecoFormatado || 'Não cadastrado' }}</span>
+                </div>
+            </div>
+
+            <button class="btn-primary btn-large" (click)="iniciarEdicao()">
+                ✏️ Editar meus dados
+            </button>
+            } @else {
+            <!-- Formulário de edição -->
+            <form class="edit-form" (ngSubmit)="salvar()">
+                <div class="form-group">
+                    <label for="edit-nome">Nome completo</label>
+                    <input type="text" id="edit-nome" name="nome" [ngModel]="formEdicao().nome"
+                        (ngModelChange)="atualizarForm('nome', $event)" placeholder="Seu nome" maxlength="200"
+                        autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-telefone">Telefone</label>
+                    <input type="tel" id="edit-telefone" [value]="formEdicao().telefone"
+                        (input)="onTelefoneChange($event)" placeholder="(00) 00000-0000" maxlength="15"
+                        inputmode="numeric" autocomplete="tel">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-email">Email</label>
+                    <input type="email" id="edit-email" name="email" [ngModel]="formEdicao().email"
+                        (ngModelChange)="atualizarForm('email', $event)" placeholder="seu@email.com"
+                        autocomplete="email">
+                </div>
+
+                <div class="form-separator">
+                    <span>Endereço de entrega</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-cep">CEP</label>
+                    <div class="input-with-loading">
+                        <input type="text" id="edit-cep" [value]="formEdicao().cep" (input)="onCepChange($event)"
+                            placeholder="00000-000" maxlength="9" inputmode="numeric" autocomplete="postal-code"
+                            [class.input-success]="cepEncontrado() === true"
+                            [class.input-error]="cepEncontrado() === false">
+                        @if (buscandoCep()) {
+                        <span class="input-spinner"></span>
+                        }
+                        @if (cepEncontrado() === true) {
+                        <span class="input-icon success">✓</span>
+                        }
+                        @if (cepEncontrado() === false) {
+                        <span class="input-icon error">✗</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-logradouro">Rua / Avenida</label>
+                    <input type="text" id="edit-logradouro" name="logradouro" [ngModel]="formEdicao().logradouro"
+                        (ngModelChange)="atualizarForm('logradouro', $event)" placeholder="Nome da rua" maxlength="255"
+                        autocomplete="street-address">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-group-small">
+                        <label for="edit-numero">Número</label>
+                        <input type="text" id="edit-numero" name="numero" [ngModel]="formEdicao().numero"
+                            (ngModelChange)="atualizarForm('numero', $event)" placeholder="Nº" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-complemento">Complemento</label>
+                        <input type="text" id="edit-complemento" name="complemento" [ngModel]="formEdicao().complemento"
+                            (ngModelChange)="atualizarForm('complemento', $event)" placeholder="Apto, bloco..."
+                            maxlength="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-bairro">Bairro</label>
+                    <input type="text" id="edit-bairro" name="bairro" [ngModel]="formEdicao().bairro"
+                        (ngModelChange)="atualizarForm('bairro', $event)" placeholder="Seu bairro" maxlength="100">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-cidade">Cidade</label>
+                        <input type="text" id="edit-cidade" name="cidade" [ngModel]="formEdicao().cidade"
+                            (ngModelChange)="atualizarForm('cidade', $event)" placeholder="Sua cidade" maxlength="100">
+                    </div>
+                    <div class="form-group form-group-small">
+                        <label for="edit-estado">UF</label>
+                        <input type="text" id="edit-estado" name="estado" [ngModel]="formEdicao().estado"
+                            (ngModelChange)="atualizarForm('estado', $event.toUpperCase())" placeholder="SP"
+                            maxlength="2" style="text-transform: uppercase;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-referencia">Ponto de referência</label>
+                    <input type="text" id="edit-referencia" name="pontoReferencia"
+                        [ngModel]="formEdicao().pontoReferencia"
+                        (ngModelChange)="atualizarForm('pontoReferencia', $event)" placeholder="Próximo ao mercado..."
+                        maxlength="255">
+                </div>
+
+                <div class="perfil-buttons">
+                    <button type="button" class="btn-secondary" (click)="cancelarEdicao()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary" [disabled]="!dadosValidos() || salvando()">
+                        @if (salvando()) {
+                        <span class="spinner"></span>
+                        <span>Salvando...</span>
+                        } @else {
+                        <span>✓ Salvar alterações</span>
+                        }
+                    </button>
+                </div>
+            </form>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,427 @@
+/* ========== Variáveis (herdadas do componente pai) ========== */
+:host {
+    --primary-color: #FF6B35;
+    --primary-hover: #e85a27;
+    --primary-light: #FFF4F0;
+    --secondary-color: #2D3047;
+    --success-color: #10B981;
+    --error-color: #EF4444;
+    --background: #F8FAFC;
+    --surface: #FFFFFF;
+    --border-color: #E2E8F0;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
+}
+
+/* ========== Modal Overlay ========== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 90vh;
+    width: 100%;
+    max-width: 600px;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* ========== Modal Header ========== */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 10;
+}
+
+.modal-header h2 {
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: var(--background);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: var(--border-color);
+}
+
+/* ========== Perfil Content ========== */
+.perfil-content {
+    padding: 1.25rem;
+}
+
+/* ========== Erro Message ========== */
+.erro-message {
+    background: var(--error-color);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.erro-message button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* ========== Dados Cliente (Visualização) ========== */
+.dados-cliente {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.dado-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: var(--radius-sm);
+}
+
+.dado-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dado-valor {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.dado-endereco {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--background) 100%);
+}
+
+.dado-endereco .dado-valor {
+    line-height: 1.5;
+}
+
+/* ========== Dado Vazio ========== */
+.dado-vazio {
+    color: var(--text-muted) !important;
+    font-style: italic;
+}
+
+/* ========== CTA Telefone ========== */
+.cta-telefone {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+    border: 1.5px solid #FDBA74;
+    border-radius: var(--radius-md);
+    margin-top: 0.5rem;
+}
+
+.cta-icon {
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.cta-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.cta-content strong {
+    font-size: 0.9375rem;
+    color: #C2410C;
+}
+
+.cta-content span {
+    font-size: 0.8125rem;
+    color: #9A3412;
+}
+
+.btn-cta {
+    background: #EA580C;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.btn-cta:hover {
+    background: #C2410C;
+}
+
+.btn-cta:active {
+    transform: scale(0.98);
+}
+
+/* ========== Form Styles ========== */
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    flex: 1;
+}
+
+.form-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    color: var(--text-primary);
+    background: var(--surface);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+}
+
+.form-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.form-group-small {
+    flex: 0 0 80px;
+}
+
+/* ========== Form Separator ========== */
+.form-separator {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem 0;
+}
+
+.form-separator::before,
+.form-separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.form-separator span {
+    padding: 0 1rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ========== Input with Loading ========== */
+.input-with-loading {
+    position: relative;
+}
+
+.input-with-loading input {
+    padding-right: 2.5rem;
+}
+
+.input-spinner {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.input-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.input-icon.success {
+    color: var(--success-color);
+}
+
+.input-icon.error {
+    color: var(--error-color);
+}
+
+.input-success {
+    border-color: var(--success-color) !important;
+}
+
+.input-error {
+    border-color: var(--error-color) !important;
+}
+
+@keyframes spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+/* ========== Perfil Buttons ========== */
+.perfil-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.perfil-buttons button {
+    flex: 1;
+}
+
+/* ========== Buttons ========== */
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-color);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.0625rem;
+}
+
+/* ========== Spinner ========== */
+.spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* ========== Responsivo ========== */
+@media (min-width: 600px) {
+    .modal-overlay {
+        align-items: center;
+    }
+
+    .modal-content {
+        border-radius: var(--radius-lg);
+        max-width: 500px;
+    }
+}

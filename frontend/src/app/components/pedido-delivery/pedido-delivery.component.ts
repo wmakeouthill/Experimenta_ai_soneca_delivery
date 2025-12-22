@@ -15,6 +15,7 @@ import { Produto } from '../../services/produto.service';
 import { Categoria } from '../../services/categoria.service';
 import { AdicionalService, Adicional } from '../../services/adicional.service';
 import { CepService } from '../../services/cep.service';
+import { MenuPerfilComponent } from '../menu-perfil/menu-perfil.component';
 
 type Etapa = 'boas-vindas' | 'login' | 'cadastro' | 'cardapio' | 'carrinho' | 'checkout' | 'sucesso';
 
@@ -46,7 +47,7 @@ interface FormCadastro {
 @Component({
     selector: 'app-pedido-delivery',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, MenuPerfilComponent],
     templateUrl: './pedido-delivery.component.html',
     styleUrls: ['./pedido-delivery.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -136,6 +137,9 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     // Sucesso
     readonly pedidoId = signal<string | null>(null);
     readonly statusPedido = signal<StatusPedidoDelivery | null>(null);
+
+    // Menu Perfil
+    readonly mostrarMenuPerfil = signal(false);
 
     // ========== COMPUTED ==========
 
@@ -576,6 +580,23 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.googleButtonLoginRendered = false;
         this.googleButtonCadastroRendered = false;
         this.etapaAtual.set('boas-vindas');
+    }
+
+    // ========== MENU PERFIL ==========
+
+    abrirMenuPerfil(): void {
+        this.mostrarMenuPerfil.set(true);
+    }
+
+    fecharMenuPerfil(): void {
+        this.mostrarMenuPerfil.set(false);
+    }
+
+    onClienteAtualizado(clienteAtualizado: ClienteAuth): void {
+        this.cliente.set(clienteAtualizado);
+        if (clienteAtualizado.enderecoFormatado) {
+            this.enderecoEntrega.set(clienteAtualizado.enderecoFormatado);
+        }
     }
 
     // ========== CARDÁPIO ==========
