@@ -138,7 +138,13 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
 
     // Lifecycle
     ngOnInit(): void {
-        this.carregarCardapio();
+        // Só carrega o cardápio no browser, não durante SSR/prerendering
+        if (this.isBrowser) {
+            this.carregarCardapio();
+        } else {
+            // Durante SSR, apenas marca como não carregando
+            this.carregando.set(false);
+        }
     }
 
     ngOnDestroy(): void {
