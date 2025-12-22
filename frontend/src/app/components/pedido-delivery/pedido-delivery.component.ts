@@ -642,7 +642,9 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             observacoes: item.observacao,
             adicionais: item.adicionais?.map(a => ({
                 adicionalId: a.adicional.id,
-                quantidade: a.quantidade
+                nomeAdicional: a.adicional.nome,
+                quantidade: a.quantidade,
+                precoUnitario: a.adicional.preco
             }))
         }));
 
@@ -650,13 +652,23 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             clienteId: clienteData.id,
             nomeCliente: clienteData.nome,
             telefoneCliente: clienteData.telefone || '',
+            emailCliente: clienteData.email,
             itens,
             meiosPagamento: [{
                 meioPagamento: this.meioPagamentoSelecionado()!,
                 valor: this.totalCarrinho()
             }],
             tipoPedido: this.tipoPedido(),
-            enderecoEntrega: this.tipoPedido() === 'DELIVERY' ? this.enderecoEntrega() : undefined
+            enderecoEntrega: this.tipoPedido() === 'DELIVERY' ? this.enderecoEntrega() : undefined,
+            logradouro: clienteData.logradouro,
+            numero: clienteData.numero,
+            complemento: clienteData.complemento,
+            bairro: clienteData.bairro,
+            cidade: clienteData.cidade,
+            estado: clienteData.estado,
+            cep: clienteData.cep,
+            pontoReferencia: clienteData.pontoReferencia,
+            meioPagamento: this.meioPagamentoSelecionado() ?? undefined
         };
 
         try {

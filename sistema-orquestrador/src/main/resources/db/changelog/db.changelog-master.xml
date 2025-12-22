@@ -141,6 +141,12 @@
     <!-- Migration: Adiciona campos de endereço na tabela de clientes para delivery -->
     <include file="changes/043-add-endereco-clientes.sql" relativeToChangelogFile="true" />
 
+    <!-- Migration: Criação das tabelas de pedidos de delivery (separadas da tabela principal) -->
+    <include file="changes/044-create-pedidos-delivery-tables.sql" relativeToChangelogFile="true" />
+
+    <!-- Migration: Corrige nomes de colunas nas tabelas de pedidos delivery -->
+    <include file="changes/045-fix-pedidos-delivery-columns.sql" relativeToChangelogFile="true" />
+
     <!-- 
     NOTA: O usuário administrador inicial é criado automaticamente via CommandLineRunner
     (UsuarioInicialConfig) na primeira execução da aplicação.

@@ -21,41 +21,49 @@ export interface ItemPedidoDeliveryRequest {
     produtoId: string;
     quantidade: number;
     observacoes?: string;
-    adicionais?: { adicionalId: string; quantidade: number }[];
+    adicionais?: { adicionalId: string; nomeAdicional?: string; quantidade: number; precoUnitario?: number }[];
 }
 
 export interface MeioPagamentoDeliveryRequest {
     meioPagamento: 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'VALE_REFEICAO' | 'DINHEIRO';
     valor: number;
+    trocoPara?: number;
 }
 
 export interface CriarPedidoDeliveryRequest {
-    clienteId: string;
+    clienteId?: string;
     nomeCliente: string;
     telefoneCliente: string;
+    emailCliente?: string;
     itens: ItemPedidoDeliveryRequest[];
     meiosPagamento?: MeioPagamentoDeliveryRequest[];
     tipoPedido: TipoPedido;
-    enderecoEntrega?: string; // Obrigatório para DELIVERY
-    previsaoEntregaCliente?: string; // Tempo estimado informado pelo cliente
+    enderecoEntrega?: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    cidade?: string;
+    estado?: string;
+    cep?: string;
+    pontoReferencia?: string;
+    taxaEntrega?: number;
+    valorDesconto?: number;
+    meioPagamento?: string;
+    trocoPara?: number;
+    observacoes?: string;
 }
 
 export interface PedidoDeliveryResponse {
     id: string;
+    numeroPedido: string;
     nomeCliente: string;
     telefoneCliente: string;
     tipoPedido: TipoPedido;
     enderecoEntrega?: string;
-    previsaoEntregaCliente?: string;
     status: string;
-    itens: {
-        produtoId: string;
-        nomeProduto: string;
-        quantidade: number;
-        precoUnitario: number;
-        observacao?: string;
-    }[];
     total: number;
+    previsaoEntrega?: string;
     createdAt: string;
 }
 
