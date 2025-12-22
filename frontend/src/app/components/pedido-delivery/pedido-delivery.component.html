@@ -4,16 +4,13 @@
     <!-- PWA Install Banner -->
     @if (mostrarBannerPwa()) {
     <div class="pwa-install-banner">
-        <div class="pwa-content">
-            <img src="/assets/icons/icon-192x192.png" alt="App Icon" class="pwa-icon">
-            <div class="pwa-text">
-                <strong>Instalar App</strong>
-                <span>Adicione à tela inicial para acesso rápido</span>
-            </div>
+        <div class="pwa-install-texto">
+            <strong>Instale o app</strong>
+            <span>Atalho na tela inicial, experiência fullscreen e mais rápida.</span>
         </div>
-        <div class="pwa-actions">
-            <button class="btn-pwa-dismiss" (click)="fecharBannerPwa()">✕</button>
-            <button class="btn-pwa-install" (click)="instalarPwa()">Instalar</button>
+        <div class="pwa-install-botoes">
+            <button class="pwa-btn-secundario" (click)="fecharBannerPwa()">Agora não</button>
+            <button class="pwa-btn-primario" (click)="instalarPwa()">Instalar</button>
         </div>
     </div>
     }
@@ -455,25 +452,93 @@
     </div>
 
     <!-- Lista de Produtos -->
-    <div class="produtos-grid">
-        @for (produto of produtosFiltrados(); track produto.id) {
-        <div class="produto-card" (click)="abrirDetalhesProduto(produto)">
-            @if (produto.foto) {
-            <div class="produto-imagem">
-                <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
+    <div class="produtos-container">
+        <!-- Exibição agrupada por categoria (quando "Todos" selecionado) -->
+        @if (categoriaSelecionada() === null) {
+        @for (grupo of produtosAgrupadosPorCategoria(); track grupo.id) {
+        <div class="categoria-section">
+            <h2 class="categoria-titulo">{{ grupo.nome }}</h2>
+            <div class="produtos-grid">
+                @for (produto of grupo.produtos; track produto.id) {
+                <div class="produto-card" (click)="abrirDetalhesProduto(produto)">
+                    @if (produto.foto) {
+                    <div class="produto-imagem">
+                        <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
+                    </div>
+                    } @else {
+                    <div class="produto-imagem produto-sem-foto">
+                        <span>🍽️</span>
+                    </div>
+                    }
+                    <div class="produto-info">
+                        <h3 class="produto-nome">{{ produto.nome }}</h3>
+                        @if (produto.descricao) {
+                        <p class="produto-descricao">{{ produto.descricao }}</p>
+                        }
+                        <div class="produto-preco">{{ produto.preco | currency:'BRL' }}</div>
+                        <div class="produto-acoes">
+                            <button class="btn-favorito btn-favorito-inline"
+                                [class.ativo]="favoritos.isFavorito(produto.id)"
+                                (click)="toggleFavorito(produto.id, $event)"
+                                [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                                {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
+                            </button>
+                            <button class="btn-adicionar"
+                                (click)="adicionarAoCarrinhoRapido(produto); $event.stopPropagation()"
+                                aria-label="Adicionar ao carrinho">
+                                +
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
             </div>
-            } @else {
-            <div class="produto-imagem produto-sem-foto">
-                <span>🍔</span>
+        </div>
+        } @empty {
+        <div class="sem-produtos">
+            <p>Nenhum produto disponível</p>
+        </div>
+        }
+        } @else {
+        <!-- Exibição normal (categoria específica selecionada) -->
+        <div class="produtos-grid">
+            @for (produto of produtosFiltrados(); track produto.id) {
+            <div class="produto-card" (click)="abrirDetalhesProduto(produto)">
+                @if (produto.foto) {
+                <div class="produto-imagem">
+                    <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
+                </div>
+                } @else {
+                <div class="produto-imagem produto-sem-foto">
+                    <span>🍽️</span>
+                </div>
+                }
+                <div class="produto-info">
+                    <h3 class="produto-nome">{{ produto.nome }}</h3>
+                    @if (produto.descricao) {
+                    <p class="produto-descricao">{{ produto.descricao }}</p>
+                    }
+                    <div class="produto-preco">{{ produto.preco | currency:'BRL' }}</div>
+                    <div class="produto-acoes">
+                        <button class="btn-favorito btn-favorito-inline"
+                            [class.ativo]="favoritos.isFavorito(produto.id)"
+                            (click)="toggleFavorito(produto.id, $event)"
+                            [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                            {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
+                        </button>
+                        <button class="btn-adicionar"
+                            (click)="adicionarAoCarrinhoRapido(produto); $event.stopPropagation()"
+                            aria-label="Adicionar ao carrinho">
+                            +
+                        </button>
+                    </div>
+                </div>
+            </div>
+            } @empty {
+            <div class="sem-produtos">
+                <p>Nenhum produto disponível nesta categoria</p>
             </div>
             }
-            <div class="produto-info">
-                <h3>{{ produto.nome }}</h3>
-                @if (produto.descricao) {
-                <p class="produto-descricao">{{ produto.descricao }}</p>
-                }
-                <span class="produto-preco">{{ produto.preco | currency:'BRL' }}</span>
-            </div>
         </div>
         }
     </div>

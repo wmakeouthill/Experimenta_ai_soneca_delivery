@@ -251,6 +251,30 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         return this.produtos().filter(p => p.categoria === cat);
     });
 
+    /**
+     * Agrupa produtos por categoria para exibição organizada.
+     * Usado quando nenhuma categoria específica está selecionada.
+     */
+    readonly produtosAgrupadosPorCategoria = computed(() => {
+        const todosProdutos = this.produtos();
+        const categoriasAtivas = this.categorias();
+
+        const grupos: { id: string; nome: string; produtos: Produto[] }[] = [];
+
+        for (const cat of categoriasAtivas) {
+            const produtosDaCategoria = todosProdutos.filter(p => p.categoria === cat.nome);
+            if (produtosDaCategoria.length > 0) {
+                grupos.push({
+                    id: cat.id,
+                    nome: cat.nome,
+                    produtos: produtosDaCategoria
+                });
+            }
+        }
+
+        return grupos;
+    });
+
     readonly totalCarrinho = computed(() => {
         return this.itensCarrinho().reduce((acc, item) => {
             let itemTotal = item.produto.preco * item.quantidade;
@@ -800,8 +824,10 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     private carregarAdicionais(produtoId: string): void {
         this.carregandoAdicionais.set(true);
-        this.adicionalService.listarAdicionaisDoProduto(produtoId).subscribe({
+        // Usa endpoint público para não exigir autenticação de admin/operador
+        this.adicionalService.listarAdicionaisDoProdutoPublico(produtoId).subscribe({
             next: (adicionais) => {
+                // O backend já filtra os disponíveis, mas mantemos o filtro por segurança
                 this.adicionaisDisponiveis.set(adicionais.filter(a => a.disponivel));
                 this.carregandoAdicionais.set(false);
             },
@@ -880,6 +906,34 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     removerDoCarrinho(index: number): void {
         const itens = this.itensCarrinho();
         this.itensCarrinho.set(itens.filter((_, i) => i !== index));
+    }
+
+    /**
+     * Adiciona um produto ao carrinho rapidamente (quantidade 1, sem adicionais).
+     * Usado pelo botão '+' no card do produto.
+     */
+    adicionarAoCarrinhoRapido(produto: Produto): void {
+        const novoItem: ItemCarrinho = {
+            produto,
+            quantidade: 1
+        };
+
+        const itens = this.itensCarrinho();
+        const itemExistente = itens.find(
+            i => i.produto.id === produto.id && !i.observacao && !i.adicionais
+        );
+
+        if (itemExistente) {
+            this.itensCarrinho.set(
+                itens.map(i =>
+                    i === itemExistente
+                        ? { ...i, quantidade: i.quantidade + 1 }
+                        : i
+                )
+            );
+        } else {
+            this.itensCarrinho.set([...itens, novoItem]);
+        }
     }
 
     incrementarItemCarrinho(index: number): void {

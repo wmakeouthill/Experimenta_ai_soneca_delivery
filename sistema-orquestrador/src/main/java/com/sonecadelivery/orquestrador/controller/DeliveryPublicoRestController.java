@@ -1,8 +1,10 @@
 package com.sonecadelivery.orquestrador.controller;
 
+import com.sonecadelivery.cardapio.application.dto.AdicionalDTO;
 import com.sonecadelivery.cardapio.application.dto.CategoriaDTO;
 import com.sonecadelivery.cardapio.application.dto.ProdutoDTO;
 import com.sonecadelivery.cardapio.application.usecases.BuscarProdutoPorIdUseCase;
+import com.sonecadelivery.cardapio.application.usecases.GerenciarAdicionaisProdutoUseCase;
 import com.sonecadelivery.cardapio.application.usecases.ListarCategoriasUseCase;
 import com.sonecadelivery.cardapio.application.usecases.ListarProdutosUseCase;
 import com.sonecadelivery.pedidos.application.dto.ProdutoPopularDTO;
@@ -40,306 +42,337 @@ import java.util.UUID;
 @Slf4j
 public class DeliveryPublicoRestController {
 
-    private final ListarCategoriasUseCase listarCategoriasUseCase;
-    private final ListarProdutosUseCase listarProdutosUseCase;
-    private final BuscarProdutoPorIdUseCase buscarProdutoPorIdUseCase;
-    private final CriarPedidoDeliveryUseCase criarPedidoDeliveryUseCase;
-    private final PedidoDeliveryJpaRepository pedidoDeliveryRepository;
-    private final BuscarProdutosPopularesUseCase buscarProdutosPopularesUseCase;
+        private final ListarCategoriasUseCase listarCategoriasUseCase;
+        private final ListarProdutosUseCase listarProdutosUseCase;
+        private final BuscarProdutoPorIdUseCase buscarProdutoPorIdUseCase;
+        private final CriarPedidoDeliveryUseCase criarPedidoDeliveryUseCase;
+        private final PedidoDeliveryJpaRepository pedidoDeliveryRepository;
+        private final BuscarProdutosPopularesUseCase buscarProdutosPopularesUseCase;
+        private final GerenciarAdicionaisProdutoUseCase gerenciarAdicionaisProdutoUseCase;
 
-    /**
-     * Retorna o cardápio público para delivery.
-     */
-    @GetMapping("/cardapio")
-    public ResponseEntity<CardapioPublicoResponse> buscarCardapio() {
-        log.info("Buscando cardápio público para delivery");
+        /**
+         * Retorna o cardápio público para delivery.
+         */
+        @GetMapping("/cardapio")
+        public ResponseEntity<CardapioPublicoResponse> buscarCardapio() {
+                log.info("Buscando cardápio público para delivery");
 
-        List<CategoriaDTO> categorias = listarCategoriasUseCase.executarAtivas();
-        List<ProdutoDTO> produtos = listarProdutosUseCase.executarDisponiveis();
+                List<CategoriaDTO> categorias = listarCategoriasUseCase.executarAtivas();
+                List<ProdutoDTO> produtos = listarProdutosUseCase.executarDisponiveis();
 
-        CardapioPublicoResponse response = new CardapioPublicoResponse(categorias, produtos);
-        return ResponseEntity.ok(response);
-    }
+                CardapioPublicoResponse response = new CardapioPublicoResponse(categorias, produtos);
+                return ResponseEntity.ok(response);
+        }
 
-    /**
-     * Cria um novo pedido de delivery/retirada.
-     * 
-     * IDEMPOTÊNCIA:
-     * - Se o header X-Idempotency-Key for fornecido e já existir um pedido com essa
-     * key,
-     * retorna o pedido existente com status 200 (OK) em vez de 201 (Created).
-     * - Isso garante que o cliente pode fazer retry da requisição sem criar
-     * duplicatas.
-     * 
-     * RECOMENDAÇÃO: O frontend deve gerar um UUID único para cada tentativa de
-     * pedido
-     * e enviar no header X-Idempotency-Key.
-     */
-    @PostMapping("/pedido")
-    public ResponseEntity<PedidoDeliveryResponse> criarPedido(
-            @Valid @RequestBody CriarPedidoDeliveryRequest request,
-            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey) {
+        /**
+         * Cria um novo pedido de delivery/retirada.
+         * 
+         * IDEMPOTÊNCIA:
+         * - Se o header X-Idempotency-Key for fornecido e já existir um pedido com essa
+         * key,
+         * retorna o pedido existente com status 200 (OK) em vez de 201 (Created).
+         * - Isso garante que o cliente pode fazer retry da requisição sem criar
+         * duplicatas.
+         * 
+         * RECOMENDAÇÃO: O frontend deve gerar um UUID único para cada tentativa de
+         * pedido
+         * e enviar no header X-Idempotency-Key.
+         */
+        @PostMapping("/pedido")
+        public ResponseEntity<PedidoDeliveryResponse> criarPedido(
+                        @Valid @RequestBody CriarPedidoDeliveryRequest request,
+                        @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey) {
 
-        log.info("Criando pedido delivery para cliente: {}. IdempotencyKey: {}",
-                request.nomeCliente(), idempotencyKey);
+                log.info("Criando pedido delivery para cliente: {}. IdempotencyKey: {}",
+                                request.nomeCliente(), idempotencyKey);
 
-        // Gerar idempotencyKey se não fornecido
-        String finalIdempotencyKey = idempotencyKey != null ? idempotencyKey : UUID.randomUUID().toString();
+                // Gerar idempotencyKey se não fornecido
+                String finalIdempotencyKey = idempotencyKey != null ? idempotencyKey : UUID.randomUUID().toString();
 
-        // Converter DTOs para comandos do UseCase
-        List<ItemPedidoInput> itensInput = new ArrayList<>();
-        for (ItemPedidoDeliveryRequest itemRequest : request.itens()) {
-            // Buscar dados do produto
-            ProdutoDTO produto = buscarProdutoPorIdUseCase.executar(itemRequest.produtoId());
+                // Converter DTOs para comandos do UseCase
+                List<ItemPedidoInput> itensInput = new ArrayList<>();
+                for (ItemPedidoDeliveryRequest itemRequest : request.itens()) {
+                        // Buscar dados do produto
+                        ProdutoDTO produto = buscarProdutoPorIdUseCase.executar(itemRequest.produtoId());
 
-            List<AdicionalItemInput> adicionaisInput = new ArrayList<>();
-            if (itemRequest.adicionais() != null) {
-                for (AdicionalItemDeliveryRequest adicionalRequest : itemRequest.adicionais()) {
-                    // TODO: Buscar dados do adicional
-                    adicionaisInput.add(new AdicionalItemInput(
-                            adicionalRequest.adicionalId(),
-                            adicionalRequest.nomeAdicional() != null ? adicionalRequest.nomeAdicional() : "Adicional",
-                            adicionalRequest.quantidade(),
-                            adicionalRequest.precoUnitario() != null ? adicionalRequest.precoUnitario()
-                                    : BigDecimal.ZERO));
+                        List<AdicionalItemInput> adicionaisInput = new ArrayList<>();
+                        if (itemRequest.adicionais() != null) {
+                                for (AdicionalItemDeliveryRequest adicionalRequest : itemRequest.adicionais()) {
+                                        // TODO: Buscar dados do adicional
+                                        adicionaisInput.add(new AdicionalItemInput(
+                                                        adicionalRequest.adicionalId(),
+                                                        adicionalRequest.nomeAdicional() != null
+                                                                        ? adicionalRequest.nomeAdicional()
+                                                                        : "Adicional",
+                                                        adicionalRequest.quantidade(),
+                                                        adicionalRequest.precoUnitario() != null
+                                                                        ? adicionalRequest.precoUnitario()
+                                                                        : BigDecimal.ZERO));
+                                }
+                        }
+
+                        itensInput.add(new ItemPedidoInput(
+                                        itemRequest.produtoId(),
+                                        produto != null ? produto.getNome() : "Produto",
+                                        produto != null ? produto.getDescricao() : "",
+                                        itemRequest.quantidade(),
+                                        produto != null ? produto.getPreco() : BigDecimal.ZERO,
+                                        itemRequest.observacoes(),
+                                        adicionaisInput));
                 }
-            }
 
-            itensInput.add(new ItemPedidoInput(
-                    itemRequest.produtoId(),
-                    produto != null ? produto.getNome() : "Produto",
-                    produto != null ? produto.getDescricao() : "",
-                    itemRequest.quantidade(),
-                    produto != null ? produto.getPreco() : BigDecimal.ZERO,
-                    itemRequest.observacoes(),
-                    adicionaisInput));
+                // Converter meios de pagamento
+                List<MeioPagamentoInput> meiosPagamentoInput = new ArrayList<>();
+                if (request.meiosPagamento() != null) {
+                        for (MeioPagamentoDeliveryRequest mpRequest : request.meiosPagamento()) {
+                                meiosPagamentoInput.add(new MeioPagamentoInput(
+                                                mpRequest.meioPagamento(),
+                                                mpRequest.valor(),
+                                                mpRequest.trocoPara(),
+                                                null));
+                        }
+                }
+
+                // Criar comando
+                ComandoCriarPedido comando = new ComandoCriarPedido(
+                                finalIdempotencyKey,
+                                request.clienteId(),
+                                request.nomeCliente(),
+                                request.telefoneCliente(),
+                                request.emailCliente(),
+                                request.enderecoEntrega(),
+                                request.logradouro(),
+                                request.numero(),
+                                request.complemento(),
+                                request.bairro(),
+                                request.cidade(),
+                                request.estado(),
+                                request.cep(),
+                                request.pontoReferencia(),
+                                "RETIRADA".equalsIgnoreCase(request.tipoPedido())
+                                                ? PedidoDeliveryEntity.TipoPedidoDelivery.RETIRADA
+                                                : PedidoDeliveryEntity.TipoPedidoDelivery.DELIVERY,
+                                request.taxaEntrega(),
+                                request.valorDesconto(),
+                                request.meioPagamento(),
+                                request.trocoPara(),
+                                request.observacoes(),
+                                itensInput,
+                                meiosPagamentoInput);
+
+                // Executar criação com idempotência
+                ResultadoCriacaoPedido resultado = criarPedidoDeliveryUseCase.executar(comando);
+
+                // Mapear para response
+                PedidoDeliveryEntity pedido = resultado.pedido();
+                PedidoDeliveryResponse response = new PedidoDeliveryResponse(
+                                pedido.getId(),
+                                pedido.getNumeroPedido(),
+                                pedido.getNomeCliente(),
+                                pedido.getTelefoneCliente(),
+                                pedido.getTipoPedido().name(),
+                                pedido.getEnderecoEntrega(),
+                                pedido.getStatus().name(),
+                                pedido.getValorTotal(),
+                                pedido.getPrevisaoEntrega() != null ? pedido.getPrevisaoEntrega().toString() : null,
+                                pedido.getCreatedAt().toString());
+
+                // Retornar 200 se já existia, 201 se criou novo
+                if (resultado.jáExistia()) {
+                        log.info("Pedido já existia. Retornando existente: {}", pedido.getId());
+                        return ResponseEntity.ok(response);
+                } else {
+                        log.info("Pedido criado com sucesso: {}", pedido.getId());
+                        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+                }
         }
 
-        // Converter meios de pagamento
-        List<MeioPagamentoInput> meiosPagamentoInput = new ArrayList<>();
-        if (request.meiosPagamento() != null) {
-            for (MeioPagamentoDeliveryRequest mpRequest : request.meiosPagamento()) {
-                meiosPagamentoInput.add(new MeioPagamentoInput(
-                        mpRequest.meioPagamento(),
-                        mpRequest.valor(),
-                        mpRequest.trocoPara(),
-                        null));
-            }
+        /**
+         * Busca o status de um pedido.
+         */
+        @GetMapping("/pedido/{pedidoId}/status")
+        public ResponseEntity<StatusPedidoResponse> buscarStatusPedido(@PathVariable String pedidoId) {
+                log.info("Buscando status do pedido: {}", pedidoId);
+
+                return pedidoDeliveryRepository.findById(pedidoId)
+                                .map(pedido -> {
+                                        StatusPedidoResponse response = new StatusPedidoResponse(
+                                                        pedido.getId(),
+                                                        pedido.getNumeroPedido(),
+                                                        pedido.getStatus().name(),
+                                                        pedido.getMotoboyNome(),
+                                                        null, // TODO: Adicionar telefone do motoboy se necessário
+                                                        pedido.getPrevisaoEntrega() != null
+                                                                        ? pedido.getPrevisaoEntrega().toString()
+                                                                        : null);
+                                        return ResponseEntity.ok(response);
+                                })
+                                .orElse(ResponseEntity.notFound().build());
         }
 
-        // Criar comando
-        ComandoCriarPedido comando = new ComandoCriarPedido(
-                finalIdempotencyKey,
-                request.clienteId(),
-                request.nomeCliente(),
-                request.telefoneCliente(),
-                request.emailCliente(),
-                request.enderecoEntrega(),
-                request.logradouro(),
-                request.numero(),
-                request.complemento(),
-                request.bairro(),
-                request.cidade(),
-                request.estado(),
-                request.cep(),
-                request.pontoReferencia(),
-                "RETIRADA".equalsIgnoreCase(request.tipoPedido())
-                        ? PedidoDeliveryEntity.TipoPedidoDelivery.RETIRADA
-                        : PedidoDeliveryEntity.TipoPedidoDelivery.DELIVERY,
-                request.taxaEntrega(),
-                request.valorDesconto(),
-                request.meioPagamento(),
-                request.trocoPara(),
-                request.observacoes(),
-                itensInput,
-                meiosPagamentoInput);
+        /**
+         * Lista pedidos de um cliente (por clienteId ou telefone).
+         */
+        @GetMapping("/pedidos")
+        public ResponseEntity<List<PedidoDeliveryResponse>> listarPedidosCliente(
+                        @RequestParam(required = false) String clienteId,
+                        @RequestParam(required = false) String telefone) {
 
-        // Executar criação com idempotência
-        ResultadoCriacaoPedido resultado = criarPedidoDeliveryUseCase.executar(comando);
+                List<PedidoDeliveryEntity> pedidos;
 
-        // Mapear para response
-        PedidoDeliveryEntity pedido = resultado.pedido();
-        PedidoDeliveryResponse response = new PedidoDeliveryResponse(
-                pedido.getId(),
-                pedido.getNumeroPedido(),
-                pedido.getNomeCliente(),
-                pedido.getTelefoneCliente(),
-                pedido.getTipoPedido().name(),
-                pedido.getEnderecoEntrega(),
-                pedido.getStatus().name(),
-                pedido.getValorTotal(),
-                pedido.getPrevisaoEntrega() != null ? pedido.getPrevisaoEntrega().toString() : null,
-                pedido.getCreatedAt().toString());
+                if (clienteId != null && !clienteId.isBlank()) {
+                        pedidos = pedidoDeliveryRepository.findByClienteIdOrderByCreatedAtDesc(clienteId);
+                } else if (telefone != null && !telefone.isBlank()) {
+                        pedidos = pedidoDeliveryRepository.findByTelefoneClienteOrderByCreatedAtDesc(telefone);
+                } else {
+                        return ResponseEntity.badRequest().build();
+                }
 
-        // Retornar 200 se já existia, 201 se criou novo
-        if (resultado.jáExistia()) {
-            log.info("Pedido já existia. Retornando existente: {}", pedido.getId());
-            return ResponseEntity.ok(response);
-        } else {
-            log.info("Pedido criado com sucesso: {}", pedido.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }
-    }
+                List<PedidoDeliveryResponse> responses = pedidos.stream()
+                                .map(pedido -> new PedidoDeliveryResponse(
+                                                pedido.getId(),
+                                                pedido.getNumeroPedido(),
+                                                pedido.getNomeCliente(),
+                                                pedido.getTelefoneCliente(),
+                                                pedido.getTipoPedido().name(),
+                                                pedido.getEnderecoEntrega(),
+                                                pedido.getStatus().name(),
+                                                pedido.getValorTotal(),
+                                                pedido.getPrevisaoEntrega() != null
+                                                                ? pedido.getPrevisaoEntrega().toString()
+                                                                : null,
+                                                pedido.getCreatedAt().toString()))
+                                .toList();
 
-    /**
-     * Busca o status de um pedido.
-     */
-    @GetMapping("/pedido/{pedidoId}/status")
-    public ResponseEntity<StatusPedidoResponse> buscarStatusPedido(@PathVariable String pedidoId) {
-        log.info("Buscando status do pedido: {}", pedidoId);
-
-        return pedidoDeliveryRepository.findById(pedidoId)
-                .map(pedido -> {
-                    StatusPedidoResponse response = new StatusPedidoResponse(
-                            pedido.getId(),
-                            pedido.getNumeroPedido(),
-                            pedido.getStatus().name(),
-                            pedido.getMotoboyNome(),
-                            null, // TODO: Adicionar telefone do motoboy se necessário
-                            pedido.getPrevisaoEntrega() != null ? pedido.getPrevisaoEntrega().toString() : null);
-                    return ResponseEntity.ok(response);
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    /**
-     * Lista pedidos de um cliente (por clienteId ou telefone).
-     */
-    @GetMapping("/pedidos")
-    public ResponseEntity<List<PedidoDeliveryResponse>> listarPedidosCliente(
-            @RequestParam(required = false) String clienteId,
-            @RequestParam(required = false) String telefone) {
-
-        List<PedidoDeliveryEntity> pedidos;
-
-        if (clienteId != null && !clienteId.isBlank()) {
-            pedidos = pedidoDeliveryRepository.findByClienteIdOrderByCreatedAtDesc(clienteId);
-        } else if (telefone != null && !telefone.isBlank()) {
-            pedidos = pedidoDeliveryRepository.findByTelefoneClienteOrderByCreatedAtDesc(telefone);
-        } else {
-            return ResponseEntity.badRequest().build();
+                return ResponseEntity.ok(responses);
         }
 
-        List<PedidoDeliveryResponse> responses = pedidos.stream()
-                .map(pedido -> new PedidoDeliveryResponse(
-                        pedido.getId(),
-                        pedido.getNumeroPedido(),
-                        pedido.getNomeCliente(),
-                        pedido.getTelefoneCliente(),
-                        pedido.getTipoPedido().name(),
-                        pedido.getEnderecoEntrega(),
-                        pedido.getStatus().name(),
-                        pedido.getValorTotal(),
-                        pedido.getPrevisaoEntrega() != null ? pedido.getPrevisaoEntrega().toString() : null,
-                        pedido.getCreatedAt().toString()))
-                .toList();
+        /**
+         * Retorna os produtos mais pedidos para o contexto de delivery.
+         * Baseado na quantidade de vezes que o produto aparece em pedidos.
+         */
+        @GetMapping("/produtos/mais-pedidos")
+        public ResponseEntity<List<ProdutoPopularDTO>> buscarMaisPedidos(
+                        @RequestParam(defaultValue = "8") int limite) {
+                List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarMaisPedidos(limite);
+                return ResponseEntity.ok(produtos);
+        }
 
-        return ResponseEntity.ok(responses);
-    }
+        /**
+         * Retorna os produtos mais bem avaliados para o contexto de delivery.
+         * Baseado na média de avaliações dos clientes.
+         */
+        @GetMapping("/produtos/bem-avaliados")
+        public ResponseEntity<List<ProdutoPopularDTO>> buscarBemAvaliados(
+                        @RequestParam(defaultValue = "8") int limite) {
+                List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarBemAvaliados(limite);
+                return ResponseEntity.ok(produtos);
+        }
 
-    /**
-     * Retorna os produtos mais pedidos para o contexto de delivery.
-     * Baseado na quantidade de vezes que o produto aparece em pedidos.
-     */
-    @GetMapping("/produtos/mais-pedidos")
-    public ResponseEntity<List<ProdutoPopularDTO>> buscarMaisPedidos(
-            @RequestParam(defaultValue = "8") int limite) {
-        List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarMaisPedidos(limite);
-        return ResponseEntity.ok(produtos);
-    }
+        /**
+         * Retorna os produtos mais favoritados para o contexto de delivery.
+         * Baseado na quantidade de clientes que favoritaram cada produto.
+         */
+        @GetMapping("/produtos/mais-favoritados")
+        public ResponseEntity<List<ProdutoPopularDTO>> buscarMaisFavoritados(
+                        @RequestParam(defaultValue = "20") int limite) {
+                List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarMaisFavoritados(limite);
+                return ResponseEntity.ok(produtos);
+        }
 
-    /**
-     * Retorna os produtos mais bem avaliados para o contexto de delivery.
-     * Baseado na média de avaliações dos clientes.
-     */
-    @GetMapping("/produtos/bem-avaliados")
-    public ResponseEntity<List<ProdutoPopularDTO>> buscarBemAvaliados(
-            @RequestParam(defaultValue = "8") int limite) {
-        List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarBemAvaliados(limite);
-        return ResponseEntity.ok(produtos);
-    }
+        /**
+         * Retorna os adicionais disponíveis para um produto específico.
+         * Endpoint público para que clientes possam ver os adicionais ao selecionar um
+         * produto.
+         */
+        @GetMapping("/produtos/{produtoId}/adicionais")
+        public ResponseEntity<List<AdicionalDTO>> buscarAdicionaisDoProduto(@PathVariable String produtoId) {
+                log.debug("Buscando adicionais públicos do produto: {}", produtoId);
+                try {
+                        List<AdicionalDTO> adicionais = gerenciarAdicionaisProdutoUseCase
+                                        .buscarAdicionaisDoProduto(produtoId);
+                        // Filtra apenas os disponíveis
+                        List<AdicionalDTO> disponiveis = adicionais.stream()
+                                        .filter(AdicionalDTO::isDisponivel)
+                                        .toList();
+                        return ResponseEntity.ok(disponiveis);
+                } catch (Exception e) {
+                        log.warn("Erro ao buscar adicionais do produto {}: {}", produtoId, e.getMessage());
+                        // Retorna lista vazia em caso de erro (produto não existe, etc.)
+                        return ResponseEntity.ok(List.of());
+                }
+        }
 
-    /**
-     * Retorna os produtos mais favoritados para o contexto de delivery.
-     * Baseado na quantidade de clientes que favoritaram cada produto.
-     */
-    @GetMapping("/produtos/mais-favoritados")
-    public ResponseEntity<List<ProdutoPopularDTO>> buscarMaisFavoritados(
-            @RequestParam(defaultValue = "20") int limite) {
-        List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarMaisFavoritados(limite);
-        return ResponseEntity.ok(produtos);
-    }
+        // ===== DTOs =====
 
-    // ===== DTOs =====
+        public record CardapioPublicoResponse(
+                        List<CategoriaDTO> categorias,
+                        List<ProdutoDTO> produtos) {
+        }
 
-    public record CardapioPublicoResponse(
-            List<CategoriaDTO> categorias,
-            List<ProdutoDTO> produtos) {
-    }
+        public record CriarPedidoDeliveryRequest(
+                        String clienteId,
+                        @NotBlank(message = "Nome do cliente é obrigatório") String nomeCliente,
+                        @NotBlank(message = "Telefone do cliente é obrigatório") String telefoneCliente,
+                        String emailCliente,
+                        @NotEmpty(message = "Pelo menos um item é obrigatório") List<ItemPedidoDeliveryRequest> itens,
+                        List<MeioPagamentoDeliveryRequest> meiosPagamento,
+                        @NotBlank(message = "Tipo do pedido é obrigatório") String tipoPedido,
+                        String enderecoEntrega,
+                        String logradouro,
+                        String numero,
+                        String complemento,
+                        String bairro,
+                        String cidade,
+                        String estado,
+                        String cep,
+                        String pontoReferencia,
+                        BigDecimal taxaEntrega,
+                        BigDecimal valorDesconto,
+                        String meioPagamento,
+                        BigDecimal trocoPara,
+                        String observacoes) {
+        }
 
-    public record CriarPedidoDeliveryRequest(
-            String clienteId,
-            @NotBlank(message = "Nome do cliente é obrigatório") String nomeCliente,
-            @NotBlank(message = "Telefone do cliente é obrigatório") String telefoneCliente,
-            String emailCliente,
-            @NotEmpty(message = "Pelo menos um item é obrigatório") List<ItemPedidoDeliveryRequest> itens,
-            List<MeioPagamentoDeliveryRequest> meiosPagamento,
-            @NotBlank(message = "Tipo do pedido é obrigatório") String tipoPedido,
-            String enderecoEntrega,
-            String logradouro,
-            String numero,
-            String complemento,
-            String bairro,
-            String cidade,
-            String estado,
-            String cep,
-            String pontoReferencia,
-            BigDecimal taxaEntrega,
-            BigDecimal valorDesconto,
-            String meioPagamento,
-            BigDecimal trocoPara,
-            String observacoes) {
-    }
+        public record ItemPedidoDeliveryRequest(
+                        @NotBlank(message = "ID do produto é obrigatório") String produtoId,
+                        @NotNull(message = "Quantidade é obrigatória") Integer quantidade,
+                        String observacoes,
+                        List<AdicionalItemDeliveryRequest> adicionais) {
+        }
 
-    public record ItemPedidoDeliveryRequest(
-            @NotBlank(message = "ID do produto é obrigatório") String produtoId,
-            @NotNull(message = "Quantidade é obrigatória") Integer quantidade,
-            String observacoes,
-            List<AdicionalItemDeliveryRequest> adicionais) {
-    }
+        public record AdicionalItemDeliveryRequest(
+                        @NotBlank(message = "ID do adicional é obrigatório") String adicionalId,
+                        String nomeAdicional,
+                        @NotNull(message = "Quantidade é obrigatória") Integer quantidade,
+                        BigDecimal precoUnitario) {
+        }
 
-    public record AdicionalItemDeliveryRequest(
-            @NotBlank(message = "ID do adicional é obrigatório") String adicionalId,
-            String nomeAdicional,
-            @NotNull(message = "Quantidade é obrigatória") Integer quantidade,
-            BigDecimal precoUnitario) {
-    }
+        public record MeioPagamentoDeliveryRequest(
+                        @NotBlank(message = "Meio de pagamento é obrigatório") String meioPagamento,
+                        @NotNull(message = "Valor é obrigatório") BigDecimal valor,
+                        BigDecimal trocoPara) {
+        }
 
-    public record MeioPagamentoDeliveryRequest(
-            @NotBlank(message = "Meio de pagamento é obrigatório") String meioPagamento,
-            @NotNull(message = "Valor é obrigatório") BigDecimal valor,
-            BigDecimal trocoPara) {
-    }
+        public record PedidoDeliveryResponse(
+                        String id,
+                        String numeroPedido,
+                        String nomeCliente,
+                        String telefoneCliente,
+                        String tipoPedido,
+                        String enderecoEntrega,
+                        String status,
+                        BigDecimal total,
+                        String previsaoEntrega,
+                        String createdAt) {
+        }
 
-    public record PedidoDeliveryResponse(
-            String id,
-            String numeroPedido,
-            String nomeCliente,
-            String telefoneCliente,
-            String tipoPedido,
-            String enderecoEntrega,
-            String status,
-            BigDecimal total,
-            String previsaoEntrega,
-            String createdAt) {
-    }
-
-    public record StatusPedidoResponse(
-            String id,
-            String numeroPedido,
-            String status,
-            String nomeMotoboyAtribuido,
-            String telefoneMotoboyAtribuido,
-            String previsaoEntrega) {
-    }
+        public record StatusPedidoResponse(
+                        String id,
+                        String numeroPedido,
+                        String status,
+                        String nomeMotoboyAtribuido,
+                        String telefoneMotoboyAtribuido,
+                        String previsaoEntrega) {
+        }
 }

@@ -23,7 +23,16 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              { "glob": "pwa-sw.js", "input": "src", "output": "." }
+              {
+                "glob": "pwa-sw.js",
+                "input": "src",
+                "output": "."
+              },
+              {
+                "glob": "manifest.webmanifest",
+                "input": "src",
+                "output": "."
+              }
             ],
             "styles": [
               "src/styles.css"

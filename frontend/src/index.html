@@ -1,16 +1,31 @@
 <!doctype html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="utf-8">
   <title>Experimenta aí - Snackbar System</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#FF6B35">
   <meta name="description" content="Sistema de Gestão para Lanchonetes - Experimenta aí">
+
+  <!-- PWA Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Experimenta aí">
+  <meta name="application-name" content="Experimenta aí">
+  <meta name="msapplication-TileColor" content="#FF6B35">
+  <meta name="msapplication-tap-highlight" content="no">
+
   <!-- Permite popups do Google OAuth -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+
+  <!-- Favicons e Ícones -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="manifest" href="/assets/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/experimenta_ai_banner_circular.webp">
+  <link rel="apple-touch-icon" sizes="192x192" href="/assets/experimenta_ai_banner_circular.webp">
+  <link rel="manifest" href="/manifest.webmanifest">
 
   <!-- DNS Prefetch para APIs externas -->
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -19,9 +34,27 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
   <app-root></app-root>
+
+  <!-- Registro do Service Worker para PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/pwa-sw.js')
+          .then(function (registration) {
+            console.log('PWA Service Worker registrado com sucesso:', registration.scope);
+          })
+          .catch(function (error) {
+            console.log('Erro ao registrar Service Worker PWA:', error);
+          });
+      });
+    }
+  </script>
 </body>
+
 </html>

@@ -144,6 +144,58 @@
     cursor: pointer;
 }
 
+/* Novo formato do PWA Banner (alinhado com pedido-mesa) */
+.pwa-install-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.pwa-install-texto strong {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.pwa-install-texto span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.pwa-install-botoes {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pwa-btn-primario {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pwa-btn-primario:hover {
+    background: var(--primary-hover);
+}
+
+.pwa-btn-secundario {
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.pwa-btn-secundario:hover {
+    color: var(--text-primary);
+}
+
 /* ========== Buttons ========== */
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);

@@ -1,20 +1,64 @@
 {
-  "name": "Experimenta aí - Cliente",
-  "short_name": "ExperimentaAI",
-  "start_url": "/mesa",
+  "name": "Experimenta aí - Delivery",
+  "short_name": "Experimenta aí",
+  "description": "Faça seu pedido de forma rápida e prática. Delivery e retirada no local.",
+  "start_url": "/delivery",
+  "scope": "/",
+  "id": "/delivery",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#FF6B35",
+  "categories": [
+    "food",
+    "shopping"
+  ],
+  "lang": "pt-BR",
+  "dir": "ltr",
   "icons": [
     {
-      "src": "/assets/experimenta_ai_banner_circular.png",
+      "src": "/assets/experimenta_ai_banner_circular.webp",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "maskable"
     },
     {
       "src": "/assets/experimenta_ai_banner_circular.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Cardápio do Experimenta aí"
+    }
+  ],
+  "prefer_related_applications": false,
+  "display_override": [
+    "standalone",
+    "minimal-ui"
   ]
 }
