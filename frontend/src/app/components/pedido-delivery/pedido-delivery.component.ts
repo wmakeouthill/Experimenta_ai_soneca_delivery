@@ -16,8 +16,11 @@ import { Categoria } from '../../services/categoria.service';
 import { AdicionalService, Adicional } from '../../services/adicional.service';
 import { CepService } from '../../services/cep.service';
 import { MenuPerfilComponent } from '../menu-perfil/menu-perfil.component';
+import { FooterNavComponent } from './components/footer-nav/footer-nav.component';
 
-type Etapa = 'boas-vindas' | 'login' | 'cadastro' | 'cardapio' | 'carrinho' | 'checkout' | 'sucesso';
+type Etapa = 'boas-vindas' | 'login' | 'cadastro' | 'cardapio' | 'checkout' | 'sucesso';
+type AbaDelivery = 'inicio' | 'cardapio' | 'carrinho' | 'perfil';
+type SecaoPerfil = 'principal' | 'edicao' | 'pedidos';
 
 interface ItemCarrinho {
     produto: Produto;
@@ -47,9 +50,18 @@ interface FormCadastro {
 @Component({
     selector: 'app-pedido-delivery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MenuPerfilComponent],
+    imports: [CommonModule, FormsModule, MenuPerfilComponent, FooterNavComponent],
     templateUrl: './pedido-delivery.component.html',
-    styleUrls: ['./pedido-delivery.component.css'],
+    styleUrls: [
+        './styles/base.css',
+        './styles/auth.css',
+        './styles/cardapio.css',
+        './styles/modal.css',
+        './styles/abas.css',
+        './styles/inicio.css',
+        './styles/checkout.css',
+        './styles/responsive.css'
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked {
@@ -138,10 +150,22 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     readonly pedidoId = signal<string | null>(null);
     readonly statusPedido = signal<StatusPedidoDelivery | null>(null);
 
-    // Menu Perfil
-    readonly mostrarMenuPerfil = signal(false);
+    // Navegação por Abas
+    readonly abaAtual = signal<AbaDelivery>('inicio');
+    readonly secaoPerfil = signal<SecaoPerfil>('principal');
+
+    // CTA Telefone (flutuante)
+    readonly ctaTelefoneFechado = signal(false);
 
     // ========== COMPUTED ==========
+
+    readonly deveMostrarCtaTelefone = computed(() => {
+        // Mostra CTA quando cliente logado não tem telefone e está no cardápio
+        return this.etapaAtual() === 'cardapio' &&
+            this.cliente() &&
+            !this.cliente()?.telefone &&
+            !this.ctaTelefoneFechado();
+    });
 
     readonly loginValido = computed(() => {
         const tel = this.loginTelefone().replace(/\D/g, '');
@@ -582,14 +606,18 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.etapaAtual.set('boas-vindas');
     }
 
-    // ========== MENU PERFIL ==========
+    // ========== NAVEGAÇÃO POR ABAS ==========
 
-    abrirMenuPerfil(): void {
-        this.mostrarMenuPerfil.set(true);
+    navegarPara(aba: AbaDelivery): void {
+        this.abaAtual.set(aba);
+        // Reset seção do perfil quando navegar para ele
+        if (aba === 'perfil') {
+            this.secaoPerfil.set('principal');
+        }
     }
 
-    fecharMenuPerfil(): void {
-        this.mostrarMenuPerfil.set(false);
+    abrirMenuPerfil(): void {
+        this.navegarPara('perfil');
     }
 
     onClienteAtualizado(clienteAtualizado: ClienteAuth): void {
@@ -597,6 +625,18 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         if (clienteAtualizado.enderecoFormatado) {
             this.enderecoEntrega.set(clienteAtualizado.enderecoFormatado);
         }
+    }
+
+    // ========== CTA TELEFONE ==========
+
+    fecharCtaTelefone(): void {
+        this.ctaTelefoneFechado.set(true);
+    }
+
+    abrirPerfilParaCadastrarTelefone(): void {
+        this.navegarPara('perfil');
+        this.secaoPerfil.set('edicao');
+        this.ctaTelefoneFechado.set(true);
     }
 
     // ========== CARDÁPIO ==========
@@ -746,23 +786,23 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     abrirCarrinho(): void {
-        this.mostrarCarrinho.set(true);
+        this.navegarPara('carrinho');
     }
 
     fecharCarrinho(): void {
-        this.mostrarCarrinho.set(false);
+        this.navegarPara('cardapio');
     }
 
     // ========== CHECKOUT ==========
 
     irParaCheckout(): void {
         if (this.carrinhoVazio()) return;
-        this.mostrarCarrinho.set(false);
         this.etapaAtual.set('checkout');
     }
 
     voltarParaCardapio(): void {
         this.etapaAtual.set('cardapio');
+        this.navegarPara('cardapio');
     }
 
     selecionarMeioPagamento(meio: MeioPagamento): void {

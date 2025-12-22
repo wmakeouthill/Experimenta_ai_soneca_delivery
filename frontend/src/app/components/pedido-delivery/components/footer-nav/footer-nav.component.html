@@ -1,0 +1,21 @@
+<nav class="footer-nav">
+    <button class="nav-item" [class.ativo]="abaAtual() === 'inicio'" (click)="abaMudou.emit('inicio')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Início</span>
+    </button>
+    <button class="nav-item" [class.ativo]="abaAtual() === 'cardapio'" (click)="abaMudou.emit('cardapio')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Cardápio</span>
+    </button>
+    <button class="nav-item carrinho-nav" (click)="abrirCarrinho.emit()">
+        <span class="nav-icon">🛒</span>
+        @if (temItensCarrinho()) {
+        <span class="carrinho-badge">{{ totalCarrinho() }}</span>
+        }
+        <span class="nav-label">Carrinho</span>
+    </button>
+    <button class="nav-item" [class.ativo]="abaAtual() === 'perfil'" (click)="abaMudou.emit('perfil')">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Perfil</span>
+    </button>
+</nav>

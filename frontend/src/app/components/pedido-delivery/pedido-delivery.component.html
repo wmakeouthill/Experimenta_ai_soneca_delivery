@@ -274,7 +274,7 @@
     </div>
     }
 
-    <!-- ========== CARDÁPIO ========== -->
+    <!-- ========== CARDÁPIO (com abas) ========== -->
     @if (etapaAtual() === 'cardapio' && cliente()) {
     <header class="header-delivery">
         <div class="header-content">
@@ -283,15 +283,10 @@
                 <span class="cliente-nome">Olá, {{ cliente()!.nome.split(' ')[0] }}!</span>
                 <span class="tipo-badge">🛵 Delivery</span>
             </div>
-            <div class="header-actions">
-                <button class="btn-logout" (click)="logout()" title="Sair">
-                    <span class="logout-icon">🚪</span>
-                    <span class="logout-badge">Sair</span>
-                </button>
-                <button class="btn-menu-perfil" (click)="abrirMenuPerfil()" title="Meus dados">
-                    <span class="menu-icon">☰</span>
-                </button>
-            </div>
+            <button class="btn-logout" (click)="logout()" title="Sair">
+                <span class="logout-icon">🚪</span>
+                <span class="logout-badge">Sair</span>
+            </button>
         </div>
     </header>
 
@@ -301,6 +296,66 @@
         <p>Carregando cardápio...</p>
     </div>
     } @else {
+    <!-- ========== ABA: INÍCIO ========== -->
+    @if (abaAtual() === 'inicio') {
+    <div class="aba-inicio">
+        <!-- Bem-vindo -->
+        <div class="inicio-welcome">
+            <h2>Olá, {{ cliente()!.nome.split(' ')[0] }}! 👋</h2>
+            <p>O que você deseja pedir hoje?</p>
+        </div>
+
+        <!-- Destaques / Mais Populares -->
+        <div class="inicio-section">
+            <h2 class="section-titulo">🔥 Mais Populares</h2>
+            @if (produtos().length > 0) {
+            <div class="carrossel-horizontal">
+                @for (produto of produtos().slice(0, 5); track produto.id) {
+                <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
+                    @if (produto.foto) {
+                    <div class="produto-imagem-mini">
+                        <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
+                    </div>
+                    } @else {
+                    <div class="produto-imagem-mini produto-sem-foto">
+                        <span>🍽️</span>
+                    </div>
+                    }
+                    <div class="produto-info-mini">
+                        <span class="produto-nome-mini">{{ produto.nome }}</span>
+                        <span class="produto-preco-mini">{{ produto.preco | currency:'BRL' }}</span>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else {
+            <p class="carrossel-vazio">Carregando produtos...</p>
+            }
+        </div>
+
+        <!-- Categorias Rápidas -->
+        <div class="inicio-section">
+            <h2 class="section-titulo">📋 Categorias</h2>
+            <div class="categorias-grid">
+                @for (categoria of categorias(); track categoria.id) {
+                <button class="categoria-card" (click)="selecionarCategoria(categoria.nome); navegarPara('cardapio')">
+                    <span class="categoria-nome">{{ categoria.nome }}</span>
+                </button>
+                }
+            </div>
+        </div>
+
+        <!-- Ver Cardápio Completo -->
+        <div class="inicio-cta">
+            <button class="btn-primary btn-large" (click)="navegarPara('cardapio')">
+                📋 Ver Cardápio Completo
+            </button>
+        </div>
+    </div>
+    }
+
+    <!-- ========== ABA: CARDÁPIO ========== -->
+    @if (abaAtual() === 'cardapio') {
     <!-- Categorias -->
     <div class="categorias-scroll">
         <button class="categoria-chip" [class.ativa]="categoriaSelecionada() === null"
@@ -338,15 +393,179 @@
         </div>
         }
     </div>
-
-    <!-- Botão Carrinho Flutuante -->
-    @if (!carrinhoVazio()) {
-    <button class="btn-carrinho-flutuante" (click)="abrirCarrinho()">
-        <span class="carrinho-badge">{{ quantidadeItensCarrinho() }}</span>
-        🛒 Ver carrinho
-        <span class="carrinho-total">{{ totalCarrinho() | currency:'BRL' }}</span>
-    </button>
     }
+
+    <!-- ========== ABA: CARRINHO ========== -->
+    @if (abaAtual() === 'carrinho') {
+    <div class="aba-carrinho">
+        <div class="aba-header">
+            <h2>🛒 Seu Carrinho</h2>
+        </div>
+
+        @if (carrinhoVazio()) {
+        <div class="carrinho-vazio">
+            <span class="vazio-icon">🛒</span>
+            <p>Seu carrinho está vazio</p>
+            <button class="btn-secondary" (click)="navegarPara('cardapio')">Ver cardápio</button>
+        </div>
+        } @else {
+        <div class="carrinho-items">
+            @for (item of itensCarrinho(); track item.produto.id; let i = $index) {
+            <div class="carrinho-item">
+                <div class="item-info">
+                    <h4>{{ item.produto.nome }}</h4>
+                    @if (formatarAdicionaisItem(item)) {
+                    <p class="item-adicionais">+ {{ formatarAdicionaisItem(item) }}</p>
+                    }
+                    @if (item.observacao) {
+                    <p class="item-obs">📝 {{ item.observacao }}</p>
+                    }
+                </div>
+                <div class="item-controls">
+                    <div class="quantidade-mini">
+                        <button (click)="decrementarItemCarrinho(i)">−</button>
+                        <span>{{ item.quantidade }}</span>
+                        <button (click)="incrementarItemCarrinho(i)">+</button>
+                    </div>
+                    <span class="item-preco">{{ (item.produto.preco * item.quantidade) | currency:'BRL' }}</span>
+                </div>
+            </div>
+            }
+        </div>
+
+        <div class="carrinho-footer">
+            <div class="carrinho-total-row">
+                <span>Total</span>
+                <span class="total-valor">{{ totalCarrinho() | currency:'BRL' }}</span>
+            </div>
+            <button class="btn-primary btn-large" (click)="irParaCheckout()">
+                Continuar →
+            </button>
+        </div>
+        }
+    </div>
+    }
+
+    <!-- ========== ABA: PERFIL ========== -->
+    @if (abaAtual() === 'perfil') {
+    <div class="aba-perfil">
+        <!-- Seção Principal do Perfil -->
+        @if (secaoPerfil() === 'principal') {
+        <div class="perfil-header">
+            <div class="perfil-avatar">
+                @if (cliente()?.fotoUrl) {
+                <img [src]="cliente()!.fotoUrl" alt="Foto" class="avatar-img">
+                } @else {
+                <span class="avatar-placeholder">👤</span>
+                }
+            </div>
+            <h2 class="perfil-nome">{{ cliente()!.nome }}</h2>
+            @if (cliente()!.telefone) {
+            <p class="perfil-telefone">{{ cliente()!.telefone }}</p>
+            }
+            @if (cliente()?.email) {
+            <p class="perfil-email">{{ cliente()!.email }}</p>
+            }
+        </div>
+
+        <div class="perfil-menu">
+            <!-- Adicionar/Editar Celular -->
+            <button class="perfil-item" (click)="secaoPerfil.set('edicao')">
+                <span class="item-icon">📱</span>
+                <span class="item-texto">
+                    @if (cliente()?.telefone) {
+                    Meu celular
+                    } @else {
+                    Adicionar celular
+                    }
+                </span>
+                @if (cliente()?.telefone) {
+                <span class="item-badge telefone">{{ cliente()!.telefone }}</span>
+                }
+                <span class="item-arrow">›</span>
+            </button>
+
+            <!-- Meus Pedidos -->
+            <button class="perfil-item" (click)="secaoPerfil.set('pedidos')">
+                <span class="item-icon">📋</span>
+                <span class="item-texto">Meus Pedidos</span>
+                <span class="item-arrow">›</span>
+            </button>
+
+            <!-- Endereço -->
+            <button class="perfil-item" (click)="secaoPerfil.set('edicao')">
+                <span class="item-icon">📍</span>
+                <span class="item-texto">Endereço de entrega</span>
+                <span class="item-arrow">›</span>
+            </button>
+
+            <!-- Editar Dados -->
+            <button class="perfil-item" (click)="secaoPerfil.set('edicao')">
+                <span class="item-icon">✏️</span>
+                <span class="item-texto">Editar meus dados</span>
+                <span class="item-arrow">›</span>
+            </button>
+
+            <!-- Sair -->
+            <button class="perfil-item sair" (click)="logout()">
+                <span class="item-icon">🚪</span>
+                <span class="item-texto">Sair da conta</span>
+                <span class="item-arrow">›</span>
+            </button>
+        </div>
+
+        <p class="perfil-info">🛵 Soneca Delivery</p>
+        }
+
+        <!-- Seção Meus Pedidos -->
+        @if (secaoPerfil() === 'pedidos') {
+        <div class="secao-header">
+            <button class="btn-voltar" (click)="secaoPerfil.set('principal')">
+                <span>‹</span>
+            </button>
+            <h2 class="secao-titulo">Meus Pedidos</h2>
+        </div>
+        <div class="lista-pedidos">
+            <div class="lista-vazia">
+                <span class="lista-vazia-icon">📋</span>
+                <p>Nenhum pedido ainda</p>
+                <small>Seus pedidos aparecerão aqui</small>
+            </div>
+        </div>
+        }
+
+        <!-- Seção Edição -->
+        @if (secaoPerfil() === 'edicao') {
+        <div class="secao-header">
+            <button class="btn-voltar" (click)="secaoPerfil.set('principal')">
+                <span>‹</span>
+            </button>
+            <h2 class="secao-titulo">Editar Dados</h2>
+        </div>
+        <app-menu-perfil [cliente]="cliente()!" [visivel]="true" (fechar)="secaoPerfil.set('principal')"
+            (clienteAtualizado)="onClienteAtualizado($event)" />
+        }
+    </div>
+    }
+
+    <!-- ========== CTAs DE NOTIFICAÇÃO ========== -->
+    @if (abaAtual() === 'cardapio') {
+    <div class="ctas-container">
+        <!-- CTA Telefone -->
+        @if (deveMostrarCtaTelefone()) {
+        <div class="cta-telefone-float" (click)="abrirPerfilParaCadastrarTelefone()">
+            <button class="cta-close" (click)="fecharCtaTelefone(); $event.stopPropagation()">✕</button>
+            <span class="cta-icon">📱</span>
+            <span class="cta-texto">Cadastre seu celular para <strong>facilitar o atendimento</strong></span>
+            <span class="cta-seta">›</span>
+        </div>
+        }
+    </div>
+    }
+
+    <!-- ========== FOOTER NAVEGAÇÃO ========== -->
+    <app-footer-nav [abaAtual]="abaAtual()" [totalCarrinho]="quantidadeItensCarrinho()" (abaMudou)="navegarPara($event)"
+        (abrirCarrinho)="navegarPara('carrinho')" />
     }
     }
 
@@ -401,52 +620,6 @@
                 </div>
                 <button class="btn-adicionar" (click)="adicionarAoCarrinho()">
                     Adicionar {{ (produtoSelecionado()!.preco * quantidadeSelecionada()) | currency:'BRL' }}
-                </button>
-            </div>
-        </div>
-    </div>
-    }
-
-    <!-- ========== MODAL CARRINHO ========== -->
-    @if (mostrarCarrinho()) {
-    <div class="modal-overlay" (click)="fecharCarrinho()">
-        <div class="modal-content modal-carrinho" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-                <h2>🛒 Seu Carrinho</h2>
-                <button class="modal-close" (click)="fecharCarrinho()">✕</button>
-            </div>
-
-            <div class="carrinho-items">
-                @for (item of itensCarrinho(); track item.produto.id; let i = $index) {
-                <div class="carrinho-item">
-                    <div class="item-info">
-                        <h4>{{ item.produto.nome }}</h4>
-                        @if (formatarAdicionaisItem(item)) {
-                        <p class="item-adicionais">+ {{ formatarAdicionaisItem(item) }}</p>
-                        }
-                        @if (item.observacao) {
-                        <p class="item-obs">📝 {{ item.observacao }}</p>
-                        }
-                    </div>
-                    <div class="item-controls">
-                        <div class="quantidade-mini">
-                            <button (click)="decrementarItemCarrinho(i)">−</button>
-                            <span>{{ item.quantidade }}</span>
-                            <button (click)="incrementarItemCarrinho(i)">+</button>
-                        </div>
-                        <span class="item-preco">{{ (item.produto.preco * item.quantidade) | currency:'BRL' }}</span>
-                    </div>
-                </div>
-                }
-            </div>
-
-            <div class="carrinho-footer">
-                <div class="carrinho-total-row">
-                    <span>Total</span>
-                    <span class="total-valor">{{ totalCarrinho() | currency:'BRL' }}</span>
-                </div>
-                <button class="btn-primary btn-large" (click)="irParaCheckout()">
-                    Continuar →
                 </button>
             </div>
         </div>
@@ -567,10 +740,5 @@
             </button>
         </div>
     </div>
-    }
-    <!-- ========== MODAL MENU PERFIL ========== -->
-    @if (mostrarMenuPerfil() && cliente()) {
-    <app-menu-perfil [cliente]="cliente()!" [visivel]="mostrarMenuPerfil()" (fechar)="fecharMenuPerfil()"
-        (clienteAtualizado)="onClienteAtualizado($event)" />
     }
 </div>

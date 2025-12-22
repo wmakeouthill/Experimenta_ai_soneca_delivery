@@ -1,0 +1,479 @@
+/* ========== Estilos das Abas ========== */
+
+/* Header das Abas */
+.aba-header {
+    background: var(--surface);
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 60px;
+    z-index: 10;
+}
+
+.aba-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+/* ========== ABA CARRINHO ========== */
+.aba-carrinho {
+    padding-bottom: 9rem;
+}
+
+.carrinho-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+    text-align: center;
+}
+
+.vazio-icon {
+    font-size: 4rem;
+    opacity: 0.5;
+}
+
+.carrinho-vazio p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.carrinho-items {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.carrinho-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.carrinho-item .item-info h4 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.item-adicionais,
+.item-obs {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.item-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.quantidade-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--background);
+    border-radius: var(--radius-full);
+    padding: 0.25rem;
+}
+
+.quantidade-mini button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    color: var(--primary-color);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.quantidade-mini span {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.item-preco {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.carrinho-footer {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.carrinho-total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+}
+
+.total-valor {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.25rem;
+}
+
+/* ========== ABA PERFIL ========== */
+.aba-perfil {
+    padding: 2rem 1rem;
+    padding-bottom: 100px;
+}
+
+/* Header do Perfil */
+.perfil-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.perfil-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    font-size: 2.5rem;
+    filter: grayscale(1) brightness(10);
+}
+
+.perfil-nome {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 0.25rem;
+}
+
+.perfil-telefone {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+}
+
+.perfil-email {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 0.25rem 0 0;
+}
+
+/* Menu do Perfil */
+.perfil-menu {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.perfil-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: left;
+}
+
+.perfil-item:last-child {
+    border-bottom: none;
+}
+
+.perfil-item:active:not(.disabled) {
+    background: #f5f5f5;
+}
+
+.perfil-item.sair {
+    background: #FEF2F2;
+}
+
+.perfil-item.sair:active {
+    background: #FEE2E2;
+}
+
+.item-icon {
+    font-size: 1.25rem;
+    margin-right: 1rem;
+}
+
+.item-texto {
+    flex: 1;
+    font-size: 1rem;
+    color: #333;
+}
+
+.item-arrow {
+    font-size: 1.25rem;
+    color: #ccc;
+}
+
+.item-badge {
+    background: #f0f0f0;
+    color: #999;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.item-badge.telefone {
+    background: #E0F2FE;
+    color: #0369A1;
+}
+
+.perfil-info {
+    text-align: center;
+    color: #999;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Seção Header (para edição) */
+.secao-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 60px;
+    z-index: 10;
+}
+
+.btn-voltar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--surface);
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-voltar:hover {
+    background: var(--background);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.secao-titulo {
+    margin: 0;
+    font-size: 1.125rem;
+    color: var(--text-primary);
+}
+
+/* Lista Pedidos */
+.lista-pedidos {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lista-vazia {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #999;
+}
+
+.lista-vazia-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.lista-vazia p {
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+    color: #666;
+}
+
+.lista-vazia small {
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+/* CTA Telefone Inline */
+.cta-telefone-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+    border: 1.5px solid #FDBA74;
+    border-radius: var(--radius-md);
+}
+
+.cta-telefone-inline .cta-icon {
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.cta-telefone-inline .cta-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.cta-telefone-inline .cta-content strong {
+    font-size: 0.9375rem;
+    color: #C2410C;
+}
+
+.cta-telefone-inline .cta-content span {
+    font-size: 0.8125rem;
+    color: #9A3412;
+}
+
+.btn-cta {
+    background: #EA580C;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.btn-cta:hover {
+    background: #C2410C;
+}
+
+.btn-cta:active {
+    transform: scale(0.98);
+}
+
+/* ========== CONTAINER CTAs FLUTUANTES ========== */
+.ctas-container {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 99;
+    padding: 0 0.5rem;
+    gap: 0.5rem;
+}
+
+/* ========== CTA TELEFONE FLUTUANTE ========== */
+.cta-telefone-float {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #4A90D9 0%, #2E7BC9 100%);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(74, 144, 217, 0.3);
+    animation: slideUpCta 0.3s ease-out;
+}
+
+@keyframes slideUpCta {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cta-telefone-float:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(74, 144, 217, 0.4);
+}
+
+.cta-close {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    color: #666;
+    border: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.cta-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.cta-texto {
+    font-size: 0.875rem;
+    flex: 1;
+    text-align: left;
+}
+
+.cta-texto strong {
+    text-decoration: underline;
+}
+
+.cta-seta {
+    font-size: 1.5rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}

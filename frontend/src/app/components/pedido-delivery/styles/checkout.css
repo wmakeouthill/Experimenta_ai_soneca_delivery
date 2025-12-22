@@ -1,0 +1,259 @@
+/* ========== Checkout Screen ========== */
+.checkout-screen {
+    min-height: 100vh;
+    background: var(--background);
+}
+
+.checkout-header {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 100;
+}
+
+.checkout-header h1 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.checkout-content {
+    padding: 1rem;
+    padding-bottom: 8rem;
+}
+
+.checkout-section {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.checkout-section h3 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+/* Tipo de Pedido */
+.tipo-pedido-options {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.tipo-option {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.tipo-option:hover {
+    border-color: var(--primary-color);
+}
+
+.tipo-option.selected {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+/* Endereço */
+.endereco-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.endereco-display p {
+    margin: 0;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.endereco-display textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.9375rem;
+    resize: none;
+    font-family: inherit;
+}
+
+/* Resumo do Pedido */
+.resumo-itens {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.resumo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.resumo-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.resumo-item-info {
+    flex: 1;
+}
+
+.resumo-item-info .nome {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.resumo-item-info .quantidade {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.resumo-item .preco {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.resumo-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.resumo-total span:first-child {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.resumo-total .total-valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Meios de Pagamento */
+.pagamento-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pagamento-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagamento-option:hover {
+    border-color: var(--primary-color);
+}
+
+.pagamento-option.selected {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.pagamento-option input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-color);
+}
+
+.pagamento-option .icon {
+    font-size: 1.5rem;
+}
+
+.pagamento-option .label {
+    flex: 1;
+    font-size: 0.9375rem;
+}
+
+/* Checkout Footer */
+.checkout-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== Sucesso Screen ========== */
+.sucesso-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 50%);
+}
+
+.sucesso-content {
+    text-align: center;
+    max-width: 400px;
+}
+
+.sucesso-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+}
+
+.sucesso-content h1 {
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+}
+
+.sucesso-content p {
+    color: var(--text-secondary);
+    font-size: 1.0625rem;
+    margin: 0 0 2rem;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+}
+
+.status-icon {
+    font-size: 1.5rem;
+}
+
+.status-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}

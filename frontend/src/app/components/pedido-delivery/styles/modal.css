@@ -1,0 +1,243 @@
+/* ========== Modal Base ========== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+/* ========== Modal Produto ========== */
+.modal-produto {
+    position: relative;
+}
+
+.modal-produto-imagem {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.modal-produto-imagem img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal-produto-info {
+    padding: 1.25rem;
+}
+
+.modal-produto-info h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.modal-produto-info .descricao {
+    margin: 0 0 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.modal-produto-info .preco {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Adicionais */
+.adicionais-section {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.adicionais-section h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.adicional-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.adicional-item:hover {
+    background: #F1F5F9;
+}
+
+.adicional-item.selecionado {
+    background: var(--primary-light);
+    border: 1px solid var(--primary-color);
+}
+
+.adicional-item input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+}
+
+.adicional-nome {
+    flex: 1;
+    font-size: 0.9375rem;
+}
+
+.adicional-preco {
+    font-size: 0.875rem;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* Observação */
+.observacao-section {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.observacao-section label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+}
+
+.observacao-section textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.9375rem;
+    resize: none;
+    font-family: inherit;
+}
+
+/* Modal Footer */
+.modal-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--surface);
+}
+
+.quantidade-control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--background);
+    border-radius: var(--radius-full);
+    padding: 0.5rem;
+}
+
+.quantidade-control button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface);
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.quantidade-control button:hover:not(:disabled) {
+    background: var(--primary-light);
+}
+
+.quantidade-control button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.quantidade-control span {
+    min-width: 24px;
+    text-align: center;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.btn-adicionar {
+    flex: 1;
+    padding: 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-adicionar:hover {
+    background: var(--primary-hover);
+}

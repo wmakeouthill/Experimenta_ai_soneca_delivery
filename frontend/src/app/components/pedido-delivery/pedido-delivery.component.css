@@ -619,7 +619,8 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
-    padding: 0 1rem 6rem;
+    padding: 0 1rem 9rem;
+    /* Espaço extra para CTAs + footer nav */
 }
 
 .produto-card {
@@ -1379,4 +1380,337 @@
     .produto-info {
         padding: 1rem;
     }
+}
+
+/* ========== CONTAINER CTAs FLUTUANTES ========== */
+.ctas-container {
+    position: fixed;
+    bottom: 70px;
+    /* Acima do footer nav */
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 99;
+    padding: 0 0.5rem;
+    gap: 0.5rem;
+}
+
+/* ========== CTA TELEFONE FLUTUANTE ========== */
+.cta-telefone-float {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #4A90D9 0%, #2E7BC9 100%);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(74, 144, 217, 0.3);
+    animation: slideUpCta 0.3s ease-out;
+}
+
+@keyframes slideUpCta {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cta-telefone-float:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(74, 144, 217, 0.4);
+}
+
+.cta-telefone-float:active {
+    transform: translateY(0);
+}
+
+.cta-close {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    color: #666;
+    border: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: background 0.2s;
+}
+
+.cta-close:hover {
+    background: #f0f0f0;
+}
+
+.cta-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.cta-texto {
+    font-size: 0.875rem;
+    flex: 1;
+    text-align: left;
+}
+
+.cta-texto strong {
+    text-decoration: underline;
+}
+
+.cta-seta {
+    font-size: 1.5rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* ========== ESTILOS DAS ABAS ========== */
+
+/* Header das Abas */
+.aba-header {
+    background: var(--surface);
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 60px;
+    z-index: 10;
+}
+
+.aba-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text);
+}
+
+/* ========== ABA CARRINHO ========== */
+.aba-carrinho {
+    padding-bottom: 9rem;
+}
+
+.carrinho-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+    text-align: center;
+}
+
+.vazio-icon {
+    font-size: 4rem;
+    opacity: 0.5;
+}
+
+.carrinho-vazio p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.carrinho-items {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.carrinho-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.carrinho-item .item-info h4 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.item-adicionais,
+.item-obs {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.item-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.quantidade-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--background);
+    border-radius: var(--radius-full);
+    padding: 0.25rem;
+}
+
+.quantidade-mini button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    color: var(--primary-color);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.quantidade-mini span {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.item-preco {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.carrinho-footer {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.carrinho-total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+}
+
+.total-valor {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.25rem;
+}
+
+/* ========== ABA PERFIL ========== */
+.aba-perfil {
+    padding-bottom: 9rem;
+}
+
+.perfil-content {
+    padding: 1rem;
+}
+
+.dados-cliente {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.dado-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+}
+
+.dado-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dado-valor {
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.dado-vazio {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.dado-endereco .dado-valor {
+    line-height: 1.5;
+}
+
+/* CTA Telefone Inline */
+.cta-telefone-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+    border: 1.5px solid #FDBA74;
+    border-radius: var(--radius-md);
+}
+
+.cta-telefone-inline .cta-icon {
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.cta-telefone-inline .cta-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.cta-telefone-inline .cta-content strong {
+    font-size: 0.9375rem;
+    color: #C2410C;
+}
+
+.cta-telefone-inline .cta-content span {
+    font-size: 0.8125rem;
+    color: #9A3412;
+}
+
+.btn-cta {
+    background: #EA580C;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.btn-cta:hover {
+    background: #C2410C;
+}
+
+.btn-cta:active {
+    transform: scale(0.98);
 }

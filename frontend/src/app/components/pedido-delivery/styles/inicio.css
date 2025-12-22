@@ -1,0 +1,161 @@
+/* ========== ABA INÍCIO ========== */
+
+.aba-inicio {
+    padding: 1rem;
+    padding-bottom: 9rem;
+}
+
+.inicio-welcome {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: linear-gradient(135deg, var(--primary-light) 0%, #FFFFFF 100%);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.5rem;
+}
+
+.inicio-welcome h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.inicio-welcome p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.inicio-section {
+    margin-bottom: 1.5rem;
+}
+
+.section-titulo {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Carrossel Horizontal */
+.carrossel-horizontal {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding: 0.25rem 0;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.carrossel-horizontal::-webkit-scrollbar {
+    display: none;
+}
+
+.carrossel-vazio {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+    background: var(--background);
+    border-radius: var(--radius-md);
+}
+
+/* Card Mini para carrossel */
+.produto-card-mini {
+    min-width: 140px;
+    max-width: 140px;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.produto-card-mini:active {
+    transform: scale(0.98);
+}
+
+.produto-imagem-mini {
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+    background: var(--background);
+}
+
+.produto-imagem-mini img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.produto-imagem-mini.produto-sem-foto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.produto-info-mini {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.produto-nome-mini {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.produto-preco-mini {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Categorias Grid */
+.categorias-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.categoria-card {
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.categoria-card:hover {
+    background: var(--primary-light);
+    border-color: var(--primary-color);
+}
+
+.categoria-card:active {
+    transform: scale(0.98);
+}
+
+.categoria-nome {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* CTA de início */
+.inicio-cta {
+    padding: 1rem 0;
+}
