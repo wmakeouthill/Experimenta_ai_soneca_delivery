@@ -245,6 +245,11 @@ import { MensagemChat, ProdutoDestacado, ConversaSalva } from '../composables/us
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      /* Garante leitura mesmo se variáveis globais definirem texto escuro */
+      color: #e8e8e8;
+      /* Sobrescreve variáveis de texto apenas dentro do chat, igual padrão da tela mesa */
+      --text-primary: #e8e8e8;
+      --text-secondary: #aaaaaa;
     }
 
     /* Mobile: ajuste quando teclado abre */

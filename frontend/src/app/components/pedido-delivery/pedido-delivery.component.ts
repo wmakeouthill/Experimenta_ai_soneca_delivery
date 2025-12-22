@@ -17,6 +17,7 @@ import { AdicionalService, Adicional } from '../../services/adicional.service';
 import { CepService } from '../../services/cep.service';
 import { MenuPerfilComponent } from '../menu-perfil/menu-perfil.component';
 import { FooterNavComponent } from './components/footer-nav/footer-nav.component';
+import { DraggableScrollDirective } from '../pedido-cliente-mesa/directives/draggable-scroll.directive';
 import { useFavoritos, useInicio, useMeusPedidos } from './composables';
 import { useChatIA } from './composables/use-chat-ia';
 import { ChatIAButtonDeliveryComponent } from './components/chat-ia-button.component';
@@ -55,7 +56,7 @@ interface FormCadastro {
 @Component({
     selector: 'app-pedido-delivery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MenuPerfilComponent, FooterNavComponent, ChatIAButtonDeliveryComponent, ChatIAFullscreenDeliveryComponent],
+    imports: [CommonModule, FormsModule, MenuPerfilComponent, FooterNavComponent, ChatIAButtonDeliveryComponent, ChatIAFullscreenDeliveryComponent, DraggableScrollDirective],
     templateUrl: './pedido-delivery.component.html',
     styleUrls: [
         './styles/base.css',

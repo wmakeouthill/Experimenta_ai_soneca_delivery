@@ -5,8 +5,10 @@ import com.sonecadelivery.cardapio.application.dto.ProdutoDTO;
 import com.sonecadelivery.cardapio.application.usecases.BuscarProdutoPorIdUseCase;
 import com.sonecadelivery.cardapio.application.usecases.ListarCategoriasUseCase;
 import com.sonecadelivery.cardapio.application.usecases.ListarProdutosUseCase;
+import com.sonecadelivery.pedidos.application.dto.ProdutoPopularDTO;
 import com.sonecadelivery.pedidos.application.usecase.CriarPedidoDeliveryUseCase;
 import com.sonecadelivery.pedidos.application.usecase.CriarPedidoDeliveryUseCase.*;
+import com.sonecadelivery.pedidos.application.usecases.BuscarProdutosPopularesUseCase;
 import com.sonecadelivery.pedidos.infrastructure.persistence.PedidoDeliveryEntity;
 import com.sonecadelivery.pedidos.infrastructure.persistence.PedidoDeliveryJpaRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +45,7 @@ public class DeliveryPublicoRestController {
     private final BuscarProdutoPorIdUseCase buscarProdutoPorIdUseCase;
     private final CriarPedidoDeliveryUseCase criarPedidoDeliveryUseCase;
     private final PedidoDeliveryJpaRepository pedidoDeliveryRepository;
+    private final BuscarProdutosPopularesUseCase buscarProdutosPopularesUseCase;
 
     /**
      * Retorna o cardápio público para delivery.
@@ -232,6 +235,39 @@ public class DeliveryPublicoRestController {
                 .toList();
 
         return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * Retorna os produtos mais pedidos para o contexto de delivery.
+     * Baseado na quantidade de vezes que o produto aparece em pedidos.
+     */
+    @GetMapping("/produtos/mais-pedidos")
+    public ResponseEntity<List<ProdutoPopularDTO>> buscarMaisPedidos(
+            @RequestParam(defaultValue = "8") int limite) {
+        List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarMaisPedidos(limite);
+        return ResponseEntity.ok(produtos);
+    }
+
+    /**
+     * Retorna os produtos mais bem avaliados para o contexto de delivery.
+     * Baseado na média de avaliações dos clientes.
+     */
+    @GetMapping("/produtos/bem-avaliados")
+    public ResponseEntity<List<ProdutoPopularDTO>> buscarBemAvaliados(
+            @RequestParam(defaultValue = "8") int limite) {
+        List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarBemAvaliados(limite);
+        return ResponseEntity.ok(produtos);
+    }
+
+    /**
+     * Retorna os produtos mais favoritados para o contexto de delivery.
+     * Baseado na quantidade de clientes que favoritaram cada produto.
+     */
+    @GetMapping("/produtos/mais-favoritados")
+    public ResponseEntity<List<ProdutoPopularDTO>> buscarMaisFavoritados(
+            @RequestParam(defaultValue = "20") int limite) {
+        List<ProdutoPopularDTO> produtos = buscarProdutosPopularesUseCase.buscarMaisFavoritados(limite);
+        return ResponseEntity.ok(produtos);
     }
 
     // ===== DTOs =====

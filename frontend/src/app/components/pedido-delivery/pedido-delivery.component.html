@@ -326,7 +326,7 @@
         <div class="inicio-section">
             <h2 class="section-titulo">🔥 Mais Populares</h2>
             @if (inicio.produtosMaisPedidos().length > 0) {
-            <div class="carrossel-horizontal">
+            <div class="carrossel-horizontal" appDraggableScroll>
                 @for (produto of inicio.produtosMaisPedidos(); track produto.id) {
                 <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
                     <button class="btn-favorito" [class.ativo]="favoritos.isFavorito(produto.id)"
@@ -359,7 +359,7 @@
         @if (inicio.produtosMaisFavoritados().length > 0) {
         <div class="inicio-section">
             <h2 class="section-titulo">❤️ Favoritos da Galera</h2>
-            <div class="carrossel-horizontal">
+            <div class="carrossel-horizontal" appDraggableScroll>
                 @for (produto of inicio.produtosMaisFavoritados(); track produto.id) {
                 <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
                     <button class="btn-favorito" [class.ativo]="favoritos.isFavorito(produto.id)"
@@ -390,7 +390,7 @@
         @if (inicio.produtosBemAvaliados().length > 0) {
         <div class="inicio-section">
             <h2 class="section-titulo">⭐ Bem Avaliados</h2>
-            <div class="carrossel-horizontal">
+            <div class="carrossel-horizontal" appDraggableScroll>
                 @for (produto of inicio.produtosBemAvaliados(); track produto.id) {
                 <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
                     <button class="btn-favorito" [class.ativo]="favoritos.isFavorito(produto.id)"
