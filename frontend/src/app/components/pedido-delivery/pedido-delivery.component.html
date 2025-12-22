@@ -230,11 +230,25 @@
                                     placeholder="00000-000"
                                     maxlength="9"
                                     inputmode="numeric"
-                                    autocomplete="postal-code">
+                                    autocomplete="postal-code"
+                                    [class.input-success]="cepEncontrado() === true"
+                                    [class.input-error]="cepEncontrado() === false">
                                 @if (buscandoCep()) {
                                     <span class="input-spinner"></span>
                                 }
+                                @if (cepEncontrado() === true) {
+                                    <span class="input-icon success">✓</span>
+                                }
+                                @if (cepEncontrado() === false) {
+                                    <span class="input-icon error">✗</span>
+                                }
                             </div>
+                            @if (cepEncontrado() === false) {
+                                <span class="form-hint error">CEP não encontrado. <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener">Não sabe seu CEP?</a></span>
+                            }
+                            @if (cepEncontrado() === true) {
+                                <span class="form-hint success">Endereço preenchido automaticamente!</span>
+                            }
                         </div>
 
                         <div class="form-group">
@@ -242,6 +256,7 @@
                             <input
                                 type="text"
                                 id="cad-logradouro"
+                                name="logradouro"
                                 [ngModel]="formCadastro().logradouro"
                                 (ngModelChange)="atualizarFormCadastro('logradouro', $event)"
                                 placeholder="Nome da rua"
@@ -255,6 +270,7 @@
                                 <input
                                     type="text"
                                     id="cad-numero"
+                                    name="numero"
                                     [ngModel]="formCadastro().numero"
                                     (ngModelChange)="atualizarFormCadastro('numero', $event)"
                                     placeholder="Nº"
@@ -265,6 +281,7 @@
                                 <input
                                     type="text"
                                     id="cad-complemento"
+                                    name="complemento"
                                     [ngModel]="formCadastro().complemento"
                                     (ngModelChange)="atualizarFormCadastro('complemento', $event)"
                                     placeholder="Apto, bloco..."
@@ -277,6 +294,7 @@
                             <input
                                 type="text"
                                 id="cad-bairro"
+                                name="bairro"
                                 [ngModel]="formCadastro().bairro"
                                 (ngModelChange)="atualizarFormCadastro('bairro', $event)"
                                 placeholder="Seu bairro"
@@ -289,6 +307,7 @@
                                 <input
                                     type="text"
                                     id="cad-cidade"
+                                    name="cidade"
                                     [ngModel]="formCadastro().cidade"
                                     (ngModelChange)="atualizarFormCadastro('cidade', $event)"
                                     placeholder="Sua cidade"
@@ -299,6 +318,7 @@
                                 <input
                                     type="text"
                                     id="cad-estado"
+                                    name="estado"
                                     [ngModel]="formCadastro().estado"
                                     (ngModelChange)="atualizarFormCadastro('estado', $event.toUpperCase())"
                                     placeholder="SP"
@@ -312,6 +332,7 @@
                             <input
                                 type="text"
                                 id="cad-referencia"
+                                name="pontoReferencia"
                                 [ngModel]="formCadastro().pontoReferencia"
                                 (ngModelChange)="atualizarFormCadastro('pontoReferencia', $event)"
                                 placeholder="Próximo ao mercado..."

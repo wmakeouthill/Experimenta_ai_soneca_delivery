@@ -11,6 +11,12 @@ import { HttpInterceptorFn } from '@angular/common/http';
  * - Servidor local do Electron (portas específicas)
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  // Não adiciona token em requisições externas (não são para nossa API)
+  // Isso evita erros de CORS com APIs externas como ViaCEP
+  if (!req.url.includes('/api/')) {
+    return next(req);
+  }
+
   // Não adiciona token de admin/operador em requisições para endpoints públicos ou de cliente
   // Esses endpoints usam autenticação própria (cliente) ou são públicos
   if (req.url.includes('/api/public/') || req.url.includes('/api/publico/') || req.url.includes('/api/cliente/')) {

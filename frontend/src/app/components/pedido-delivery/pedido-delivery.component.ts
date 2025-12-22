@@ -6,13 +6,15 @@ import {
     ClienteAuthService,
     ClienteAuth,
     CadastrarClienteDeliveryRequest,
-    ClienteLoginRequest
+    ClienteLoginRequest,
+    AtualizarEnderecoRequest
 } from '../../services/cliente-auth.service';
 import { GoogleSignInService } from '../../services/google-signin.service';
 import { DeliveryService, TipoPedido, CriarPedidoDeliveryRequest, ItemPedidoDeliveryRequest, StatusPedidoDelivery } from '../../services/delivery.service';
 import { Produto } from '../../services/produto.service';
 import { Categoria } from '../../services/categoria.service';
 import { AdicionalService, Adicional } from '../../services/adicional.service';
+import { CepService } from '../../services/cep.service';
 
 type Etapa = 'boas-vindas' | 'login' | 'cadastro' | 'cardapio' | 'carrinho' | 'checkout' | 'sucesso';
 
@@ -54,6 +56,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     private readonly googleSignInService = inject(GoogleSignInService);
     private readonly deliveryService = inject(DeliveryService);
     private readonly adicionalService = inject(AdicionalService);
+    private readonly cepService = inject(CepService);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly platformId = inject(PLATFORM_ID);
     private readonly isBrowser = isPlatformBrowser(this.platformId);
@@ -94,6 +97,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     readonly cadastroCarregando = signal(false);
     readonly etapaCadastro = signal<'dados' | 'endereco'>('dados');
     readonly buscandoCep = signal(false);
+    readonly cepEncontrado = signal<boolean | null>(null); // null = não buscou, true = encontrado, false = não encontrado
 
     // Google Auth
     readonly googleIniciado = signal(false);
@@ -206,10 +210,22 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             const clienteLogado = this.clienteAuthService.clienteLogado;
             if (clienteLogado) {
                 this.cliente.set(clienteLogado);
-                this.etapaAtual.set('cardapio');
-                // Usar endereço salvo se disponível
+
+                // Só vai para cardápio se tiver endereço cadastrado
                 if (clienteLogado.enderecoFormatado) {
                     this.enderecoEntrega.set(clienteLogado.enderecoFormatado);
+                    this.etapaAtual.set('cardapio');
+                } else {
+                    // Cliente sem endereço - precisa completar cadastro
+                    this.etapaAtual.set('cadastro');
+                    this.etapaCadastro.set('endereco');
+                    // Preencher dados básicos no formulário
+                    this.formCadastro.update(form => ({
+                        ...form,
+                        nome: clienteLogado.nome || '',
+                        telefone: clienteLogado.telefone || '',
+                        email: clienteLogado.email || ''
+                    }));
                 }
             }
             this.carregarCardapio();
@@ -376,10 +392,24 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         try {
             const response = await firstValueFrom(this.clienteAuthService.login(request));
             this.cliente.set(response.cliente);
-            if (response.cliente.enderecoFormatado) {
-                this.enderecoEntrega.set(response.cliente.enderecoFormatado);
+
+            // Se cliente não tem endereço, ir para cadastro de endereço
+            if (!response.cliente.temEndereco) {
+                this.etapaCadastro.set('endereco');
+                this.etapaAtual.set('cadastro');
+                // Preencher dados do cliente no formulário
+                this.formCadastro.update(form => ({
+                    ...form,
+                    nome: response.cliente.nome || '',
+                    telefone: response.cliente.telefone || '',
+                    email: response.cliente.email || ''
+                }));
+            } else {
+                if (response.cliente.enderecoFormatado) {
+                    this.enderecoEntrega.set(response.cliente.enderecoFormatado);
+                }
+                this.etapaAtual.set('cardapio');
             }
-            this.etapaAtual.set('cardapio');
         } catch (e: any) {
             console.error('Erro no login:', e);
             this.erro.set(e?.error?.message || 'Telefone ou senha incorretos');
@@ -407,6 +437,9 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         const formatted = this.formatarCep(input.value);
         this.atualizarFormCadastro('cep', formatted);
 
+        // Reset feedback quando digitar
+        this.cepEncontrado.set(null);
+
         // Buscar CEP quando tiver 8 dígitos
         const cep = formatted.replace(/\D/g, '');
         if (cep.length === 8) {
@@ -414,22 +447,28 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    private async buscarCep(cep: string): Promise<void> {
+    private buscarCep(cep: string): void {
         this.buscandoCep.set(true);
-        try {
-            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-            const data = await response.json();
-            if (!data.erro) {
-                this.atualizarFormCadastro('logradouro', data.logradouro || '');
-                this.atualizarFormCadastro('bairro', data.bairro || '');
-                this.atualizarFormCadastro('cidade', data.localidade || '');
-                this.atualizarFormCadastro('estado', data.uf || '');
+        this.cepEncontrado.set(null);
+
+        this.cepService.buscarPorCep(cep).subscribe({
+            next: (endereco) => {
+                if (endereco) {
+                    this.atualizarFormCadastro('logradouro', endereco.logradouro);
+                    this.atualizarFormCadastro('bairro', endereco.bairro);
+                    this.atualizarFormCadastro('cidade', endereco.cidade);
+                    this.atualizarFormCadastro('estado', endereco.estado);
+                    this.cepEncontrado.set(true);
+                } else {
+                    this.cepEncontrado.set(false);
+                }
+                this.buscandoCep.set(false);
+            },
+            error: () => {
+                this.cepEncontrado.set(false);
+                this.buscandoCep.set(false);
             }
-        } catch (e) {
-            console.error('Erro ao buscar CEP:', e);
-        } finally {
-            this.buscandoCep.set(false);
-        }
+        });
     }
 
     atualizarFormCadastro<K extends keyof FormCadastro>(campo: K, valor: FormCadastro[K]): void {
@@ -453,28 +492,51 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.erro.set(null);
 
         const form = this.formCadastro();
-        const request: CadastrarClienteDeliveryRequest = {
-            nome: form.nome.trim(),
-            telefone: form.telefone.replace(/\D/g, ''),
-            email: form.email.trim() || undefined,
-            senha: form.senha,
-            logradouro: form.logradouro.trim(),
-            numero: form.numero.trim(),
-            complemento: form.complemento.trim() || undefined,
-            bairro: form.bairro.trim(),
-            cidade: form.cidade.trim(),
-            estado: form.estado.toUpperCase(),
-            cep: form.cep.replace(/\D/g, ''),
-            pontoReferencia: form.pontoReferencia.trim() || undefined
-        };
 
         try {
-            const response = await firstValueFrom(this.clienteAuthService.cadastrarDelivery(request));
-            this.cliente.set(response.cliente);
-            if (response.cliente.enderecoFormatado) {
-                this.enderecoEntrega.set(response.cliente.enderecoFormatado);
+            // Se cliente já está logado, apenas atualizar endereço
+            if (this.cliente()) {
+                const enderecoRequest: AtualizarEnderecoRequest = {
+                    logradouro: form.logradouro.trim(),
+                    numero: form.numero.trim(),
+                    complemento: form.complemento.trim() || undefined,
+                    bairro: form.bairro.trim(),
+                    cidade: form.cidade.trim(),
+                    estado: form.estado.toUpperCase(),
+                    cep: form.cep.replace(/\D/g, ''),
+                    pontoReferencia: form.pontoReferencia.trim() || undefined
+                };
+
+                const clienteAtualizado = await firstValueFrom(this.clienteAuthService.atualizarEndereco(enderecoRequest));
+                this.cliente.set(clienteAtualizado);
+                if (clienteAtualizado.enderecoFormatado) {
+                    this.enderecoEntrega.set(clienteAtualizado.enderecoFormatado);
+                }
+                this.etapaAtual.set('cardapio');
+            } else {
+                // Cliente não logado - fazer cadastro completo
+                const request: CadastrarClienteDeliveryRequest = {
+                    nome: form.nome.trim(),
+                    telefone: form.telefone.replace(/\D/g, ''),
+                    email: form.email.trim() || undefined,
+                    senha: form.senha,
+                    logradouro: form.logradouro.trim(),
+                    numero: form.numero.trim(),
+                    complemento: form.complemento.trim() || undefined,
+                    bairro: form.bairro.trim(),
+                    cidade: form.cidade.trim(),
+                    estado: form.estado.toUpperCase(),
+                    cep: form.cep.replace(/\D/g, ''),
+                    pontoReferencia: form.pontoReferencia.trim() || undefined
+                };
+
+                const response = await firstValueFrom(this.clienteAuthService.cadastrarDelivery(request));
+                this.cliente.set(response.cliente);
+                if (response.cliente.enderecoFormatado) {
+                    this.enderecoEntrega.set(response.cliente.enderecoFormatado);
+                }
+                this.etapaAtual.set('cardapio');
             }
-            this.etapaAtual.set('cardapio');
         } catch (e: any) {
             console.error('Erro no cadastro:', e);
             this.erro.set(e?.error?.message || 'Erro ao cadastrar. Tente novamente.');

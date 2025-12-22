@@ -336,6 +336,51 @@
     animation: spin 0.8s linear infinite;
 }
 
+.input-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.input-icon.success {
+    color: var(--success-color);
+}
+
+.input-icon.error {
+    color: var(--error-color);
+}
+
+.input-success {
+    border-color: var(--success-color) !important;
+}
+
+.input-error {
+    border-color: var(--error-color) !important;
+}
+
+.form-hint {
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    color: var(--text-secondary);
+}
+
+.form-hint.success {
+    color: var(--success-color);
+}
+
+.form-hint.error {
+    color: var(--error-color);
+}
+
+.form-hint a {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
 /* ========== Buttons ========== */
 .btn-primary {
     background: var(--primary-color);
