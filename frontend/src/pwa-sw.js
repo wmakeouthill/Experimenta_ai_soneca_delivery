@@ -5,7 +5,7 @@ const CACHE_NAME = 'experimenta-ai-delivery-v1';
 const STATIC_ASSETS = [
   '/',
   '/delivery',
-  '/manifest.webmanifest',
+  '/assets/manifest.webmanifest',
   '/assets/experimenta_ai_banner_circular.webp'
 ];
 
@@ -64,6 +64,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Ignora requisições que não são HTTP/HTTPS (extensões do Chrome, etc.)
+  if (!request.url.startsWith('http://') && !request.url.startsWith('https://')) {
+    return;
+  }
+
   // Ignora requisições de API (sempre vai para a rede)
   if (request.url.includes('/api/')) {
     return;
@@ -74,10 +79,12 @@ self.addEventListener('fetch', (event) => {
     fetch(request)
       .then((response) => {
         // Se a resposta for válida, atualiza o cache
-        if (response.ok) {
+        if (response.ok && request.url.startsWith(self.location.origin)) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
+            cache.put(request, responseClone).catch(() => {
+              // Ignora erros de cache (ex: quota exceeded)
+            });
           });
         }
         return response;
