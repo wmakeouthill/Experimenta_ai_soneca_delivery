@@ -1,5 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService, UsuarioDTO, CriarUsuarioRequest, AtualizarUsuarioRequest } from '../../services/auth.service';
@@ -15,12 +15,14 @@ import { ConfigImpressoraComponent } from './components/config-impressora/config
 export class AdministracaoComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
+  private readonly platformId = inject(PLATFORM_ID);
 
   readonly usuarios = signal<UsuarioDTO[]>([]);
   readonly estaCarregando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly mostrarModal = signal(false);
   readonly usuarioEditando = signal<UsuarioDTO | null>(null);
+  readonly linkCopiado = signal(false);
   readonly form: FormGroup;
 
   constructor() {
@@ -181,6 +183,21 @@ export class AdministracaoComponent implements OnInit {
 
   isEditando(): boolean {
     return this.usuarioEditando() !== null;
+  }
+
+  copiarLinkDelivery(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const baseUrl = window.location.origin;
+    const linkDelivery = `${baseUrl}/delivery`;
+
+    navigator.clipboard.writeText(linkDelivery).then(() => {
+      this.linkCopiado.set(true);
+      setTimeout(() => this.linkCopiado.set(false), 2000);
+    }).catch(err => {
+      console.error('Erro ao copiar link:', err);
+      this.erro.set('Erro ao copiar link. Tente manualmente.');
+    });
   }
 }
 

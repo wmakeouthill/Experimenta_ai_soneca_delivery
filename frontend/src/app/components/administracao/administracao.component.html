@@ -6,8 +6,12 @@
         Administração
       </h1>
       <div class="header-actions">
-        <button class="btn-header" routerLink="/gestao-mesas">
-          🍽️ Mesas
+        <button class="btn-header btn-link-delivery" (click)="copiarLinkDelivery()" title="Copiar link para clientes fazerem pedidos">
+          @if (linkCopiado()) {
+            ✅ Link copiado!
+          } @else {
+            📋 Copiar Link Delivery
+          }
         </button>
         <button class="btn-header" routerLink="/gestao-motoboys">
           🛵 Motoboys

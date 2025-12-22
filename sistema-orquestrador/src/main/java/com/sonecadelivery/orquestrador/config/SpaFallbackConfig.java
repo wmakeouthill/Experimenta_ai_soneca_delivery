@@ -44,7 +44,8 @@ public class SpaFallbackConfig implements ErrorController {
             "/relatorio-financeiro",
             "/gestao-estoque",
             "/administracao",
-            "/gestao-mesas",
+            "/gestao-motoboys",
+            "/delivery",
             "/lobby-pedidos",
             "/autoatendimento"
     })

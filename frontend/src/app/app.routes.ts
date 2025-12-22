@@ -69,11 +69,6 @@ export const routes: Routes = [
     canActivate: [adminGuard]
   },
   {
-    path: 'gestao-mesas',
-    loadComponent: () => import('./components/gestao-mesas/gestao-mesas.component').then(m => m.GestaoMesasComponent),
-    canActivate: [adminGuard]
-  },
-  {
     path: 'gestao-motoboys',
     loadComponent: () => import('./components/gestao-motoboys/gestao-motoboys.component').then(m => m.GestaoMotoboysComponent),
     canActivate: [adminGuard]

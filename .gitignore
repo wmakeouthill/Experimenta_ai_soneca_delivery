@@ -15,7 +15,7 @@
 **/*password*
 **/*credential*
 **/*credentials*
-
+/consultar_se_necessario
 # Chaves e tokens (arquivos com padrões específicos)
 **/*.private.key
 **/*.private-key
