@@ -30,11 +30,11 @@ export class AppComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   // Rotas públicas que não devem iniciar serviços autenticados
-  private readonly rotasPublicas = ['/mesa/', '/pedido-mesa/'];
+  private readonly rotasPublicas = ['/mesa/', '/pedido-mesa/', '/delivery', '/politica-privacidade', '/termos-uso'];
 
   // Rotas onde a notificação de novo pedido deve ser suprimida
   // (ex: cliente delivery cria o pedido na própria tela, não precisa notificar)
-  private readonly rotasSemNotificacao = ['/mesa/', '/pedido-mesa/', '/delivery/'];
+  private readonly rotasSemNotificacao = ['/mesa/', '/pedido-mesa/', '/delivery'];
 
   ngOnInit(): void {
     if (this.isBrowser) {
@@ -62,7 +62,8 @@ export class AppComponent implements OnInit {
   }
 
   private isRotaPublica(url: string): boolean {
-    return this.rotasPublicas.some(rota => url.includes(rota));
+    // Verifica se a URL é exatamente a rota ou começa com a rota
+    return this.rotasPublicas.some(rota => url === rota || url.startsWith(rota + '/') || url.startsWith(rota));
   }
 
   private iniciarServicosGlobais() {

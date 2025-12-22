@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, ViewChild, ElementRef, AfterViewInit, AfterViewChecked } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, ViewChild, ElementRef, AfterViewInit, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, interval, switchMap, catchError, of, firstValueFrom } from 'rxjs';
@@ -54,6 +54,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     private readonly googleSignInService = inject(GoogleSignInService);
     private readonly deliveryService = inject(DeliveryService);
     private readonly adicionalService = inject(AdicionalService);
+    private readonly cdr = inject(ChangeDetectorRef);
     private readonly platformId = inject(PLATFORM_ID);
     private readonly isBrowser = isPlatformBrowser(this.platformId);
     private readonly destroy$ = new Subject<void>();
@@ -96,7 +97,10 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Google Auth
     readonly googleIniciado = signal(false);
-    private googleButtonRendered = false;
+    private googleButtonBoasVindasRendered = false;
+    private googleButtonLoginRendered = false;
+    private googleButtonCadastroRendered = false;
+    @ViewChild('googleButtonBoasVindas') googleButtonBoasVindasRef?: ElementRef<HTMLDivElement>;
     @ViewChild('googleButtonLogin') googleButtonLoginRef?: ElementRef<HTMLDivElement>;
     @ViewChild('googleButtonCadastro') googleButtonCadastroRef?: ElementRef<HTMLDivElement>;
 
@@ -236,6 +240,11 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         try {
             await this.googleSignInService.initialize();
             this.googleIniciado.set(true);
+            console.debug('[Google] SDK inicializado com sucesso');
+
+            // Força detecção de mudanças e renderização do botão
+            this.cdr.detectChanges();
+            setTimeout(() => this.renderizarBotaoGoogle(), 100);
 
             // Escutar credenciais do Google
             this.googleSignInService.credential$
@@ -249,21 +258,64 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private renderizarBotaoGoogle(): void {
-        if (!this.isBrowser || !this.googleIniciado() || this.googleButtonRendered) return;
+        if (!this.isBrowser || !this.googleIniciado()) {
+            console.debug('[Google] Não pode renderizar: isBrowser=', this.isBrowser, 'googleIniciado=', this.googleIniciado());
+            return;
+        }
 
-        const element = this.googleButtonLoginRef?.nativeElement || this.googleButtonCadastroRef?.nativeElement;
-        if (element) {
+        const etapa = this.etapaAtual();
+        console.debug('[Google] Renderizando para etapa:', etapa, {
+            boasVindasRef: !!this.googleButtonBoasVindasRef?.nativeElement,
+            boasVindasRendered: this.googleButtonBoasVindasRendered,
+            loginRef: !!this.googleButtonLoginRef?.nativeElement,
+            loginRendered: this.googleButtonLoginRendered
+        });
+
+        // Renderizar botão na tela de boas-vindas
+        if (etapa === 'boas-vindas' && !this.googleButtonBoasVindasRendered && this.googleButtonBoasVindasRef?.nativeElement) {
             try {
-                this.googleSignInService.renderButton(element, {
+                this.googleSignInService.renderButton(this.googleButtonBoasVindasRef.nativeElement, {
                     theme: 'outline',
                     size: 'large',
                     text: 'continue_with',
                     shape: 'rectangular',
                     width: 300
                 });
-                this.googleButtonRendered = true;
+                this.googleButtonBoasVindasRendered = true;
             } catch (e) {
-                console.error('Erro ao renderizar botão Google:', e);
+                console.error('Erro ao renderizar botão Google (boas-vindas):', e);
+            }
+        }
+
+        // Renderizar botão na tela de login
+        if (etapa === 'login' && !this.googleButtonLoginRendered && this.googleButtonLoginRef?.nativeElement) {
+            try {
+                this.googleSignInService.renderButton(this.googleButtonLoginRef.nativeElement, {
+                    theme: 'outline',
+                    size: 'large',
+                    text: 'continue_with',
+                    shape: 'rectangular',
+                    width: 300
+                });
+                this.googleButtonLoginRendered = true;
+            } catch (e) {
+                console.error('Erro ao renderizar botão Google (login):', e);
+            }
+        }
+
+        // Renderizar botão na tela de cadastro
+        if (etapa === 'cadastro' && !this.googleButtonCadastroRendered && this.googleButtonCadastroRef?.nativeElement) {
+            try {
+                this.googleSignInService.renderButton(this.googleButtonCadastroRef.nativeElement, {
+                    theme: 'outline',
+                    size: 'large',
+                    text: 'continue_with',
+                    shape: 'rectangular',
+                    width: 300
+                });
+                this.googleButtonCadastroRendered = true;
+            } catch (e) {
+                console.error('Erro ao renderizar botão Google (cadastro):', e);
             }
         }
     }
@@ -435,20 +487,22 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     irParaLogin(): void {
         this.erro.set(null);
-        this.googleButtonRendered = false;
+        this.googleButtonLoginRendered = false;
         this.etapaAtual.set('login');
     }
 
     irParaCadastro(): void {
         this.erro.set(null);
-        this.googleButtonRendered = false;
+        this.googleButtonCadastroRendered = false;
         this.etapaCadastro.set('dados');
         this.etapaAtual.set('cadastro');
     }
 
     irParaBoasVindas(): void {
         this.erro.set(null);
-        this.googleButtonRendered = false;
+        this.googleButtonBoasVindasRendered = false;
+        this.googleButtonLoginRendered = false;
+        this.googleButtonCadastroRendered = false;
         this.etapaAtual.set('boas-vindas');
     }
 
@@ -456,6 +510,9 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.clienteAuthService.logout();
         this.cliente.set(null);
         this.itensCarrinho.set([]);
+        this.googleButtonBoasVindasRendered = false;
+        this.googleButtonLoginRendered = false;
+        this.googleButtonCadastroRendered = false;
         this.etapaAtual.set('boas-vindas');
     }
 

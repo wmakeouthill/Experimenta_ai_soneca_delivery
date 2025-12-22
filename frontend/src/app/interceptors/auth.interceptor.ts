@@ -1,13 +1,22 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 
 /**
- * Interceptor que adiciona o token JWT e o ID do usuário em todas as requisições HTTP
+ * Interceptor que adiciona o token JWT e o ID do usuário em requisições HTTP para funcionários
  * O token é obtido do localStorage e adicionado no header Authorization
  * O ID do usuário é adicionado no header X-Usuario-Id
  *
- * NOTA: Não adiciona token em requisições para servidor local do Electron (portas específicas)
+ * NOTA: NÃO adiciona token em:
+ * - Requisições para /api/public/ (endpoints públicos)
+ * - Requisições para /api/cliente/ (usa clienteAuthInterceptor)
+ * - Servidor local do Electron (portas específicas)
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  // Não adiciona token de admin/operador em requisições para endpoints públicos ou de cliente
+  // Esses endpoints usam autenticação própria (cliente) ou são públicos
+  if (req.url.includes('/api/public/') || req.url.includes('/api/publico/') || req.url.includes('/api/cliente/')) {
+    return next(req);
+  }
+
   // Não adiciona token em requisições para servidor local do Electron
   // Portas típicas do servidor Electron: 3847, 3000 (diferente da 4200 do Angular dev server)
   // Requisições para /api/* devem sempre ter o token (mesmo via proxy em localhost:4200)
