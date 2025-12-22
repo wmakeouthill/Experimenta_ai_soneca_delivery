@@ -52,6 +52,32 @@ public class ClienteEntity {
     @Column(name = "ultimo_login")
     private LocalDateTime ultimoLogin;
 
+    // ========== Campos de Endereço (Delivery) ==========
+
+    @Column(length = 255)
+    private String logradouro;
+
+    @Column(length = 20)
+    private String numero;
+
+    @Column(length = 100)
+    private String complemento;
+
+    @Column(length = 100)
+    private String bairro;
+
+    @Column(length = 100)
+    private String cidade;
+
+    @Column(length = 2)
+    private String estado;
+
+    @Column(length = 9)
+    private String cep;
+
+    @Column(name = "ponto_referencia", length = 255)
+    private String pontoReferencia;
+
     // ========== Timestamps ==========
 
     @Column(nullable = false)

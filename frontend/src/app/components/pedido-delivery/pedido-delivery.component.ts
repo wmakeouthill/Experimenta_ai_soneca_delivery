@@ -1,20 +1,20 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, ViewChild, ElementRef, AfterViewInit, AfterViewChecked } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, interval, switchMap, catchError, of } from 'rxjs';
+import { Subject, takeUntil, interval, switchMap, catchError, of, firstValueFrom } from 'rxjs';
 import {
-    DeliveryService,
-    TipoPedido,
-    ClientePublico,
-    CriarPedidoDeliveryRequest,
-    ItemPedidoDeliveryRequest,
-    StatusPedidoDelivery
-} from '../../services/delivery.service';
+    ClienteAuthService,
+    ClienteAuth,
+    CadastrarClienteDeliveryRequest,
+    ClienteLoginRequest
+} from '../../services/cliente-auth.service';
+import { GoogleSignInService } from '../../services/google-signin.service';
+import { DeliveryService, TipoPedido, CriarPedidoDeliveryRequest, ItemPedidoDeliveryRequest, StatusPedidoDelivery } from '../../services/delivery.service';
 import { Produto } from '../../services/produto.service';
 import { Categoria } from '../../services/categoria.service';
 import { AdicionalService, Adicional } from '../../services/adicional.service';
 
-type Etapa = 'identificacao' | 'cadastro' | 'cardapio' | 'carrinho' | 'checkout' | 'sucesso';
+type Etapa = 'boas-vindas' | 'login' | 'cadastro' | 'cardapio' | 'carrinho' | 'checkout' | 'sucesso';
 
 interface ItemCarrinho {
     produto: Produto;
@@ -25,6 +25,22 @@ interface ItemCarrinho {
 
 type MeioPagamento = 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'VALE_REFEICAO' | 'DINHEIRO';
 
+interface FormCadastro {
+    nome: string;
+    telefone: string;
+    email: string;
+    senha: string;
+    confirmarSenha: string;
+    logradouro: string;
+    numero: string;
+    complemento: string;
+    bairro: string;
+    cidade: string;
+    estado: string;
+    cep: string;
+    pontoReferencia: string;
+}
+
 @Component({
     selector: 'app-pedido-delivery',
     standalone: true,
@@ -33,7 +49,9 @@ type MeioPagamento = 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'VALE_REFEICAO
     styleUrls: ['./pedido-delivery.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PedidoDeliveryComponent implements OnInit, OnDestroy {
+export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked {
+    private readonly clienteAuthService = inject(ClienteAuthService);
+    private readonly googleSignInService = inject(GoogleSignInService);
     private readonly deliveryService = inject(DeliveryService);
     private readonly adicionalService = inject(AdicionalService);
     private readonly platformId = inject(PLATFORM_ID);
@@ -45,19 +63,46 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
     // Estado geral
     readonly carregando = signal(true);
     readonly erro = signal<string | null>(null);
-    readonly etapaAtual = signal<Etapa>('identificacao');
+    readonly etapaAtual = signal<Etapa>('boas-vindas');
     readonly enviando = signal(false);
 
-    // Cliente
-    readonly telefone = signal('');
-    readonly nome = signal('');
-    readonly buscandoCliente = signal(false);
-    readonly clienteIdentificado = signal<ClientePublico | null>(null);
+    // Cliente autenticado
+    readonly cliente = signal<ClienteAuth | null>(null);
 
-    // Tipo de pedido (delivery ou retirada)
+    // Login
+    readonly loginTelefone = signal('');
+    readonly loginSenha = signal('');
+    readonly loginCarregando = signal(false);
+
+    // Cadastro
+    readonly formCadastro = signal<FormCadastro>({
+        nome: '',
+        telefone: '',
+        email: '',
+        senha: '',
+        confirmarSenha: '',
+        logradouro: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        cep: '',
+        pontoReferencia: ''
+    });
+    readonly cadastroCarregando = signal(false);
+    readonly etapaCadastro = signal<'dados' | 'endereco'>('dados');
+    readonly buscandoCep = signal(false);
+
+    // Google Auth
+    readonly googleIniciado = signal(false);
+    private googleButtonRendered = false;
+    @ViewChild('googleButtonLogin') googleButtonLoginRef?: ElementRef<HTMLDivElement>;
+    @ViewChild('googleButtonCadastro') googleButtonCadastroRef?: ElementRef<HTMLDivElement>;
+
+    // Tipo de pedido
     readonly tipoPedido = signal<TipoPedido>('DELIVERY');
     readonly enderecoEntrega = signal('');
-    readonly previsaoCliente = signal(''); // Tempo estimado pelo cliente
 
     // Cardápio
     readonly categorias = signal<Categoria[]>([]);
@@ -84,23 +129,36 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
     readonly pedidoId = signal<string | null>(null);
     readonly statusPedido = signal<StatusPedidoDelivery | null>(null);
 
-    // Computed
-    readonly telefoneValido = computed(() => {
-        const tel = this.telefone().replace(/\D/g, '');
-        return tel.length >= 10 && tel.length <= 11;
+    // ========== COMPUTED ==========
+
+    readonly loginValido = computed(() => {
+        const tel = this.loginTelefone().replace(/\D/g, '');
+        return tel.length >= 10 && this.loginSenha().length >= 6;
     });
 
-    readonly nomeValido = computed(() => {
-        return this.nome().trim().length >= 2;
+    readonly dadosCadastroValidos = computed(() => {
+        const form = this.formCadastro();
+        const tel = form.telefone.replace(/\D/g, '');
+        return (
+            form.nome.trim().length >= 2 &&
+            tel.length >= 10 &&
+            form.senha.length >= 6 &&
+            form.senha === form.confirmarSenha
+        );
     });
 
-    readonly podeBuscarCliente = computed(() =>
-        this.telefoneValido() && !this.buscandoCliente()
-    );
-
-    readonly podeCadastrar = computed(() =>
-        this.telefoneValido() && this.nomeValido() && !this.buscandoCliente()
-    );
+    readonly enderecoCadastroValido = computed(() => {
+        const form = this.formCadastro();
+        const cep = form.cep.replace(/\D/g, '');
+        return (
+            form.logradouro.trim().length >= 3 &&
+            form.numero.trim().length >= 1 &&
+            form.bairro.trim().length >= 2 &&
+            form.cidade.trim().length >= 2 &&
+            form.estado.length === 2 &&
+            cep.length === 8
+        );
+    });
 
     readonly produtosFiltrados = computed(() => {
         const cat = this.categoriaSelecionada();
@@ -136,15 +194,33 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
 
     readonly enderecoObrigatorio = computed(() => this.tipoPedido() === 'DELIVERY');
 
-    // Lifecycle
+    // ========== LIFECYCLE ==========
+
     ngOnInit(): void {
-        // Só carrega o cardápio no browser, não durante SSR/prerendering
         if (this.isBrowser) {
+            // Verificar se já está logado
+            const clienteLogado = this.clienteAuthService.clienteLogado;
+            if (clienteLogado) {
+                this.cliente.set(clienteLogado);
+                this.etapaAtual.set('cardapio');
+                // Usar endereço salvo se disponível
+                if (clienteLogado.enderecoFormatado) {
+                    this.enderecoEntrega.set(clienteLogado.enderecoFormatado);
+                }
+            }
             this.carregarCardapio();
+            this.inicializarGoogleAuth();
         } else {
-            // Durante SSR, apenas marca como não carregando
             this.carregando.set(false);
         }
+    }
+
+    ngAfterViewInit(): void {
+        this.renderizarBotaoGoogle();
+    }
+
+    ngAfterViewChecked(): void {
+        this.renderizarBotaoGoogle();
     }
 
     ngOnDestroy(): void {
@@ -152,7 +228,74 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         this.destroy$.complete();
     }
 
-    // Métodos de identificação
+    // ========== GOOGLE AUTH ==========
+
+    private async inicializarGoogleAuth(): Promise<void> {
+        if (!this.isBrowser) return;
+
+        try {
+            await this.googleSignInService.initialize();
+            this.googleIniciado.set(true);
+
+            // Escutar credenciais do Google
+            this.googleSignInService.credential$
+                .pipe(takeUntil(this.destroy$))
+                .subscribe(async (token) => {
+                    await this.processarLoginGoogle(token);
+                });
+        } catch (e) {
+            console.error('Erro ao inicializar Google Sign-In:', e);
+        }
+    }
+
+    private renderizarBotaoGoogle(): void {
+        if (!this.isBrowser || !this.googleIniciado() || this.googleButtonRendered) return;
+
+        const element = this.googleButtonLoginRef?.nativeElement || this.googleButtonCadastroRef?.nativeElement;
+        if (element) {
+            try {
+                this.googleSignInService.renderButton(element, {
+                    theme: 'outline',
+                    size: 'large',
+                    text: 'continue_with',
+                    shape: 'rectangular',
+                    width: 300
+                });
+                this.googleButtonRendered = true;
+            } catch (e) {
+                console.error('Erro ao renderizar botão Google:', e);
+            }
+        }
+    }
+
+    private async processarLoginGoogle(idToken: string): Promise<void> {
+        this.loginCarregando.set(true);
+        this.erro.set(null);
+
+        try {
+            const response = await firstValueFrom(this.clienteAuthService.loginGoogle(idToken));
+            this.cliente.set(response.cliente);
+
+            // Se cliente Google não tem endereço, ir para cadastro de endereço
+            if (!response.cliente.temEndereco) {
+                this.etapaCadastro.set('endereco');
+                this.etapaAtual.set('cadastro');
+            } else {
+                if (response.cliente.enderecoFormatado) {
+                    this.enderecoEntrega.set(response.cliente.enderecoFormatado);
+                }
+                this.etapaAtual.set('cardapio');
+            }
+        } catch (e: any) {
+            console.error('Erro no login com Google:', e);
+            this.erro.set(e?.error?.message || 'Erro ao fazer login com Google');
+        } finally {
+            this.loginCarregando.set(false);
+        }
+    }
+
+    // ========== LOGIN ==========
+
     formatarTelefone(valor: string): string {
         const numeros = valor.replace(/\D/g, '');
         if (numeros.length <= 2) return numeros;
@@ -161,68 +304,163 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
     }
 
-    onTelefoneChange(event: Event): void {
+    onLoginTelefoneChange(event: Event): void {
         const input = event.target as HTMLInputElement;
         const formatted = this.formatarTelefone(input.value);
-        this.telefone.set(formatted);
+        this.loginTelefone.set(formatted);
     }
 
-    buscarCliente(): void {
-        if (!this.podeBuscarCliente()) return;
+    async fazerLogin(): Promise<void> {
+        if (!this.loginValido()) return;
 
-        this.buscandoCliente.set(true);
+        this.loginCarregando.set(true);
         this.erro.set(null);
 
-        const telefone = this.telefone().replace(/\D/g, '');
+        const request: ClienteLoginRequest = {
+            telefone: this.loginTelefone().replace(/\D/g, ''),
+            senha: this.loginSenha()
+        };
 
-        this.deliveryService.buscarClientePorTelefone(telefone).subscribe({
-            next: (cliente) => {
-                this.buscandoCliente.set(false);
-                this.clienteIdentificado.set(cliente);
-                this.etapaAtual.set('cardapio');
-            },
-            error: (err) => {
-                this.buscandoCliente.set(false);
-                if (err.status === 404) {
-                    // Cliente não encontrado, ir para cadastro
-                    this.etapaAtual.set('cadastro');
-                } else {
-                    this.erro.set('Erro ao buscar cliente. Tente novamente.');
-                }
+        try {
+            const response = await firstValueFrom(this.clienteAuthService.login(request));
+            this.cliente.set(response.cliente);
+            if (response.cliente.enderecoFormatado) {
+                this.enderecoEntrega.set(response.cliente.enderecoFormatado);
             }
-        });
+            this.etapaAtual.set('cardapio');
+        } catch (e: any) {
+            console.error('Erro no login:', e);
+            this.erro.set(e?.error?.message || 'Telefone ou senha incorretos');
+        } finally {
+            this.loginCarregando.set(false);
+        }
     }
 
-    cadastrarCliente(): void {
-        if (!this.podeCadastrar()) return;
+    // ========== CADASTRO ==========
 
-        this.buscandoCliente.set(true);
+    onCadastroTelefoneChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const formatted = this.formatarTelefone(input.value);
+        this.atualizarFormCadastro('telefone', formatted);
+    }
+
+    formatarCep(valor: string): string {
+        const numeros = valor.replace(/\D/g, '');
+        if (numeros.length <= 5) return numeros;
+        return `${numeros.slice(0, 5)}-${numeros.slice(5, 8)}`;
+    }
+
+    onCepChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const formatted = this.formatarCep(input.value);
+        this.atualizarFormCadastro('cep', formatted);
+
+        // Buscar CEP quando tiver 8 dígitos
+        const cep = formatted.replace(/\D/g, '');
+        if (cep.length === 8) {
+            this.buscarCep(cep);
+        }
+    }
+
+    private async buscarCep(cep: string): Promise<void> {
+        this.buscandoCep.set(true);
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const data = await response.json();
+            if (!data.erro) {
+                this.atualizarFormCadastro('logradouro', data.logradouro || '');
+                this.atualizarFormCadastro('bairro', data.bairro || '');
+                this.atualizarFormCadastro('cidade', data.localidade || '');
+                this.atualizarFormCadastro('estado', data.uf || '');
+            }
+        } catch (e) {
+            console.error('Erro ao buscar CEP:', e);
+        } finally {
+            this.buscandoCep.set(false);
+        }
+    }
+
+    atualizarFormCadastro<K extends keyof FormCadastro>(campo: K, valor: FormCadastro[K]): void {
+        this.formCadastro.update(form => ({ ...form, [campo]: valor }));
+    }
+
+    avancarParaEndereco(): void {
+        if (this.dadosCadastroValidos()) {
+            this.etapaCadastro.set('endereco');
+        }
+    }
+
+    voltarParaDados(): void {
+        this.etapaCadastro.set('dados');
+    }
+
+    async finalizarCadastro(): Promise<void> {
+        if (!this.enderecoCadastroValido()) return;
+
+        this.cadastroCarregando.set(true);
         this.erro.set(null);
 
-        const telefone = this.telefone().replace(/\D/g, '');
+        const form = this.formCadastro();
+        const request: CadastrarClienteDeliveryRequest = {
+            nome: form.nome.trim(),
+            telefone: form.telefone.replace(/\D/g, ''),
+            email: form.email.trim() || undefined,
+            senha: form.senha,
+            logradouro: form.logradouro.trim(),
+            numero: form.numero.trim(),
+            complemento: form.complemento.trim() || undefined,
+            bairro: form.bairro.trim(),
+            cidade: form.cidade.trim(),
+            estado: form.estado.toUpperCase(),
+            cep: form.cep.replace(/\D/g, ''),
+            pontoReferencia: form.pontoReferencia.trim() || undefined
+        };
 
-        this.deliveryService.cadastrarCliente({
-            nome: this.nome().trim(),
-            telefone
-        }).subscribe({
-            next: (cliente) => {
-                this.buscandoCliente.set(false);
-                this.clienteIdentificado.set(cliente);
-                this.etapaAtual.set('cardapio');
-            },
-            error: () => {
-                this.buscandoCliente.set(false);
-                this.erro.set('Erro ao cadastrar. Tente novamente.');
+        try {
+            const response = await firstValueFrom(this.clienteAuthService.cadastrarDelivery(request));
+            this.cliente.set(response.cliente);
+            if (response.cliente.enderecoFormatado) {
+                this.enderecoEntrega.set(response.cliente.enderecoFormatado);
             }
-        });
+            this.etapaAtual.set('cardapio');
+        } catch (e: any) {
+            console.error('Erro no cadastro:', e);
+            this.erro.set(e?.error?.message || 'Erro ao cadastrar. Tente novamente.');
+        } finally {
+            this.cadastroCarregando.set(false);
+        }
     }
 
-    voltarParaIdentificacao(): void {
-        this.nome.set('');
-        this.etapaAtual.set('identificacao');
+    // ========== NAVEGAÇÃO ==========
+
+    irParaLogin(): void {
+        this.erro.set(null);
+        this.googleButtonRendered = false;
+        this.etapaAtual.set('login');
     }
 
-    // Métodos do cardápio
+    irParaCadastro(): void {
+        this.erro.set(null);
+        this.googleButtonRendered = false;
+        this.etapaCadastro.set('dados');
+        this.etapaAtual.set('cadastro');
+    }
+
+    irParaBoasVindas(): void {
+        this.erro.set(null);
+        this.googleButtonRendered = false;
+        this.etapaAtual.set('boas-vindas');
+    }
+
+    logout(): void {
+        this.clienteAuthService.logout();
+        this.cliente.set(null);
+        this.itensCarrinho.set([]);
+        this.etapaAtual.set('boas-vindas');
+    }
+
+    // ========== CARDÁPIO ==========
+
     private carregarCardapio(): void {
         this.carregando.set(true);
 
@@ -243,7 +481,8 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         this.categoriaSelecionada.set(categoria);
     }
 
-    // Métodos do produto/carrinho
+    // ========== PRODUTO/CARRINHO ==========
+
     abrirDetalhesProduto(produto: Produto): void {
         this.produtoSelecionado.set(produto);
         this.quantidadeSelecionada.set(1);
@@ -296,10 +535,6 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         return this.adicionaisSelecionados().some(a => a.adicional.id === adicionalId);
     }
 
-    /**
-     * Formata a lista de adicionais de um item do carrinho para exibição.
-     * Método auxiliar para evitar arrow functions no template.
-     */
     formatarAdicionaisItem(item: ItemCarrinho): string {
         if (!item.adicionais || item.adicionais.length === 0) {
             return '';
@@ -320,7 +555,6 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
                 : undefined
         };
 
-        // Verifica se já existe item igual no carrinho
         const itens = this.itensCarrinho();
         const itemExistente = itens.find(
             i => i.produto.id === produto.id &&
@@ -329,7 +563,6 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         );
 
         if (itemExistente) {
-            // Incrementa quantidade
             this.itensCarrinho.set(
                 itens.map(i =>
                     i === itemExistente
@@ -349,20 +582,24 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         this.itensCarrinho.set(itens.filter((_, i) => i !== index));
     }
 
-    alterarQuantidadeCarrinho(index: number, delta: number): void {
+    incrementarItemCarrinho(index: number): void {
+        const itens = this.itensCarrinho();
+        this.itensCarrinho.set(
+            itens.map((item, i) =>
+                i === index ? { ...item, quantidade: item.quantidade + 1 } : item
+            )
+        );
+    }
+
+    decrementarItemCarrinho(index: number): void {
         const itens = this.itensCarrinho();
         const item = itens[index];
-
-        if (!item) return;
-
-        const novaQuantidade = item.quantidade + delta;
-
-        if (novaQuantidade <= 0) {
+        if (item.quantidade <= 1) {
             this.removerDoCarrinho(index);
         } else {
             this.itensCarrinho.set(
-                itens.map((i, idx) =>
-                    idx === index ? { ...i, quantidade: novaQuantidade } : i
+                itens.map((it, i) =>
+                    i === index ? { ...it, quantidade: it.quantidade - 1 } : it
                 )
             );
         }
@@ -376,9 +613,11 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         this.mostrarCarrinho.set(false);
     }
 
-    // Checkout
+    // ========== CHECKOUT ==========
+
     irParaCheckout(): void {
         if (this.carrinhoVazio()) return;
+        this.mostrarCarrinho.set(false);
         this.etapaAtual.set('checkout');
     }
 
@@ -390,104 +629,87 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
         this.meioPagamentoSelecionado.set(meio);
     }
 
-    selecionarTipoPedido(tipo: TipoPedido): void {
-        this.tipoPedido.set(tipo);
-        if (tipo === 'RETIRADA') {
-            this.enderecoEntrega.set('');
-        }
-    }
-
-    // Envio do pedido
-    enviarPedido(): void {
-        const cliente = this.clienteIdentificado();
-        if (!cliente || !this.podeEnviarPedido()) return;
+    async enviarPedido(): Promise<void> {
+        if (!this.podeEnviarPedido() || !this.cliente()) return;
 
         this.enviando.set(true);
         this.erro.set(null);
 
+        const clienteData = this.cliente()!;
         const itens: ItemPedidoDeliveryRequest[] = this.itensCarrinho().map(item => ({
             produtoId: item.produto.id,
             quantidade: item.quantidade,
             observacoes: item.observacao,
-            adicionais: item.adicionais?.map(ad => ({
-                adicionalId: ad.adicional.id,
-                quantidade: ad.quantidade
+            adicionais: item.adicionais?.map(a => ({
+                adicionalId: a.adicional.id,
+                quantidade: a.quantidade
             }))
         }));
 
         const request: CriarPedidoDeliveryRequest = {
-            clienteId: cliente.id,
-            nomeCliente: cliente.nome,
-            telefoneCliente: cliente.telefone,
+            clienteId: clienteData.id,
+            nomeCliente: clienteData.nome,
+            telefoneCliente: clienteData.telefone || '',
             itens,
-            meiosPagamento: this.meioPagamentoSelecionado()
-                ? [{ meioPagamento: this.meioPagamentoSelecionado()!, valor: this.totalCarrinho() }]
-                : undefined,
+            meiosPagamento: [{
+                meioPagamento: this.meioPagamentoSelecionado()!,
+                valor: this.totalCarrinho()
+            }],
             tipoPedido: this.tipoPedido(),
-            enderecoEntrega: this.tipoPedido() === 'DELIVERY' ? this.enderecoEntrega() : undefined,
-            previsaoEntregaCliente: this.previsaoCliente() || undefined
+            enderecoEntrega: this.tipoPedido() === 'DELIVERY' ? this.enderecoEntrega() : undefined
         };
 
-        this.deliveryService.criarPedido(request).subscribe({
-            next: (response) => {
-                this.enviando.set(false);
-                this.pedidoId.set(response.id);
-                this.itensCarrinho.set([]);
-                this.etapaAtual.set('sucesso');
-                this.iniciarPollingStatus(response.id);
-            },
-            error: () => {
-                this.enviando.set(false);
-                this.erro.set('Erro ao enviar pedido. Tente novamente.');
-            }
-        });
+        try {
+            const response = await firstValueFrom(this.deliveryService.criarPedido(request));
+            this.pedidoId.set(response.id);
+            this.itensCarrinho.set([]);
+            this.etapaAtual.set('sucesso');
+            this.iniciarPollingStatus(response.id);
+        } catch (e: any) {
+            console.error('Erro ao enviar pedido:', e);
+            this.erro.set(e?.error?.message || 'Erro ao enviar pedido. Tente novamente.');
+        } finally {
+            this.enviando.set(false);
+        }
     }
 
-    // Polling de status
-    private iniciarPollingStatus(pedidoId: string): void {
-        interval(5000).pipe(
-            takeUntil(this.destroy$),
-            switchMap(() => this.deliveryService.buscarStatusPedido(pedidoId)),
-            catchError(() => of(null))
-        ).subscribe(status => {
-            if (status) {
-                this.statusPedido.set(status);
-            }
-        });
+    // ========== SUCESSO/STATUS ==========
 
-        // Busca inicial
-        this.deliveryService.buscarStatusPedido(pedidoId).subscribe({
-            next: (status) => this.statusPedido.set(status),
-            error: () => { }
-        });
+    private iniciarPollingStatus(pedidoId: string): void {
+        interval(10000)
+            .pipe(
+                takeUntil(this.destroy$),
+                switchMap(() => this.deliveryService.buscarStatusPedido(pedidoId)),
+                catchError(() => of(null))
+            )
+            .subscribe(status => {
+                if (status) {
+                    this.statusPedido.set(status);
+                }
+            });
     }
 
     novoPedido(): void {
         this.pedidoId.set(null);
         this.statusPedido.set(null);
         this.meioPagamentoSelecionado.set(null);
-        this.enderecoEntrega.set('');
-        this.previsaoCliente.set('');
         this.etapaAtual.set('cardapio');
     }
 
-    // Formatação
-    formatarPreco(valor: number): string {
-        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
+    // ========== HELPERS PARA TEMPLATE ==========
 
-    getStatusLabel(status: string): string {
-        const labels: Record<string, string> = {
-            'AGUARDANDO_ACEITACAO': 'Aguardando Confirmação',
-            'ACEITO': 'Pedido Aceito',
-            'PREPARANDO': 'Preparando',
-            'PRONTO': 'Pronto',
-            'SAIU_PARA_ENTREGA': 'Saiu para Entrega',
+    getStatusDescricao(status: string): string {
+        const descricoes: Record<string, string> = {
+            'AGUARDANDO_ACEITACAO': 'Aguardando confirmação',
+            'ACEITO': 'Pedido aceito',
+            'PREPARANDO': 'Preparando seu pedido',
+            'PRONTO': 'Pedido pronto',
+            'SAIU_PARA_ENTREGA': 'Saiu para entrega',
             'ENTREGUE': 'Entregue',
             'FINALIZADO': 'Finalizado',
             'CANCELADO': 'Cancelado'
         };
-        return labels[status] || status;
+        return descricoes[status] || status;
     }
 
     getStatusIcon(status: string): string {
@@ -496,22 +718,11 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy {
             'ACEITO': '✅',
             'PREPARANDO': '👨‍🍳',
             'PRONTO': '🍽️',
-            'SAIU_PARA_ENTREGA': '🏍️',
+            'SAIU_PARA_ENTREGA': '🛵',
             'ENTREGUE': '📦',
             'FINALIZADO': '🎉',
             'CANCELADO': '❌'
         };
         return icons[status] || '📋';
-    }
-
-    calcularPrecoItemCarrinho(item: ItemCarrinho): number {
-        let total = item.produto.preco * item.quantidade;
-        if (item.adicionais) {
-            total += item.adicionais.reduce(
-                (acc, ad) => acc + ad.adicional.preco * ad.quantidade * item.quantidade,
-                0
-            );
-        }
-        return total;
     }
 }

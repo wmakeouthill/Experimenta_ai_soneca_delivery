@@ -138,6 +138,9 @@
     <!-- Migration: Adiciona campos de delivery na tabela de pedidos pendentes -->
     <include file="changes/042-add-delivery-fields-pedidos-pendentes.sql" relativeToChangelogFile="true" />
 
+    <!-- Migration: Adiciona campos de endereço na tabela de clientes para delivery -->
+    <include file="changes/043-add-endereco-clientes.sql" relativeToChangelogFile="true" />
+
     <!-- 
     NOTA: O usuário administrador inicial é criado automaticamente via CommandLineRunner
     (UsuarioInicialConfig) na primeira execução da aplicação.

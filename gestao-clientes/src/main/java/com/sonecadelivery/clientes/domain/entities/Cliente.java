@@ -21,6 +21,16 @@ public class Cliente extends BaseEntity {
     private boolean emailVerificado;
     private LocalDateTime ultimoLogin;
 
+    // ========== Campos de Endereço (Delivery) ==========
+    private String logradouro;
+    private String numero;
+    private String complemento;
+    private String bairro;
+    private String cidade;
+    private String estado;
+    private String cep;
+    private String pontoReferencia;
+
     private Cliente() {
         super();
     }
@@ -86,6 +96,70 @@ public class Cliente extends BaseEntity {
     public void atualizarObservacoes(String novasObservacoes) {
         this.observacoes = novasObservacoes != null ? novasObservacoes.trim() : null;
         touch();
+    }
+
+    // ========== Métodos de Endereço ==========
+
+    /**
+     * Atualiza o endereço completo do cliente.
+     */
+    public void atualizarEndereco(String logradouro, String numero, String complemento,
+            String bairro, String cidade, String estado, String cep, String pontoReferencia) {
+        this.logradouro = logradouro != null ? logradouro.trim() : null;
+        this.numero = numero != null ? numero.trim() : null;
+        this.complemento = complemento != null ? complemento.trim() : null;
+        this.bairro = bairro != null ? bairro.trim() : null;
+        this.cidade = cidade != null ? cidade.trim() : null;
+        this.estado = estado != null ? estado.trim().toUpperCase() : null;
+        this.cep = cep != null ? cep.replaceAll("\\D", "") : null;
+        this.pontoReferencia = pontoReferencia != null ? pontoReferencia.trim() : null;
+        touch();
+    }
+
+    /**
+     * Retorna o endereço formatado para exibição.
+     */
+    public String getEnderecoFormatado() {
+        if (logradouro == null || logradouro.isEmpty()) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(logradouro);
+        if (numero != null && !numero.isEmpty()) {
+            sb.append(", ").append(numero);
+        }
+        if (complemento != null && !complemento.isEmpty()) {
+            sb.append(" - ").append(complemento);
+        }
+        if (bairro != null && !bairro.isEmpty()) {
+            sb.append(", ").append(bairro);
+        }
+        if (cidade != null && !cidade.isEmpty()) {
+            sb.append(" - ").append(cidade);
+        }
+        if (estado != null && !estado.isEmpty()) {
+            sb.append("/").append(estado);
+        }
+        if (cep != null && !cep.isEmpty()) {
+            sb.append(", CEP: ").append(formatarCep(cep));
+        }
+        return sb.toString();
+    }
+
+    private String formatarCep(String cep) {
+        if (cep == null || cep.length() != 8)
+            return cep;
+        return cep.substring(0, 5) + "-" + cep.substring(5);
+    }
+
+    /**
+     * Verifica se o cliente tem endereço cadastrado.
+     */
+    public boolean temEndereco() {
+        return logradouro != null && !logradouro.isEmpty()
+                && numero != null && !numero.isEmpty()
+                && bairro != null && !bairro.isEmpty()
+                && cidade != null && !cidade.isEmpty();
     }
 
     // ========== Métodos de Autenticação ==========
@@ -197,6 +271,21 @@ public class Cliente extends BaseEntity {
         this.fotoUrl = fotoUrl;
         this.emailVerificado = emailVerificado;
         this.ultimoLogin = ultimoLogin;
+    }
+
+    /**
+     * Restaura campos de endereço do banco de dados (usado pelos mappers).
+     */
+    public void restaurarEnderecoDoBanco(String logradouro, String numero, String complemento,
+            String bairro, String cidade, String estado, String cep, String pontoReferencia) {
+        this.logradouro = logradouro;
+        this.numero = numero;
+        this.complemento = complemento;
+        this.bairro = bairro;
+        this.cidade = cidade;
+        this.estado = estado;
+        this.cep = cep;
+        this.pontoReferencia = pontoReferencia;
     }
 
     private static void validarDados(String nome, String telefone) {

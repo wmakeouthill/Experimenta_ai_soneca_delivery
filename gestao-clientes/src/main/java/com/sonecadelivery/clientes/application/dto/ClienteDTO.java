@@ -27,6 +27,18 @@ public class ClienteDTO {
     private boolean temContaGoogle;
     private LocalDateTime ultimoLogin;
 
+    // Campos de endereço (Delivery)
+    private String logradouro;
+    private String numero;
+    private String complemento;
+    private String bairro;
+    private String cidade;
+    private String estado;
+    private String cep;
+    private String pontoReferencia;
+    private String enderecoFormatado;
+    private boolean temEndereco;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -44,6 +56,17 @@ public class ClienteDTO {
                 .temSenha(cliente.temSenha())
                 .temContaGoogle(cliente.temContaGoogle())
                 .ultimoLogin(cliente.getUltimoLogin())
+                // Campos de endereço
+                .logradouro(cliente.getLogradouro())
+                .numero(cliente.getNumero())
+                .complemento(cliente.getComplemento())
+                .bairro(cliente.getBairro())
+                .cidade(cliente.getCidade())
+                .estado(cliente.getEstado())
+                .cep(cliente.getCep())
+                .pontoReferencia(cliente.getPontoReferencia())
+                .enderecoFormatado(cliente.getEnderecoFormatado())
+                .temEndereco(cliente.temEndereco())
                 // Timestamps
                 .createdAt(cliente.getCreatedAt())
                 .updatedAt(cliente.getUpdatedAt())

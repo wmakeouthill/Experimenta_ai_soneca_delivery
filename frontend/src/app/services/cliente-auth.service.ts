@@ -2,13 +2,27 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap, throwError } from 'rxjs';
 
-export interface ClienteAuth {
+export interface EnderecoCliente {
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  pontoReferencia?: string;
+  enderecoFormatado?: string;
+  temEndereco?: boolean;
+}
+
+export interface ClienteAuth extends EnderecoCliente {
   id: string;
   nome: string;
   telefone?: string;
   email?: string;
   fotoUrl?: string;
   googleVinculado: boolean;
+  temSenha?: boolean;
 }
 
 export interface ClienteLoginResponse {
@@ -24,6 +38,32 @@ export interface ClienteLoginRequest {
 
 export interface ClienteGoogleLoginRequest {
   googleToken: string;
+}
+
+export interface CadastrarClienteDeliveryRequest {
+  nome: string;
+  telefone: string;
+  email?: string;
+  senha: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  pontoReferencia?: string;
+}
+
+export interface AtualizarEnderecoRequest {
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  pontoReferencia?: string;
 }
 
 export interface DefinirSenhaRequest {
@@ -79,6 +119,25 @@ export class ClienteAuthService {
     const request: ClienteGoogleLoginRequest = { googleToken };
     return this.http.post<ClienteLoginResponse>(`${this.baseUrl}/google`, request)
       .pipe(tap(response => this.salvarSessao(response)));
+  }
+
+  /**
+   * Cadastro de cliente via delivery (com endereço completo)
+   */
+  cadastrarDelivery(request: CadastrarClienteDeliveryRequest): Observable<ClienteLoginResponse> {
+    return this.http.post<ClienteLoginResponse>(`${this.baseUrl}/cadastro-delivery`, request)
+      .pipe(tap(response => this.salvarSessao(response)));
+  }
+
+  /**
+   * Atualiza endereço do cliente
+   */
+  atualizarEndereco(request: AtualizarEnderecoRequest): Observable<ClienteAuth> {
+    if (!this._clienteLogado.value?.id) {
+      return throwError(() => new Error('Cliente não está logado'));
+    }
+    return this.http.put<ClienteAuth>(`${this.contaUrl}/endereco`, request)
+      .pipe(tap(cliente => this._clienteLogado.next(cliente)));
   }
 
   /**

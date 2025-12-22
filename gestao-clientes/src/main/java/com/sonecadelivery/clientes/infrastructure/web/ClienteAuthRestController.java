@@ -17,6 +17,7 @@ public class ClienteAuthRestController {
 
     private final AutenticarClienteUseCase autenticarClienteUseCase;
     private final AutenticarClienteGoogleUseCase autenticarClienteGoogleUseCase;
+    private final CadastrarClienteDeliveryUseCase cadastrarClienteDeliveryUseCase;
 
     /**
      * Login com telefone e senha
@@ -36,6 +37,16 @@ public class ClienteAuthRestController {
             @Valid @RequestBody ClienteGoogleLoginRequest request) {
         ClienteLoginResponse response = autenticarClienteGoogleUseCase.executar(request);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Cadastro de cliente via delivery (com endereço completo)
+     */
+    @PostMapping("/cadastro-delivery")
+    public ResponseEntity<ClienteLoginResponse> cadastrarDelivery(
+            @Valid @RequestBody CadastrarClienteDeliveryRequest request) {
+        ClienteLoginResponse response = cadastrarClienteDeliveryUseCase.executar(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
 
@@ -58,6 +69,7 @@ class ClienteContaRestController {
     private final AvaliarProdutoUseCase avaliarProdutoUseCase;
     private final BuscarAvaliacoesUseCase buscarAvaliacoesUseCase;
     private final AtualizarTelefoneClienteUseCase atualizarTelefoneClienteUseCase;
+    private final AtualizarEnderecoClienteUseCase atualizarEnderecoClienteUseCase;
 
     /**
      * Obtém dados do cliente logado
@@ -101,6 +113,17 @@ class ClienteContaRestController {
             @RequestHeader("X-Cliente-Id") String clienteId,
             @Valid @RequestBody AtualizarTelefoneRequest request) {
         ClienteDTO cliente = atualizarTelefoneClienteUseCase.executar(clienteId, request);
+        return ResponseEntity.ok(cliente);
+    }
+
+    /**
+     * Atualiza o endereço do cliente.
+     */
+    @PutMapping("/endereco")
+    public ResponseEntity<ClienteDTO> atualizarEndereco(
+            @RequestHeader("X-Cliente-Id") String clienteId,
+            @Valid @RequestBody AtualizarEnderecoRequest request) {
+        ClienteDTO cliente = atualizarEnderecoClienteUseCase.executar(clienteId, request);
         return ResponseEntity.ok(cliente);
     }
 
