@@ -312,6 +312,11 @@
             <div class="carrossel-horizontal">
                 @for (produto of produtos().slice(0, 5); track produto.id) {
                 <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
+                    <button class="btn-favorito" [class.ativo]="favoritos.isFavorito(produto.id)"
+                        (click)="toggleFavorito(produto.id, $event)"
+                        [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                        {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
+                    </button>
                     @if (produto.foto) {
                     <div class="produto-imagem-mini">
                         <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
@@ -492,6 +497,16 @@
                 <span class="item-arrow">›</span>
             </button>
 
+            <!-- Favoritos -->
+            <button class="perfil-item" (click)="secaoPerfil.set('favoritos')">
+                <span class="item-icon">❤️</span>
+                <span class="item-texto">Favoritos</span>
+                @if (favoritos.quantidadeFavoritos() > 0) {
+                <span class="item-count">{{ favoritos.quantidadeFavoritos() }}</span>
+                }
+                <span class="item-arrow">›</span>
+            </button>
+
             <!-- Endereço -->
             <button class="perfil-item" (click)="secaoPerfil.set('edicao')">
                 <span class="item-icon">📍</span>
@@ -526,11 +541,77 @@
             <h2 class="secao-titulo">Meus Pedidos</h2>
         </div>
         <div class="lista-pedidos">
+            @if (meusPedidos.carregando()) {
+            <div class="lista-carregando">
+                <div class="loading-spinner"></div>
+                <p>Carregando pedidos...</p>
+            </div>
+            } @else if (meusPedidos.pedidos().length === 0) {
             <div class="lista-vazia">
                 <span class="lista-vazia-icon">📋</span>
                 <p>Nenhum pedido ainda</p>
                 <small>Seus pedidos aparecerão aqui</small>
             </div>
+            } @else {
+            @for (pedido of meusPedidos.pedidos(); track pedido.id) {
+            <div class="pedido-item" (click)="meusPedidos.selecionarPedido(pedido)">
+                <div class="pedido-info">
+                    <span class="pedido-data">{{ pedido.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                    <span class="pedido-status" [class]="meusPedidos.classeStatus(pedido.status)">
+                        {{ meusPedidos.formatarStatus(pedido.status) }}
+                    </span>
+                </div>
+                <div class="pedido-total">
+                    <span>{{ pedido.total | currency:'BRL' }}</span>
+                    <span class="item-arrow">›</span>
+                </div>
+            </div>
+            }
+            }
+        </div>
+        }
+        <!-- Seção Favoritos -->
+        @if (secaoPerfil() === 'favoritos') {
+        <div class="secao-header">
+            <button class="btn-voltar" (click)="secaoPerfil.set('principal')">
+                <span>‹</span>
+            </button>
+            <h2 class="secao-titulo">Favoritos</h2>
+        </div>
+        <div class="lista-favoritos">
+            @if (favoritos.carregando()) {
+            <div class="lista-carregando">
+                <div class="loading-spinner"></div>
+                <p>Carregando favoritos...</p>
+            </div>
+            } @else if (favoritos.produtosFavoritos().length === 0) {
+            <div class="lista-vazia">
+                <span class="lista-vazia-icon">❤️</span>
+                <p>Nenhum favorito ainda</p>
+                <small>Toque no ❤️ nos produtos para adicionar</small>
+            </div>
+            } @else {
+            @for (produto of favoritos.produtosFavoritos(); track produto.id) {
+            <div class="item-favorito" (click)="abrirDetalhesProduto(produto)">
+                @if (produto.foto) {
+                <div class="favorito-imagem">
+                    <img [src]="produto.foto" [alt]="produto.nome">
+                </div>
+                } @else {
+                <div class="favorito-imagem sem-foto">
+                    <span>🍽️</span>
+                </div>
+                }
+                <div class="favorito-info">
+                    <span class="favorito-nome">{{ produto.nome }}</span>
+                    <span class="favorito-preco">{{ produto.preco | currency:'BRL' }}</span>
+                </div>
+                <button class="btn-remover-favorito" (click)="favoritos.remover(produto.id); $event.stopPropagation()">
+                    🗑️
+                </button>
+            </div>
+            }
+            }
         </div>
         }
 

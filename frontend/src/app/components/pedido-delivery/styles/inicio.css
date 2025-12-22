@@ -81,6 +81,39 @@
     transform: scale(0.98);
 }
 
+/* Botão Favorito */
+.btn-favorito {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    cursor: pointer;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-favorito:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.btn-favorito:active {
+    transform: scale(0.95);
+}
+
+.btn-favorito.ativo {
+    animation: pulse 0.3s ease;
+}
+
 .produto-imagem-mini {
     width: 100%;
     height: 100px;

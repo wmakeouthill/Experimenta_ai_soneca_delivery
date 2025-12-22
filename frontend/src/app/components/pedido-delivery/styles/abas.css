@@ -307,12 +307,98 @@
     color: var(--text-primary);
 }
 
-/* Lista Pedidos */
-.lista-pedidos {
+/* Lista Pedidos e Favoritos */
+.lista-pedidos,
+.lista-favoritos {
     padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+}
+
+.item-count {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* Item Favorito */
+.item-favorito {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.item-favorito:active {
+    transform: scale(0.99);
+}
+
+.favorito-imagem {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.favorito-imagem img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.favorito-imagem.sem-foto {
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.favorito-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.favorito-nome {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.favorito-preco {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.btn-remover-favorito {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f5f5f5;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-remover-favorito:active {
+    background: #eee;
 }
 
 .lista-vazia {
@@ -336,6 +422,88 @@
 .lista-vazia small {
     font-size: 0.85rem;
     color: #aaa;
+}
+
+.lista-carregando {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #666;
+}
+
+.lista-carregando .loading-spinner {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 1rem;
+}
+
+/* Item de Pedido */
+.pedido-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pedido-item:active {
+    transform: scale(0.99);
+}
+
+.pedido-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.pedido-data {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.pedido-status {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.status-pendente {
+    background: #FEF3C7;
+    color: #B45309;
+}
+
+.status-preparando {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+
+.status-caminho {
+    background: #E0E7FF;
+    color: #4338CA;
+}
+
+.status-entregue {
+    background: #D1FAE5;
+    color: #047857;
+}
+
+.status-cancelado {
+    background: #FEE2E2;
+    color: #B91C1C;
+}
+
+.pedido-total {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
 }
 
 /* CTA Telefone Inline */

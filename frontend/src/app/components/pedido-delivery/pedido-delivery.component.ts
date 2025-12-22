@@ -17,10 +17,11 @@ import { AdicionalService, Adicional } from '../../services/adicional.service';
 import { CepService } from '../../services/cep.service';
 import { MenuPerfilComponent } from '../menu-perfil/menu-perfil.component';
 import { FooterNavComponent } from './components/footer-nav/footer-nav.component';
+import { useFavoritos, useInicio, useMeusPedidos } from './composables';
 
 type Etapa = 'boas-vindas' | 'login' | 'cadastro' | 'cardapio' | 'checkout' | 'sucesso';
 type AbaDelivery = 'inicio' | 'cardapio' | 'carrinho' | 'perfil';
-type SecaoPerfil = 'principal' | 'edicao' | 'pedidos';
+type SecaoPerfil = 'principal' | 'edicao' | 'pedidos' | 'favoritos';
 
 interface ItemCarrinho {
     produto: Produto;
@@ -156,6 +157,21 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     // CTA Telefone (flutuante)
     readonly ctaTelefoneFechado = signal(false);
+
+    // ========== COMPOSABLES ==========
+    readonly favoritos = useFavoritos(
+        () => this.cliente()?.id,
+        () => this.produtos()
+    );
+
+    readonly inicio = useInicio(
+        () => this.cliente()?.id,
+        () => this.favoritos.produtosFavoritos()
+    );
+
+    readonly meusPedidos = useMeusPedidos(
+        () => this.cliente()?.id
+    );
 
     // ========== COMPUTED ==========
 
@@ -614,6 +630,17 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         if (aba === 'perfil') {
             this.secaoPerfil.set('principal');
         }
+        // Carregar meus pedidos quando ir para a seção de pedidos
+        if (aba === 'perfil') {
+            // Pré-carregar pedidos para quando abrir a seção
+        }
+    }
+
+    // ========== FAVORITOS ==========
+
+    toggleFavorito(produtoId: string, event: Event): void {
+        event.stopPropagation();
+        this.favoritos.toggle(produtoId);
     }
 
     abrirMenuPerfil(): void {
