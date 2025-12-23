@@ -1005,9 +1005,11 @@
     }
     <!-- ========== CHAT IA ========== -->
     @if (etapaAtual() !== 'boas-vindas' && etapaAtual() !== 'login' && etapaAtual() !== 'cadastro') {
+    @if (!mostrarDetalhes()) {
     <app-chat-ia-button-delivery [pulse]="(chatIA.mensagens().length <= 1) || !chatIA.isOpen()"
         (onClick)="chatIA.toggleChat()">
     </app-chat-ia-button-delivery>
+    }
 
     <app-chat-ia-fullscreen-delivery [isOpen]="chatIA.isOpen()" [isLoading]="chatIA.isLoading()"
         [inputText]="chatIA.inputText()" [canSend]="chatIA.canSend()" [mensagens]="chatIA.mensagens()"
