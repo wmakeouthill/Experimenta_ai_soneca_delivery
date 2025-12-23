@@ -209,8 +209,8 @@
 }
 
 .kanban-coluna {
-  min-width: 320px;
-  max-width: 320px;
+  min-width: 380px;
+  max-width: 380px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   display: flex;
@@ -222,14 +222,15 @@
   padding: 16px;
   border-bottom: 2px solid #e5e7eb;
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
+  gap: 12px;
 }
 
 .motoboy-info {
   display: flex;
   gap: 12px;
   flex: 1;
+  min-width: 0;
 }
 
 .motoboy-avatar {
@@ -244,25 +245,54 @@
   flex-shrink: 0;
 }
 
-.motoboy-detalhes {
+.motoboy-detalhes-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   flex: 1;
   min-width: 0;
 }
 
+.motoboy-linha-principal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.motoboy-linha-secundaria {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .motoboy-nome {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 16px;
   font-weight: 700;
   color: #1a1a1a;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 .motoboy-telefone,
 .motoboy-veiculo {
-  display: block;
+  display: inline-flex;
+  align-items: center;
   font-size: 12px;
   color: #6b7280;
-  margin-top: 2px;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.motoboy-telefone::after {
+  content: " • ";
+  margin: 0 4px;
+  color: #9ca3af;
 }
 
 .coluna-metadados {
@@ -270,6 +300,7 @@
   align-items: center;
   gap: 8px;
   flex-direction: row-reverse;
+  flex-shrink: 0;
 }
 
 .coluna-contador {
