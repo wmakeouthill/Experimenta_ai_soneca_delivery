@@ -13,6 +13,8 @@ export interface EnderecoCliente {
   pontoReferencia?: string;
   enderecoFormatado?: string;
   temEndereco?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ClienteAuth extends EnderecoCliente {
@@ -53,6 +55,8 @@ export interface CadastrarClienteDeliveryRequest {
   estado: string;
   cep: string;
   pontoReferencia?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface AtualizarEnderecoRequest {
@@ -64,6 +68,8 @@ export interface AtualizarEnderecoRequest {
   estado: string;
   cep: string;
   pontoReferencia?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface DefinirSenhaRequest {

@@ -20,6 +20,7 @@ import { FooterNavComponent } from './components/footer-nav/footer-nav.component
 import { DraggableScrollDirective } from '../pedido-cliente-mesa/directives/draggable-scroll.directive';
 import { useFavoritos, useInicio, useMeusPedidos } from './composables';
 import { useChatIA } from './composables/use-chat-ia';
+import { GoogleMapsService } from '../../services/google-maps.service';
 import { ChatIAButtonDeliveryComponent } from './components/chat-ia-button.component';
 import { ChatIAFullscreenDeliveryComponent } from './components/chat-ia-fullscreen.component';
 import { AcaoChat } from '../../services/chat-ia.service';
@@ -52,6 +53,8 @@ interface FormCadastro {
     estado: string;
     cep: string;
     pontoReferencia: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 @Component({
@@ -75,6 +78,12 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     private readonly clienteAuthService = inject(ClienteAuthService);
     private readonly googleSignInService = inject(GoogleSignInService);
     private readonly deliveryService = inject(DeliveryService);
+    private readonly googleMapsService = inject(GoogleMapsService);
+
+    @ViewChild('mapContainer') mapContainer!: ElementRef;
+    map: any;
+    marker: any;
+    errorMessageMap = '';
     private readonly adicionalService = inject(AdicionalService);
     private readonly cepService = inject(CepService);
     private readonly statusLojaService = inject(StatusLojaService);
@@ -679,6 +688,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                     this.atualizarFormCadastro('cidade', endereco.cidade);
                     this.atualizarFormCadastro('estado', endereco.estado);
                     this.cepEncontrado.set(true);
+                    this.atualizarMapaComEndereco();
                 } else {
                     this.cepEncontrado.set(false);
                 }
@@ -724,7 +734,9 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                     cidade: form.cidade.trim(),
                     estado: form.estado.toUpperCase(),
                     cep: form.cep.replace(/\D/g, ''),
-                    pontoReferencia: form.pontoReferencia.trim() || undefined
+                    pontoReferencia: form.pontoReferencia.trim() || undefined,
+                    latitude: form.latitude,
+                    longitude: form.longitude
                 };
 
                 const clienteAtualizado = await firstValueFrom(this.clienteAuthService.atualizarEndereco(enderecoRequest));
@@ -747,7 +759,9 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                     cidade: form.cidade.trim(),
                     estado: form.estado.toUpperCase(),
                     cep: form.cep.replace(/\D/g, ''),
-                    pontoReferencia: form.pontoReferencia.trim() || undefined
+                    pontoReferencia: form.pontoReferencia.trim() || undefined,
+                    latitude: form.latitude,
+                    longitude: form.longitude
                 };
 
                 const response = await firstValueFrom(this.clienteAuthService.cadastrarDelivery(request));
@@ -1004,6 +1018,54 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             totalUnitario += item.adicionais.reduce((acc, ad) => acc + (ad.adicional.preco * ad.quantidade), 0);
         }
         return totalUnitario * item.quantidade;
+    }
+
+    atualizarMapaComEndereco() {
+        const form = this.formCadastro();
+        const endereco = `${form.logradouro}, ${form.numero}, ${form.cidade} - ${form.estado}`;
+        if (endereco.length < 10) return;
+
+        this.googleMapsService.geocodeAddress(endereco).then(coords => {
+            if (coords) {
+                this.atualizarFormCadastro('latitude', coords.lat);
+                this.atualizarFormCadastro('longitude', coords.lng);
+                this.errorMessageMap = '';
+                this.inicializarOuAtualizarMapa(coords.lat, coords.lng);
+            } else {
+                this.errorMessageMap = 'Não foi possível localizar o endereço no mapa.';
+            }
+        });
+    }
+
+    inicializarOuAtualizarMapa(lat: number, lng: number) {
+        this.googleMapsService.getGoogleMaps().then(maps => {
+            if (!this.mapContainer) return;
+
+            const position = { lat, lng };
+            if (!this.map) {
+                this.map = new maps.Map(this.mapContainer.nativeElement, {
+                    center: position,
+                    zoom: 15
+                });
+                this.marker = new maps.Marker({
+                    position: position,
+                    map: this.map,
+                    draggable: true,
+                    title: "Local de Entrega"
+                });
+
+                this.marker.addListener('dragend', () => {
+                    const pos = this.marker.getPosition();
+                    this.atualizarFormCadastro('latitude', pos.lat());
+                    this.atualizarFormCadastro('longitude', pos.lng());
+                });
+            } else {
+                this.map.setCenter(position);
+                this.marker.setPosition(position);
+            }
+        }).catch(() => {
+            this.errorMessageMap = 'Erro ao carregar o mapa. Verifique a chave API.';
+        });
     }
 
     adicionarAoCarrinho(): void {

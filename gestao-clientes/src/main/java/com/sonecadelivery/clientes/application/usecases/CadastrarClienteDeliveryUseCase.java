@@ -62,7 +62,9 @@ public class CadastrarClienteDeliveryUseCase {
                 request.getCidade(),
                 request.getEstado(),
                 request.getCep(),
-                request.getPontoReferencia());
+                request.getPontoReferencia(),
+                request.getLatitude(),
+                request.getLongitude());
 
         // Salvar cliente
         clienteRepository.salvar(cliente);

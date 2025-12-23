@@ -45,4 +45,7 @@ public class AtualizarEnderecoRequest {
 
     @Size(max = 255, message = "Ponto de referência muito longo")
     private String pontoReferencia;
+
+    private Double latitude;
+    private Double longitude;
 }

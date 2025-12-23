@@ -36,6 +36,8 @@ public class ClienteDTO {
     private String estado;
     private String cep;
     private String pontoReferencia;
+    private Double latitude;
+    private Double longitude;
     private String enderecoFormatado;
     private boolean temEndereco;
 
@@ -65,6 +67,8 @@ public class ClienteDTO {
                 .estado(cliente.getEstado())
                 .cep(cliente.getCep())
                 .pontoReferencia(cliente.getPontoReferencia())
+                .latitude(cliente.getLatitude())
+                .longitude(cliente.getLongitude())
                 .enderecoFormatado(cliente.getEnderecoFormatado())
                 .temEndereco(cliente.temEndereco())
                 // Timestamps

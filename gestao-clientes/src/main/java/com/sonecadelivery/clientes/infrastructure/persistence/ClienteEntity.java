@@ -78,6 +78,12 @@ public class ClienteEntity {
     @Column(name = "ponto_referencia", length = 255)
     private String pontoReferencia;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     // ========== Timestamps ==========
 
     @Column(nullable = false)

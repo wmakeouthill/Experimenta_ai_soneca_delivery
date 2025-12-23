@@ -30,6 +30,8 @@ public class ClienteMapper {
                                 .estado(cliente.getEstado())
                                 .cep(cliente.getCep())
                                 .pontoReferencia(cliente.getPontoReferencia())
+                                .latitude(cliente.getLatitude())
+                                .longitude(cliente.getLongitude())
                                 // Timestamps
                                 .createdAt(cliente.getCreatedAt())
                                 .updatedAt(cliente.getUpdatedAt())
@@ -65,7 +67,9 @@ public class ClienteMapper {
                                         entity.getCidade(),
                                         entity.getEstado(),
                                         entity.getCep(),
-                                        entity.getPontoReferencia());
+                                        entity.getPontoReferencia(),
+                                        entity.getLatitude(),
+                                        entity.getLongitude());
 
                         return cliente;
                 }
@@ -98,7 +102,9 @@ public class ClienteMapper {
                                 entity.getCidade(),
                                 entity.getEstado(),
                                 entity.getCep(),
-                                entity.getPontoReferencia());
+                                entity.getPontoReferencia(),
+                                entity.getLatitude(),
+                                entity.getLongitude());
 
                 return cliente;
         }

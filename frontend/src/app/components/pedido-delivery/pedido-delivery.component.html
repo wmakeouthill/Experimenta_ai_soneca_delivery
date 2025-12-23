@@ -312,6 +312,14 @@
                         placeholder="Próximo ao mercado..." maxlength="255">
                 </div>
 
+                <div class="mapa-wrapper">
+                    <label>Localização Exata (Arraste o pino para corrigir)</label>
+                    <div #mapContainer class="map-container"></div>
+                    @if (errorMessageMap) {
+                    <div class="error-msg">{{ errorMessageMap }}</div>
+                    }
+                </div>
+
                 <button type="submit" class="btn-primary btn-large"
                     [disabled]="!enderecoCadastroValido() || cadastroCarregando()">
                     @if (cadastroCarregando()) {

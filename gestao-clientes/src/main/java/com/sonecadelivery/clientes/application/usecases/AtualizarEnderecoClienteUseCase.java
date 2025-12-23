@@ -29,7 +29,9 @@ public class AtualizarEnderecoClienteUseCase {
                 request.getCidade(),
                 request.getEstado(),
                 request.getCep(),
-                request.getPontoReferencia());
+                request.getPontoReferencia(),
+                request.getLatitude(),
+                request.getLongitude());
 
         clienteRepository.salvar(cliente);
 

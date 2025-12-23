@@ -1,8 +1,9 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef, input, output } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef, input, output, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClienteAuth, ClienteAuthService, AtualizarEnderecoRequest } from '../../services/cliente-auth.service';
 import { CepService } from '../../services/cep.service';
+import { GoogleMapsService } from '../../services/google-maps.service';
 import { firstValueFrom } from 'rxjs';
 
 interface FormEdicaoPerfil {
@@ -17,6 +18,8 @@ interface FormEdicaoPerfil {
     estado: string;
     cep: string;
     pontoReferencia: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 @Component({
@@ -30,7 +33,13 @@ interface FormEdicaoPerfil {
 export class MenuPerfilComponent {
     private readonly clienteAuthService = inject(ClienteAuthService);
     private readonly cepService = inject(CepService);
+    private readonly googleMapsService = inject(GoogleMapsService);
     private readonly cdr = inject(ChangeDetectorRef);
+
+    @ViewChild('mapContainer') mapContainer?: ElementRef;
+    map: any;
+    marker: any;
+    errorMessageMap = '';
 
     // Inputs
     readonly cliente = input.required<ClienteAuth>();
@@ -99,11 +108,21 @@ export class MenuPerfilComponent {
             cidade: c.cidade || '',
             estado: c.estado || '',
             cep: this.formatarCep(c.cep || ''),
-            pontoReferencia: c.pontoReferencia || ''
+            pontoReferencia: c.pontoReferencia || '',
+            latitude: c.latitude,
+            longitude: c.longitude
         });
         this.editando.set(true);
         this.erro.set(null);
         console.log('[MenuPerfil] Form preenchido:', this.formEdicao());
+        // Se tiver coordenadas, carrega o mapa
+        if (c.latitude && c.longitude) {
+            setTimeout(() => this.inicializarOuAtualizarMapa(c.latitude!, c.longitude!), 200);
+        } else if (c.logradouro) {
+            // Se tiver endereço mas não coords, tenta geocodificar agora?
+            // Melhor esperar, ou chamar método
+            setTimeout(() => this.atualizarMapaComEndereco(), 200);
+        }
         this.cdr.detectChanges();
     }
 
@@ -166,6 +185,7 @@ export class MenuPerfilComponent {
                     this.atualizarForm('cidade', endereco.cidade);
                     this.atualizarForm('estado', endereco.estado);
                     this.cepEncontrado.set(true);
+                    this.atualizarMapaComEndereco();
                 } else {
                     this.cepEncontrado.set(false);
                 }
@@ -195,7 +215,9 @@ export class MenuPerfilComponent {
                 cidade: form.cidade.trim(),
                 estado: form.estado.toUpperCase(),
                 cep: form.cep.replace(/\D/g, ''),
-                pontoReferencia: form.pontoReferencia.trim() || undefined
+                pontoReferencia: form.pontoReferencia.trim() || undefined,
+                latitude: form.latitude,
+                longitude: form.longitude
             };
 
             const clienteAtualizado = await firstValueFrom(
@@ -210,5 +232,53 @@ export class MenuPerfilComponent {
         } finally {
             this.salvando.set(false);
         }
+    }
+
+    atualizarMapaComEndereco() {
+        const form = this.formEdicao();
+        const endereco = `${form.logradouro}, ${form.numero}, ${form.cidade} - ${form.estado}`;
+        if (endereco.length < 10) return;
+
+        this.googleMapsService.geocodeAddress(endereco).then(coords => {
+            if (coords) {
+                this.atualizarForm('latitude', coords.lat);
+                this.atualizarForm('longitude', coords.lng);
+                this.errorMessageMap = '';
+                this.inicializarOuAtualizarMapa(coords.lat, coords.lng);
+            } else {
+                this.errorMessageMap = 'Endereço não encontrado no mapa.';
+            }
+        });
+    }
+
+    inicializarOuAtualizarMapa(lat: number, lng: number) {
+        this.googleMapsService.getGoogleMaps().then(maps => {
+            if (!this.mapContainer) return;
+
+            const position = { lat, lng };
+            if (!this.map) {
+                this.map = new maps.Map(this.mapContainer.nativeElement, {
+                    center: position,
+                    zoom: 15
+                });
+                this.marker = new maps.Marker({
+                    position: position,
+                    map: this.map,
+                    draggable: true,
+                    title: "Local de Entrega"
+                });
+
+                this.marker.addListener('dragend', () => {
+                    const pos = this.marker.getPosition();
+                    this.atualizarForm('latitude', pos.lat());
+                    this.atualizarForm('longitude', pos.lng());
+                });
+            } else {
+                this.map.setCenter(position);
+                this.marker.setPosition(position);
+            }
+        }).catch(() => {
+            this.errorMessageMap = '';
+        });
     }
 }

@@ -30,6 +30,8 @@ public class Cliente extends BaseEntity {
     private String estado;
     private String cep;
     private String pontoReferencia;
+    private Double latitude;
+    private Double longitude;
 
     private Cliente() {
         super();
@@ -104,7 +106,8 @@ public class Cliente extends BaseEntity {
      * Atualiza o endereço completo do cliente.
      */
     public void atualizarEndereco(String logradouro, String numero, String complemento,
-            String bairro, String cidade, String estado, String cep, String pontoReferencia) {
+            String bairro, String cidade, String estado, String cep, String pontoReferencia,
+            Double latitude, Double longitude) {
         this.logradouro = logradouro != null ? logradouro.trim() : null;
         this.numero = numero != null ? numero.trim() : null;
         this.complemento = complemento != null ? complemento.trim() : null;
@@ -113,6 +116,8 @@ public class Cliente extends BaseEntity {
         this.estado = estado != null ? estado.trim().toUpperCase() : null;
         this.cep = cep != null ? cep.replaceAll("\\D", "") : null;
         this.pontoReferencia = pontoReferencia != null ? pontoReferencia.trim() : null;
+        this.latitude = latitude;
+        this.longitude = longitude;
         touch();
     }
 
@@ -277,7 +282,8 @@ public class Cliente extends BaseEntity {
      * Restaura campos de endereço do banco de dados (usado pelos mappers).
      */
     public void restaurarEnderecoDoBanco(String logradouro, String numero, String complemento,
-            String bairro, String cidade, String estado, String cep, String pontoReferencia) {
+            String bairro, String cidade, String estado, String cep, String pontoReferencia,
+            Double latitude, Double longitude) {
         this.logradouro = logradouro;
         this.numero = numero;
         this.complemento = complemento;
@@ -286,6 +292,8 @@ public class Cliente extends BaseEntity {
         this.estado = estado;
         this.cep = cep;
         this.pontoReferencia = pontoReferencia;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     private static void validarDados(String nome, String telefone) {

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="046-add-coordinates-clientes" author="soneca">
+        <!-- Verifica se a coluna latitude JÁ existe. Se existir, marca como executado e não faz nada. -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="clientes" columnName="latitude"/>
+            </not>
+        </preConditions>
+
+        <addColumn tableName="clientes">
+            <column name="latitude" type="DOUBLE"/>
+            <column name="longitude" type="DOUBLE"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -147,6 +147,9 @@
     <!-- Migration: Corrige nomes de colunas nas tabelas de pedidos delivery -->
     <include file="changes/045-fix-pedidos-delivery-columns.sql" relativeToChangelogFile="true" />
 
+    <!-- Migration: Adiciona latitude e longitude na tabela clientes para delivery -->
+    <include file="changes/046-add-coordinates-clientes.xml" relativeToChangelogFile="true" />
+
     <!-- 
     NOTA: O usuário administrador inicial é criado automaticamente via CommandLineRunner
     (UsuarioInicialConfig) na primeira execução da aplicação.
