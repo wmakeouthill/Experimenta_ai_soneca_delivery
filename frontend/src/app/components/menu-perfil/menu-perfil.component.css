@@ -414,6 +414,24 @@
     animation: spin 0.8s linear infinite;
 }
 
+/* ========== Map Styles ========== */
+.map-container {
+    width: 100%;
+    height: 300px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--border-color);
+    margin-bottom: 0.5rem;
+    background-color: #eee;
+    /* Placeholder enquanto carrega */
+    overflow: hidden;
+}
+
+.error-text {
+    color: var(--error-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
 /* ========== Responsivo ========== */
 @media (min-width: 600px) {
     .modal-overlay {

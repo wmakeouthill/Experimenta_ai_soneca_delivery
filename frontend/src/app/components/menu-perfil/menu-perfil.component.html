@@ -150,6 +150,14 @@
                         maxlength="255">
                 </div>
 
+                <div class="form-group">
+                    <label>Localização no Mapa (Arraste para ajustar)</label>
+                    <div #mapContainer class="map-container"></div>
+                    @if (errorMessageMap) {
+                    <small class="error-text">{{ errorMessageMap }}</small>
+                    }
+                </div>
+
                 <div class="perfil-buttons">
                     <button type="button" class="btn-secondary" (click)="cancelarEdicao()">
                         Cancelar
