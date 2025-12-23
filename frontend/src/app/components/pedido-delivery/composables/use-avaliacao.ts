@@ -26,10 +26,12 @@ interface PedidoSelecionado {
  *
  * @param getClienteId - Função que retorna o ID do cliente atual
  * @param getPedidoSelecionado - Função que retorna o pedido selecionado
+ * @param onAvaliacaoEnviada - Callback opcional chamado quando avaliação é enviada com sucesso
  */
 export function useAvaliacao(
     getClienteId: () => string | undefined,
-    getPedidoSelecionado: () => PedidoSelecionado | null
+    getPedidoSelecionado: () => PedidoSelecionado | null,
+    onAvaliacaoEnviada?: (pedidoId: string) => void
 ) {
     const deliveryService = inject(DeliveryService);
 
@@ -214,6 +216,11 @@ export function useAvaliacao(
             const novoStatusEditando = new Map(editandoAvaliacao());
             novoStatusEditando.delete(pedido.id);
             editandoAvaliacao.set(novoStatusEditando);
+
+            // Notifica callback se definido
+            if (onAvaliacaoEnviada) {
+                onAvaliacaoEnviada(pedido.id);
+            }
 
         } catch (error) {
             console.error('Erro ao enviar avaliação:', error);

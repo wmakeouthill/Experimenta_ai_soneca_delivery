@@ -1183,6 +1183,28 @@
     flex-shrink: 0;
 }
 
+/* ========== CTA AVALIAÇÃO FLUTUANTE ========== */
+.cta-avaliacao-float {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    animation: slideUpCta 0.3s ease-out;
+}
+
+.cta-avaliacao-float:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
 /* Mapa de Entrega */
 .mapa-wrapper {
     margin-top: 1rem;

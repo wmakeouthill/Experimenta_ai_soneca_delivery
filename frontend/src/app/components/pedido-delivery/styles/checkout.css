@@ -204,38 +204,309 @@
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* ========== Sucesso Screen ========== */
+/* ========== Sucesso / Acompanhamento Screen ========== */
 .sucesso-screen {
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #FFF7ED 0%, #FFFFFF 50%);
+}
+
+.sucesso-header {
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.btn-minimizar-status {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 50%);
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.btn-minimizar-status:hover {
+    background: var(--primary-light);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-minimizar-icon {
+    font-size: 1.25rem;
+    font-weight: 700;
 }
 
 .sucesso-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    gap: 1.5rem;
+}
+
+.sucesso-card {
+    background: white;
+    border-radius: 24px;
+    padding: 2rem;
     text-align: center;
-    max-width: 400px;
+    box-shadow: 0 4px 24px rgba(255, 107, 53, 0.15);
+    width: 100%;
+    max-width: 350px;
+}
+
+.sucesso-card.cancelado {
+    box-shadow: 0 4px 24px rgba(239, 68, 68, 0.15);
+}
+
+.sucesso-icon-wrapper {
+    margin-bottom: 1rem;
 }
 
 .sucesso-icon {
-    font-size: 5rem;
-    margin-bottom: 1.5rem;
+    font-size: 4rem;
+    display: inline-block;
 }
 
-.sucesso-content h1 {
-    font-size: 2rem;
+.sucesso-icon.pulsing {
+    animation: pulse 2s infinite;
+}
+
+.sucesso-icon.cancelado {
+    filter: none;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.numero-pedido-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.sucesso-titulo {
+    margin: 0 0 0.5rem;
+    font-size: 1.375rem;
     color: var(--text-primary);
-    margin: 0 0 0.75rem;
 }
 
-.sucesso-content p {
+.sucesso-main {
+    margin: 0.5rem 0;
     color: var(--text-secondary);
-    font-size: 1.0625rem;
-    margin: 0 0 2rem;
+    font-size: 1rem;
 }
 
+.motivo-cancelamento {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #FEF2F2;
+    border-radius: var(--radius-md);
+    color: #B91C1C;
+    font-size: 0.875rem;
+}
+
+.sucesso-tipo-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.tipo-icon {
+    font-size: 1.25rem;
+}
+
+/* ========== Timeline ========== */
+.sucesso-timeline {
+    width: 100%;
+    max-width: 350px;
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.timeline-step {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    position: relative;
+}
+
+/* Linha conectora entre passos */
+.timeline-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 48px;
+    width: 2px;
+    height: calc(100% - 24px);
+    background: #E5E7EB;
+}
+
+.timeline-step.completed:not(:last-child)::after {
+    background: #10B981;
+}
+
+.timeline-step.active:not(:last-child)::after {
+    background: linear-gradient(to bottom, var(--primary-color) 50%, #E5E7EB 50%);
+}
+
+.timeline-marker {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #E5E7EB;
+    color: #9CA3AF;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-step.completed .timeline-marker {
+    background: #10B981;
+    color: white;
+}
+
+.timeline-step.active .timeline-marker {
+    background: var(--primary-color);
+    color: white;
+    animation: markerPulse 2s infinite;
+}
+
+@keyframes markerPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 107, 53, 0);
+    }
+}
+
+.timeline-icon {
+    font-size: 0.875rem;
+}
+
+.timeline-icon.waiting,
+.timeline-icon.cooking,
+.timeline-icon.delivery,
+.timeline-icon.done {
+    font-size: 1rem;
+}
+
+.timeline-icon.pending {
+    font-size: 0.625rem;
+}
+
+.timeline-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding-top: 0.25rem;
+}
+
+.timeline-label {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.timeline-step.pending .timeline-label {
+    color: var(--text-muted);
+}
+
+.timeline-sublabel {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+/* ========== Tempo de Espera ========== */
+.sucesso-tempo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border-radius: var(--radius-full);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+}
+
+.tempo-icon {
+    font-size: 1.25rem;
+}
+
+/* ========== Ações ========== */
+.sucesso-actions {
+    width: 100%;
+    max-width: 350px;
+    padding: 1.5rem 0;
+    text-align: center;
+}
+
+.sucesso-actions .btn-primary {
+    width: 100%;
+}
+
+.sucesso-actions .btn-secondary {
+    width: 100%;
+    padding: 0.875rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sucesso-actions .btn-secondary:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.aguardando-finalizacao {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Estilos antigos - compatibilidade */
 .status-card {
     display: flex;
     align-items: center;

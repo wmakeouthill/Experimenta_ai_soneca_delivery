@@ -269,7 +269,8 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     readonly avaliacao = useAvaliacao(
         () => this.cliente()?.id,
-        () => this.meusPedidos.pedidoSelecionado()
+        () => this.meusPedidos.pedidoSelecionado(),
+        (pedidoId: string) => this.meusPedidos.marcarComoAvaliado(pedidoId)
     );
 
     // ========== COMPUTED ==========
@@ -902,6 +903,27 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.navegarPara('perfil');
         this.secaoPerfil.set('edicao');
         this.ctaTelefoneFechado.set(true);
+    }
+
+    // ========== CTA AVALIAÇÃO ==========
+
+    readonly ctaAvaliacaoFechado = signal(false);
+
+    fecharCtaAvaliacao(): void {
+        this.ctaAvaliacaoFechado.set(true);
+    }
+
+    abrirAvaliacaoPedido(): void {
+        const pedido = this.meusPedidos.primeiroPedidoNaoAvaliado();
+        if (pedido) {
+            this.navegarPara('perfil');
+            this.secaoPerfil.set('pedidos');
+            // Aguarda a navegação e seleciona o pedido
+            setTimeout(() => {
+                this.meusPedidos.selecionarPedido(pedido);
+            }, 100);
+        }
+        this.ctaAvaliacaoFechado.set(true);
     }
 
     // ========== CARDÁPIO ==========

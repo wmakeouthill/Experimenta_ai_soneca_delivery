@@ -40,10 +40,61 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
     const pedidoSelecionado = signal<HistoricoPedidoDelivery | null>(null);
     const mostrandoDetalhes = signal(false);
 
+    // Estado para controle de pedidos avaliados (armazenado localmente)
+    const pedidosAvaliadosIds = signal<Set<string>>(new Set());
+
     // Computed
     const temMaisPaginas = computed(() => paginaAtual() < totalPaginas() - 1);
     const temPaginaAnterior = computed(() => paginaAtual() > 0);
     const temMais = temMaisPaginas;
+
+    // Pedidos finalizados que ainda não foram avaliados
+    const pedidosNaoAvaliados = computed(() => {
+        const avaliados = pedidosAvaliadosIds();
+        return pedidos().filter(p =>
+            (p.status === 'FINALIZADO' || p.status === 'ENTREGUE') &&
+            !avaliados.has(p.id)
+        );
+    });
+
+    // Tem pedidos para avaliar?
+    const temPedidosParaAvaliar = computed(() => pedidosNaoAvaliados().length > 0);
+
+    // Primeiro pedido não avaliado (para CTA)
+    const primeiroPedidoNaoAvaliado = computed(() => pedidosNaoAvaliados()[0] ?? null);
+
+    /**
+     * Marca um pedido como avaliado (localmente)
+     */
+    function marcarComoAvaliado(pedidoId: string): void {
+        const novosAvaliados = new Set(pedidosAvaliadosIds());
+        novosAvaliados.add(pedidoId);
+        pedidosAvaliadosIds.set(novosAvaliados);
+
+        // Persiste no localStorage
+        if (isBrowser) {
+            const stored = localStorage.getItem('pedidos_avaliados');
+            const arr = stored ? JSON.parse(stored) : [];
+            if (!arr.includes(pedidoId)) {
+                arr.push(pedidoId);
+                localStorage.setItem('pedidos_avaliados', JSON.stringify(arr));
+            }
+        }
+    }
+
+    /**
+     * Carrega os IDs de pedidos já avaliados do localStorage
+     */
+    function carregarPedidosAvaliados(): void {
+        if (!isBrowser) return;
+        const stored = localStorage.getItem('pedidos_avaliados');
+        if (stored) {
+            try {
+                const arr = JSON.parse(stored);
+                pedidosAvaliadosIds.set(new Set(arr));
+            } catch { }
+        }
+    }
 
     /**
      * Seleciona um pedido para ver detalhes.
@@ -67,6 +118,9 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
     async function carregar(): Promise<void> {
         const clienteId = clienteIdFn();
         if (!clienteId || !isBrowser) return;
+
+        // Carrega IDs de pedidos já avaliados do localStorage
+        carregarPedidosAvaliados();
 
         carregando.set(true);
         erro.set(null);
@@ -200,6 +254,9 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
         temMaisPaginas,
         temPaginaAnterior,
         temMais,
+        pedidosNaoAvaliados,
+        temPedidosParaAvaliar,
+        primeiroPedidoNaoAvaliado,
 
         // Métodos
         carregar,
@@ -208,6 +265,8 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
         formatarStatus,
         classeStatus,
         selecionarPedido,
-        fecharDetalhes
+        fecharDetalhes,
+        marcarComoAvaliado,
+        carregarPedidosAvaliados
     };
 }
