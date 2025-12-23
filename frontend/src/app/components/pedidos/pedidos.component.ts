@@ -10,6 +10,7 @@ import { AuthService } from '../../services/auth.service';
 import { ImpressaoService, TipoImpressora } from '../../services/impressao.service';
 import { NovoPedidoModalComponent } from './components/novo-pedido-modal/novo-pedido-modal.component';
 import { MenuContextoPedidoComponent } from './components/menu-contexto-pedido/menu-contexto-pedido.component';
+import { SeletorMotoboyComponent } from './components/seletor-motoboy/seletor-motoboy.component';
 import { catchError, of, Subscription, timer, switchMap, takeWhile } from 'rxjs';
 import { NotificationService } from '../../services/notification.service';
 import { FilaPedidosMesaService, PedidoPendente } from '../../services/fila-pedidos-mesa.service';
@@ -22,7 +23,8 @@ import { FilaPedidosMesaService, PedidoPendente } from '../../services/fila-pedi
     RouterModule,
     FormsModule,
     NovoPedidoModalComponent,
-    MenuContextoPedidoComponent
+    MenuContextoPedidoComponent,
+    SeletorMotoboyComponent
   ],
   templateUrl: './pedidos.component.html',
   styleUrl: './pedidos.component.css',
@@ -435,6 +437,27 @@ export class PedidosComponent implements OnInit, OnDestroy {
           if (this.isBrowser) {
             alert('Erro ao cancelar pedido. Tente novamente.');
           }
+        }
+      });
+  }
+
+  /**
+   * Atribui um motoboy a um pedido de delivery.
+   * @param pedidoId ID do pedido
+   * @param motoboyId ID do motoboy selecionado
+   */
+  atribuirMotoboy(pedidoId: string, motoboyId: string): void {
+    this.pedidoService.atribuirMotoboy(pedidoId, motoboyId)
+      .subscribe({
+        next: (pedidoAtualizado) => {
+          // Atualiza o pedido no signal para refletir na UI
+          this.pedidosComposable.atualizarPedidoNoSignal(pedidoAtualizado);
+          this.notificationService.sucesso(`✅ Motoboy atribuído com sucesso!`);
+        },
+        error: (error) => {
+          console.error('Erro ao atribuir motoboy:', error);
+          const mensagem = error.error?.message || 'Erro ao atribuir motoboy. Tente novamente.';
+          this.notificationService.erro(`❌ ${mensagem}`);
         }
       });
   }

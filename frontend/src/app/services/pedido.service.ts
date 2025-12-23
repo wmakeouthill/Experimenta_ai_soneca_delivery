@@ -192,5 +192,14 @@ export class PedidoService {
   excluir(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  /**
+   * Atribui um motoboy a um pedido de delivery.
+   * @param pedidoId ID do pedido
+   * @param motoboyId ID do motoboy a ser atribuído
+   */
+  atribuirMotoboy(pedidoId: string, motoboyId: string): Observable<Pedido> {
+    return this.http.put<Pedido>(`${this.apiUrl}/${pedidoId}/motoboy`, { motoboyId });
+  }
 }
 

@@ -1,6 +1,7 @@
 package com.sonecadelivery.pedidos.infrastructure.web;
 
 import com.sonecadelivery.pedidos.infrastructure.idempotency.IdempotencyService;
+import com.sonecadelivery.pedidos.application.dto.AtribuirMotoboyRequest;
 import com.sonecadelivery.pedidos.application.dto.AtualizarStatusPedidoRequest;
 import com.sonecadelivery.pedidos.application.dto.CriarPedidoRequest;
 import com.sonecadelivery.pedidos.application.dto.PedidoDTO;
@@ -31,6 +32,7 @@ public class PedidoRestController {
     private final CancelarPedidoUseCase cancelarPedidoUseCase;
     private final ExcluirPedidoUseCase excluirPedidoUseCase;
     private final RegistrarPagamentoPedidoUseCase registrarPagamentoPedidoUseCase;
+    private final AtribuirMotoboyPedidoUseCase atribuirMotoboyPedidoUseCase;
     private final IdempotencyService idempotencyService;
 
     /**
@@ -120,6 +122,19 @@ public class PedidoRestController {
             @NonNull @PathVariable String id,
             @Valid @RequestBody RegistrarPagamentoPedidoRequest request) {
         PedidoDTO pedido = registrarPagamentoPedidoUseCase.executar(id, request.getMeiosPagamento());
+        return ResponseEntity.ok(pedido);
+    }
+
+    /**
+     * Atribui um motoboy a um pedido de delivery.
+     * Apenas pedidos do tipo DELIVERY podem ter motoboy atribuído.
+     * O motoboy deve existir e estar ativo.
+     */
+    @PutMapping("/{id}/motoboy")
+    public ResponseEntity<PedidoDTO> atribuirMotoboy(
+            @NonNull @PathVariable String id,
+            @Valid @RequestBody AtribuirMotoboyRequest request) {
+        PedidoDTO pedido = atribuirMotoboyPedidoUseCase.executar(id, request.getMotoboyId());
         return ResponseEntity.ok(pedido);
     }
 }

@@ -145,20 +145,22 @@ export function usePedidos() {
   };
 
   const atualizarPedidoNoSignal = (pedidoAtualizado: Pedido) => {
-    // Atualiza localmente para feedback imediato
+    // Atualiza localmente para feedback imediato (sem recarregar para evitar flicker)
     pedidos.update(lista => {
       const index = lista.findIndex(p => p.id === pedidoAtualizado.id);
       if (index >= 0) {
+        // Atualiza pedido existente mantendo a ordem
         const novaLista = [...lista];
         novaLista[index] = { ...pedidoAtualizado };
         return novaLista;
       } else {
-        return [...lista, { ...pedidoAtualizado }];
+        // Adiciona novo pedido no início da lista
+        return [{ ...pedidoAtualizado }, ...lista];
       }
     });
 
-    // Força atualização no serviço global também
-    pollingService.recarregar();
+    // NÃO chama pollingService.recarregar() aqui para evitar glitch visual
+    // O polling automático já sincroniza os dados periodicamente
   };
 
   // Mantém compatibilidade com o componente

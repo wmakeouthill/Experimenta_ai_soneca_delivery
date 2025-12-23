@@ -1,0 +1,231 @@
+.seletor-motoboy-container {
+    position: relative;
+    width: 100%;
+}
+
+/* Trigger Button - Light Theme */
+.seletor-motoboy-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    color: #666;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.seletor-motoboy-trigger:hover:not(:disabled) {
+    border-color: #FF6B35;
+    background: #fff8f5;
+}
+
+.seletor-motoboy-trigger:focus {
+    outline: none;
+    border-color: #FF6B35;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
+}
+
+.seletor-motoboy-trigger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5;
+}
+
+.seletor-motoboy-trigger.tem-motoboy {
+    border-color: #4CAF50;
+    background: #f8fff8;
+}
+
+.seletor-motoboy-trigger.tem-motoboy:hover:not(:disabled) {
+    border-color: #45a049;
+}
+
+.seletor-motoboy-trigger.aberto {
+    border-color: #FF6B35;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background: #fff8f5;
+}
+
+/* Icons */
+.loading-icon,
+.motoboy-icon,
+.atribuir-icon,
+.editar-icon {
+    font-size: 0.9rem;
+}
+
+.trigger-text {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #333;
+    font-weight: 500;
+}
+
+.seletor-motoboy-trigger:not(.tem-motoboy) .trigger-text {
+    color: #888;
+    font-weight: 400;
+}
+
+.editar-icon {
+    opacity: 0.6;
+    font-size: 0.7rem;
+}
+
+.dropdown-arrow {
+    font-size: 0.6rem;
+    transition: transform 0.2s ease;
+    color: #999;
+}
+
+.dropdown-arrow.rotated {
+    transform: rotate(180deg);
+}
+
+/* Dropdown */
+.seletor-motoboy-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    border: 2px solid #FF6B35;
+    border-top: none;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+/* States */
+.dropdown-erro,
+.dropdown-vazio {
+    padding: 1rem;
+    text-align: center;
+    color: #666;
+}
+
+.dropdown-erro {
+    color: #c62828;
+    background: #fff5f5;
+}
+
+.btn-retry {
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    background: white;
+    border: 2px solid #FF6B35;
+    border-radius: 6px;
+    color: #FF6B35;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-retry:hover {
+    background: #FF6B35;
+    color: white;
+}
+
+.dica {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #999;
+}
+
+/* Lista de Motoboys */
+.motoboys-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem;
+}
+
+.motoboy-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: white;
+    border: none;
+    border-radius: 6px;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.motoboy-item:hover {
+    background: #fff5f0;
+}
+
+.motoboy-item.selecionado {
+    background: #f0fff0;
+    border: 1px solid #4CAF50;
+}
+
+.motoboy-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.motoboy-nome {
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+}
+
+.motoboy-telefone {
+    font-size: 0.7rem;
+    color: #888;
+}
+
+.motoboy-veiculo {
+    font-size: 0.7rem;
+    color: #FF6B35;
+    white-space: nowrap;
+}
+
+.check-icon {
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* Scrollbar */
+.seletor-motoboy-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.seletor-motoboy-dropdown::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.seletor-motoboy-dropdown::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.seletor-motoboy-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}

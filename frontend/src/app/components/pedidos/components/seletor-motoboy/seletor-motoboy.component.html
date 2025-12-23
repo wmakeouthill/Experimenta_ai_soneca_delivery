@@ -1,0 +1,61 @@
+<div class="seletor-motoboy-container" (document:click)="onClickFora($event)">
+    <!-- Botão/Display do motoboy atual -->
+    <button type="button" class="seletor-motoboy-trigger" [class.tem-motoboy]="temMotoboyAtribuido()"
+        [class.aberto]="aberto()" [disabled]="desabilitado() || carregando()" (click)="toggleDropdown()">
+
+        @if (carregando()) {
+        <span class="loading-icon">⏳</span>
+        <span class="trigger-text">Carregando...</span>
+        } @else if (temMotoboyAtribuido()) {
+        <span class="motoboy-icon">🛵</span>
+        <span class="trigger-text">{{ motoboyAtual() }}</span>
+        <span class="editar-icon">✏️</span>
+        } @else {
+        <span class="atribuir-icon">➕</span>
+        <span class="trigger-text">Atribuir Motoboy</span>
+        }
+
+        <span class="dropdown-arrow" [class.rotated]="aberto()">▼</span>
+    </button>
+
+    <!-- Dropdown lista de motoboys -->
+    @if (aberto()) {
+    <div class="seletor-motoboy-dropdown">
+        @if (erro()) {
+        <div class="dropdown-erro">
+            <span>{{ erro() }}</span>
+            <button type="button" class="btn-retry" (click)="carregarMotoboys()">Tentar novamente</button>
+        </div>
+        } @else if (motoboys().length === 0) {
+        <div class="dropdown-vazio">
+            <span>Nenhum motoboy ativo cadastrado.</span>
+            <span class="dica">Cadastre motoboys em Administração → Motoboys</span>
+        </div>
+        } @else {
+        <ul class="motoboys-lista">
+            @for (motoboy of motoboys(); track motoboy.id) {
+            <li>
+                <button type="button" class="motoboy-item" [class.selecionado]="motoboy.id === motoboyAtualId()"
+                    (click)="selecionarMotoboy(motoboy)">
+                    <span class="motoboy-info">
+                        <span class="motoboy-nome">{{ motoboy.nome }}</span>
+                        @if (motoboy.telefone) {
+                        <span class="motoboy-telefone">📱 {{ motoboy.telefone }}</span>
+                        }
+                    </span>
+                    @if (motoboy.veiculo || motoboy.placa) {
+                    <span class="motoboy-veiculo">
+                        {{ motoboy.veiculo }} {{ motoboy.placa ? '- ' + motoboy.placa : '' }}
+                    </span>
+                    }
+                    @if (motoboy.id === motoboyAtualId()) {
+                    <span class="check-icon">✓</span>
+                    }
+                </button>
+            </li>
+            }
+        </ul>
+        }
+    </div>
+    }
+</div>

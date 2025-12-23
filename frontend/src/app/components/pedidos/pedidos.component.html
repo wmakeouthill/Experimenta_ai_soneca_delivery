@@ -115,9 +115,7 @@
       <div class="status-cards">
         <!-- Card de Fila de Mesa (Aguardando Aceitação) -->
         @if (pedidosPendentesMesa().length > 0) {
-        <button class="status-card fila-mesa"
-          [class.selected]="filtroFilaMesa()"
-          (click)="filtrarPorFilaMesa()">
+        <button class="status-card fila-mesa" [class.selected]="filtroFilaMesa()" (click)="filtrarPorFilaMesa()">
           <div class="status-card-header">
             <h3>🍽️ Mesa</h3>
             <span class="status-count pulse">{{ pedidosPendentesMesa().length }}</span>
@@ -168,79 +166,81 @@
 
       <!-- Lista de Pedidos Pendentes de Mesa (quando filtro ativo) -->
       @if (filtroFilaMesa()) {
-        @if (pedidosPendentesMesa().length === 0) {
-          <div class="estado-vazio">
-            <p class="vazio-mensagem">Nenhum pedido de mesa aguardando aceitação.</p>
+      @if (pedidosPendentesMesa().length === 0) {
+      <div class="estado-vazio">
+        <p class="vazio-mensagem">Nenhum pedido de mesa aguardando aceitação.</p>
+      </div>
+      } @else {
+      <div class="pedidos-lista">
+        @for (pedido of pedidosPendentesMesa(); track pedido.id) {
+        <article class="pedido-card status-fila-mesa">
+          <div class="pedido-header">
+            <div class="pedido-info-principal">
+              <h3 class="pedido-numero">
+                <span class="pedido-mesa-badge fila">🍽️ Mesa {{ pedido.numeroMesa }}</span>
+              </h3>
+              <p class="pedido-cliente-data">
+                <span class="pedido-cliente" [title]="pedido.nomeCliente">{{ pedido.nomeCliente }}</span>
+                @if (pedido.telefoneCliente) {
+                <span class="pedido-separador"> - </span>
+                <span class="pedido-telefone">📱 {{ pedido.telefoneCliente }}</span>
+                }
+              </p>
+            </div>
+            <div class="pedido-status-badge badge-fila-mesa">
+              <span class="tempo-espera" [class]="getClasseTempoEspera(pedido.tempoEsperaSegundos)">
+                ⏱️ {{ formatarTempoEspera(pedido.tempoEsperaSegundos) }}
+              </span>
+            </div>
           </div>
-        } @else {
-          <div class="pedidos-lista">
-            @for (pedido of pedidosPendentesMesa(); track pedido.id) {
-            <article class="pedido-card status-fila-mesa">
-              <div class="pedido-header">
-                <div class="pedido-info-principal">
-                  <h3 class="pedido-numero">
-                    <span class="pedido-mesa-badge fila">🍽️ Mesa {{ pedido.numeroMesa }}</span>
-                  </h3>
-                  <p class="pedido-cliente-data">
-                    <span class="pedido-cliente" [title]="pedido.nomeCliente">{{ pedido.nomeCliente }}</span>
-                    @if (pedido.telefoneCliente) {
-                      <span class="pedido-separador"> - </span>
-                      <span class="pedido-telefone">📱 {{ pedido.telefoneCliente }}</span>
-                    }
-                  </p>
-                </div>
-                <div class="pedido-status-badge badge-fila-mesa">
-                  <span class="tempo-espera" [class]="getClasseTempoEspera(pedido.tempoEsperaSegundos)">
-                    ⏱️ {{ formatarTempoEspera(pedido.tempoEsperaSegundos) }}
-                  </span>
-                </div>
-              </div>
 
-              <div class="pedido-itens">
-                <ul class="itens-lista">
-                  @for (item of pedido.itens; track item.produtoId) {
-                  <li class="item-lista">
-                    <div class="item-linha-principal">
-                      <span class="item-quantidade">{{ item.quantidade }}x</span>
-                      <span class="item-nome">{{ item.nomeProduto }}</span>
-                      <span class="item-preco">{{ formatarPreco(item.subtotal) }}</span>
-                    </div>
-                    @if (item.adicionais && item.adicionais.length > 0) {
-                      <div class="item-adicionais">
-                        @for (ad of item.adicionais; track ad.adicionalId) {
-                          <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.nome }}</span>
-                        }
-                      </div>
-                    }
-                  </li>
+          <div class="pedido-itens">
+            <ul class="itens-lista">
+              @for (item of pedido.itens; track item.produtoId) {
+              <li class="item-lista">
+                <div class="item-linha-principal">
+                  <span class="item-quantidade">{{ item.quantidade }}x</span>
+                  <span class="item-nome">{{ item.nomeProduto }}</span>
+                  <span class="item-preco">{{ formatarPreco(item.subtotal) }}</span>
+                </div>
+                @if (item.adicionais && item.adicionais.length > 0) {
+                <div class="item-adicionais">
+                  @for (ad of item.adicionais; track ad.adicionalId) {
+                  <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.nome }}</span>
                   }
-                </ul>
-              </div>
-
-              @if (pedido.observacoes && pedido.observacoes.trim()) {
-              <div class="pedido-observacoes">
-                <span class="observacoes-titulo">Observações:</span>
-                <span class="observacoes-texto">{{ pedido.observacoes }}</span>
-              </div>
+                </div>
+                }
+              </li>
               }
-
-              <div class="pedido-footer">
-                <div class="pedido-total">
-                  <strong>Total: {{ formatarPreco(pedido.valorTotal) }}</strong>
-                </div>
-                <div class="pedido-acoes fila-acoes">
-                  <button class="btn-acao btn-aceitar" (click)="aceitarPedidoMesa(pedido.id)" [disabled]="carregandoFilaMesa()">
-                    ✅ Aceitar
-                  </button>
-                  <button class="btn-acao btn-rejeitar" (click)="rejeitarPedidoMesa(pedido.id)" [disabled]="carregandoFilaMesa()">
-                    ❌ Rejeitar
-                  </button>
-                </div>
-              </div>
-            </article>
-            }
+            </ul>
           </div>
+
+          @if (pedido.observacoes && pedido.observacoes.trim()) {
+          <div class="pedido-observacoes">
+            <span class="observacoes-titulo">Observações:</span>
+            <span class="observacoes-texto">{{ pedido.observacoes }}</span>
+          </div>
+          }
+
+          <div class="pedido-footer">
+            <div class="pedido-total">
+              <strong>Total: {{ formatarPreco(pedido.valorTotal) }}</strong>
+            </div>
+            <div class="pedido-acoes fila-acoes">
+              <button class="btn-acao btn-aceitar" (click)="aceitarPedidoMesa(pedido.id)"
+                [disabled]="carregandoFilaMesa()">
+                ✅ Aceitar
+              </button>
+              <button class="btn-acao btn-rejeitar" (click)="rejeitarPedidoMesa(pedido.id)"
+                [disabled]="carregandoFilaMesa()">
+                ❌ Rejeitar
+              </button>
+            </div>
+          </div>
+        </article>
         }
+      </div>
+      }
       } @else {
       <!-- Lista de Pedidos Normais -->
       @if (pedidosFiltrados().length === 0) {
@@ -254,30 +254,31 @@
       <!-- Lista de Pedidos -->
       <div class="pedidos-lista">
         @for (pedido of pedidosFiltrados(); track pedido.id) {
-        <article class="pedido-card"
-          [class]="'status-' + pedido.status.toLowerCase()"
-          [class.delivery]="isDelivery(pedido)"
-          [class.retirada]="isRetirada(pedido)"
+        <article class="pedido-card" [class]="'status-' + pedido.status.toLowerCase()"
+          [class.delivery]="isDelivery(pedido)" [class.retirada]="isRetirada(pedido)"
           (contextmenu)="abrirMenuContexto($event, pedido.id)">
           <div class="pedido-header">
             <div class="pedido-info-principal">
               <h3 class="pedido-numero">
                 Pedido #{{ pedido.numeroPedido }}
                 @if (isDelivery(pedido)) {
-                  <span class="tipo-pedido-badge delivery">🛵 Delivery</span>
+                <span class="tipo-pedido-badge delivery">🛵 Delivery</span>
                 } @else if (isRetirada(pedido)) {
-                  <span class="tipo-pedido-badge retirada">🏪 Retirada</span>
+                <span class="tipo-pedido-badge retirada">🏪 Retirada</span>
                 }
               </h3>
               <p class="pedido-cliente-data">
                 @if (pedido.mesaId) {
-                  <span class="pedido-mesa-badge">🍽️ Mesa {{ pedido.numeroMesa }}</span>
-                  <span class="pedido-cliente" [title]="pedido.nomeClienteMesa || 'Cliente da mesa'">{{ pedido.nomeClienteMesa || 'Cliente' }}</span>
+                <span class="pedido-mesa-badge">🍽️ Mesa {{ pedido.numeroMesa }}</span>
+                <span class="pedido-cliente" [title]="pedido.nomeClienteMesa || 'Cliente da mesa'">{{
+                  pedido.nomeClienteMesa || 'Cliente' }}</span>
                 } @else if (!pedido.clienteId) {
-                  <span class="pedido-totem-badge">🖥️ Totem</span>
-                  <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome) }}</span>
+                <span class="pedido-totem-badge">🖥️ Totem</span>
+                <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome)
+                  }}</span>
                 } @else {
-                  <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome) }}</span>
+                <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome)
+                  }}</span>
                 }
                 <span class="pedido-separador"> - </span>
                 <span class="pedido-data">{{ formatarData(pedido.dataPedido) }}</span>
@@ -290,37 +291,47 @@
 
           <!-- Informações de Delivery/Retirada -->
           @if (isDelivery(pedido)) {
-            <div class="delivery-info-box">
-              <div class="delivery-info-row">
-                <span class="delivery-label">📍 Endereço:</span>
-                <span class="delivery-value">{{ pedido.enderecoEntrega || 'Não informado' }}</span>
+          <div class="delivery-info-box">
+            <div class="delivery-info-row">
+              <span class="delivery-label">📍 Endereço:</span>
+              <span class="delivery-value">{{ pedido.enderecoEntrega || 'Não informado' }}</span>
+            </div>
+            <!-- Seletor de Motoboy editável (PENDENTE, PREPARANDO, PRONTO) -->
+            @if (pedido.status !== StatusPedido.FINALIZADO && pedido.status !== StatusPedido.CANCELADO) {
+            <div class="delivery-info-row motoboy-selector-row">
+              <span class="delivery-label">🛵 Motoboy:</span>
+              <div class="motoboy-selector-wrapper">
+                <app-seletor-motoboy [motoboyAtualId]="pedido.motoboyId" [motoboyAtualNome]="pedido.motoboyNome"
+                  (onMotoboySelecionado)="atribuirMotoboy(pedido.id, $event)" />
               </div>
-              @if (pedido.motoboyNome || pedido.motoboyId) {
-                <div class="delivery-info-row">
-                  <span class="delivery-label">🛵 Motoboy:</span>
-                  <span class="delivery-value">{{ pedido.motoboyNome || 'Atribuído' }}</span>
-                </div>
-              }
-              @if (pedido.taxaEntrega) {
-                <div class="delivery-info-row">
-                  <span class="delivery-label">💰 Taxa:</span>
-                  <span class="delivery-value">{{ formatarPreco(pedido.taxaEntrega) }}</span>
-                </div>
-              }
-              @if (pedido.previsaoEntrega) {
-                <div class="delivery-info-row">
-                  <span class="delivery-label">⏰ Previsão:</span>
-                  <span class="delivery-value">{{ formatarPrevisaoEntrega(pedido.previsaoEntrega) }}</span>
-                </div>
-              }
             </div>
+            } @else if (pedido.motoboyNome || pedido.motoboyId) {
+            <!-- Exibe apenas o nome se FINALIZADO ou CANCELADO -->
+            <div class="delivery-info-row">
+              <span class="delivery-label">🛵 Motoboy:</span>
+              <span class="delivery-value">{{ pedido.motoboyNome || 'Atribuído' }}</span>
+            </div>
+            }
+            @if (pedido.taxaEntrega) {
+            <div class="delivery-info-row">
+              <span class="delivery-label">💰 Taxa:</span>
+              <span class="delivery-value">{{ formatarPreco(pedido.taxaEntrega) }}</span>
+            </div>
+            }
+            @if (pedido.previsaoEntrega) {
+            <div class="delivery-info-row">
+              <span class="delivery-label">⏰ Previsão:</span>
+              <span class="delivery-value">{{ formatarPrevisaoEntrega(pedido.previsaoEntrega) }}</span>
+            </div>
+            }
+          </div>
           } @else if (isRetirada(pedido)) {
-            <div class="retirada-info-box">
-              <span class="retirada-info">🏪 Cliente retira no local</span>
-              @if (pedido.previsaoEntrega) {
-                <span class="retirada-previsao">⏰ Previsão: {{ formatarPrevisaoEntrega(pedido.previsaoEntrega) }}</span>
-              }
-            </div>
+          <div class="retirada-info-box">
+            <span class="retirada-info">🏪 Cliente retira no local</span>
+            @if (pedido.previsaoEntrega) {
+            <span class="retirada-previsao">⏰ Previsão: {{ formatarPrevisaoEntrega(pedido.previsaoEntrega) }}</span>
+            }
+          </div>
           }
 
           <div class="pedido-itens">
@@ -333,11 +344,11 @@
                   <span class="item-preco">{{ formatarPreco(item.subtotal) }}</span>
                 </div>
                 @if (item.adicionais && item.adicionais.length > 0) {
-                  <div class="item-adicionais">
-                    @for (ad of item.adicionais; track ad.adicionalId) {
-                      <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.adicionalNome }}</span>
-                    }
-                  </div>
+                <div class="item-adicionais">
+                  @for (ad of item.adicionais; track ad.adicionalId) {
+                  <span class="adicional-badge">+{{ ad.quantidade }}x {{ ad.adicionalNome }}</span>
+                  }
+                </div>
                 }
               </li>
               }
@@ -354,8 +365,9 @@
           <div class="pedido-footer">
             <div class="pedido-total">
               @if (isDelivery(pedido) && pedido.taxaEntrega) {
-                <span class="subtotal-produtos">Produtos: {{ formatarPreco(pedido.valorTotal - pedido.taxaEntrega) }}</span>
-                <span class="taxa-entrega">+ Taxa: {{ formatarPreco(pedido.taxaEntrega) }}</span>
+              <span class="subtotal-produtos">Produtos: {{ formatarPreco(pedido.valorTotal - pedido.taxaEntrega)
+                }}</span>
+              <span class="taxa-entrega">+ Taxa: {{ formatarPreco(pedido.taxaEntrega) }}</span>
               }
               <strong>Total: {{ formatarPreco(pedido.valorTotal) }}</strong>
             </div>
