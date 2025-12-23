@@ -94,6 +94,7 @@ public class BuscarStatusPedidoClienteUseCase {
             case PENDENTE -> StatusCliente.ACEITO;
             case PREPARANDO -> StatusCliente.PREPARANDO;
             case PRONTO -> StatusCliente.PRONTO;
+            case SAIU_PARA_ENTREGA -> StatusCliente.SAIU_PARA_ENTREGA;
             case FINALIZADO -> StatusCliente.FINALIZADO;
             case CANCELADO -> StatusCliente.CANCELADO;
         };

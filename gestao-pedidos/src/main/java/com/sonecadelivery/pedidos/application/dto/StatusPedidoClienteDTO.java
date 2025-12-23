@@ -33,6 +33,9 @@ public class StatusPedidoClienteDTO {
         /** Pedido pronto para ser servido/retirado */
         PRONTO("Pronto"),
 
+        /** Pedido saiu para entrega (apenas para delivery) */
+        SAIU_PARA_ENTREGA("Saiu para entrega"),
+
         /** Pedido entregue/finalizado */
         FINALIZADO("Finalizado"),
 

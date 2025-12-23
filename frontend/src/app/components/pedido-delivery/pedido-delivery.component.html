@@ -1441,7 +1441,7 @@
                 </div>
             </div>
 
-            <!-- Passo 4: Para delivery: Saiu para entrega / Para retirada: Pronto -->
+            <!-- Passo 4: Pronto (apenas para delivery) -->
             @if (tipoPedido() === 'DELIVERY') {
             <div class="timeline-step" [class.completed]="sucessoPedido.passoAtual() > 3"
                 [class.active]="sucessoPedido.passoAtual() === 3" [class.pending]="sucessoPedido.passoAtual() < 3">
@@ -1449,6 +1449,26 @@
                     @if (sucessoPedido.passoAtual() > 3) {
                     <span class="timeline-icon">✓</span>
                     } @else if (sucessoPedido.passoAtual() === 3) {
+                    <span class="timeline-icon done">✅</span>
+                    } @else {
+                    <span class="timeline-icon pending">○</span>
+                    }
+                </div>
+                <div class="timeline-content">
+                    <span class="timeline-label">Pronto!</span>
+                    @if (sucessoPedido.passoAtual() === 3) {
+                    <span class="timeline-sublabel">Iremos enviar em breve</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Passo 5: Saiu para entrega (apenas para delivery) -->
+            <div class="timeline-step" [class.completed]="sucessoPedido.passoAtual() > 4"
+                [class.active]="sucessoPedido.passoAtual() === 4" [class.pending]="sucessoPedido.passoAtual() < 4">
+                <div class="timeline-marker">
+                    @if (sucessoPedido.passoAtual() > 4) {
+                    <span class="timeline-icon">✓</span>
+                    } @else if (sucessoPedido.passoAtual() === 4) {
                     <span class="timeline-icon delivery">🛵</span>
                     } @else {
                     <span class="timeline-icon pending">○</span>
@@ -1456,17 +1476,17 @@
                 </div>
                 <div class="timeline-content">
                     <span class="timeline-label">Saiu para entrega</span>
-                    @if (sucessoPedido.passoAtual() === 3) {
+                    @if (sucessoPedido.passoAtual() === 4) {
                     <span class="timeline-sublabel">Seu pedido está a caminho!</span>
                     }
                 </div>
             </div>
 
-            <!-- Passo 5: Entregue -->
-            <div class="timeline-step" [class.completed]="sucessoPedido.passoAtual() >= 4"
-                [class.pending]="sucessoPedido.passoAtual() < 4">
+            <!-- Passo 6: Entregue (apenas para delivery) -->
+            <div class="timeline-step" [class.completed]="sucessoPedido.passoAtual() >= 5"
+                [class.pending]="sucessoPedido.passoAtual() < 5">
                 <div class="timeline-marker">
-                    @if (sucessoPedido.passoAtual() >= 4) {
+                    @if (sucessoPedido.passoAtual() >= 5) {
                     <span class="timeline-icon done">🎉</span>
                     } @else {
                     <span class="timeline-icon pending">○</span>
@@ -1474,7 +1494,7 @@
                 </div>
                 <div class="timeline-content">
                     <span class="timeline-label">Entregue!</span>
-                    @if (sucessoPedido.passoAtual() >= 4) {
+                    @if (sucessoPedido.passoAtual() >= 5) {
                     <span class="timeline-sublabel">Aproveite sua refeição!</span>
                     }
                 </div>

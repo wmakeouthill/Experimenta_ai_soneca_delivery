@@ -193,6 +193,7 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
             'PENDENTE': 'Aguardando',
             'PREPARANDO': 'Preparando',
             'PRONTO': 'Pronto',
+            'SAIU_PARA_ENTREGA': 'Saiu para entrega',
             'FINALIZADO': 'Finalizado',
             'CANCELADO': 'Cancelado'
         };
@@ -207,6 +208,7 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
             'PENDENTE': 'status-pendente',
             'PREPARANDO': 'status-preparando',
             'PRONTO': 'status-pronto',
+            'SAIU_PARA_ENTREGA': 'status-entrega',
             'FINALIZADO': 'status-finalizado',
             'CANCELADO': 'status-cancelado'
         };

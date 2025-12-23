@@ -44,8 +44,11 @@ export function useSucessoPedido() {
             case 'PREPARANDO':
                 return 2; // Em preparação
             case 'PRONTO':
-            case 'FINALIZADO':
                 return 3; // Pronto
+            case 'SAIU_PARA_ENTREGA':
+                return 4; // Saiu para entrega
+            case 'FINALIZADO':
+                return 5; // Finalizado
             case 'CANCELADO':
                 return 0; // Cancelado
             default:
@@ -118,6 +121,8 @@ export function useSucessoPedido() {
 
                 if (status.status === 'FINALIZADO' || status.status === 'CANCELADO') {
                     pararPolling();
+                } else if (status.status === 'SAIU_PARA_ENTREGA') {
+                    // Continua polling mesmo após sair para entrega, até finalizar
                 }
             },
             error: (err) => {

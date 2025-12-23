@@ -81,6 +81,7 @@ export type StatusCliente =
     | 'ACEITO'
     | 'PREPARANDO'
     | 'PRONTO'
+    | 'SAIU_PARA_ENTREGA'
     | 'FINALIZADO'
     | 'CANCELADO';
 
