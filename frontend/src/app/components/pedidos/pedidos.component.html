@@ -271,35 +271,37 @@
           [class.delivery]="isDelivery(pedido)" [class.retirada]="isRetirada(pedido)"
           (contextmenu)="abrirMenuContexto($event, pedido.id)">
           <div class="pedido-header">
-            <div class="pedido-info-principal">
-              <h3 class="pedido-numero">
-                Pedido #{{ pedido.numeroPedido }}
-                @if (isDelivery(pedido)) {
-                <span class="tipo-pedido-badge delivery">🛵 Delivery</span>
-                } @else if (isRetirada(pedido)) {
-                <span class="tipo-pedido-badge retirada">🏪 Retirada</span>
-                }
-              </h3>
-              <p class="pedido-cliente-data">
-                @if (pedido.mesaId) {
-                <span class="pedido-mesa-badge">🍽️ Mesa {{ pedido.numeroMesa }}</span>
-                <span class="pedido-cliente" [title]="pedido.nomeClienteMesa || 'Cliente da mesa'">{{
-                  pedido.nomeClienteMesa || 'Cliente' }}</span>
-                } @else if (!pedido.clienteId) {
-                <span class="pedido-totem-badge">🖥️ Totem</span>
-                <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome)
-                  }}</span>
-                } @else {
-                <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome)
-                  }}</span>
-                }
-                <span class="pedido-separador"> - </span>
-                <span class="pedido-data">{{ formatarData(pedido.dataPedido) }}</span>
-              </p>
+            <div class="pedido-header-top">
+              <div class="pedido-info-principal">
+                <h3 class="pedido-numero">
+                  Pedido #{{ pedido.numeroPedido }}
+                  @if (isDelivery(pedido)) {
+                  <span class="tipo-pedido-badge delivery">🛵 Delivery</span>
+                  } @else if (isRetirada(pedido)) {
+                  <span class="tipo-pedido-badge retirada">🏪 Retirada</span>
+                  }
+                </h3>
+              </div>
+              <div class="pedido-status-badge" [class]="'badge-' + pedido.status.toLowerCase()">
+                {{ formatarStatus(pedido.status) }}
+              </div>
             </div>
-            <div class="pedido-status-badge" [class]="'badge-' + pedido.status.toLowerCase()">
-              {{ formatarStatus(pedido.status) }}
-            </div>
+            <p class="pedido-cliente-data">
+              @if (pedido.mesaId) {
+              <span class="pedido-mesa-badge">🍽️ Mesa {{ pedido.numeroMesa }}</span>
+              <span class="pedido-cliente" [title]="pedido.nomeClienteMesa || 'Cliente da mesa'">{{
+                pedido.nomeClienteMesa || 'Cliente' }}</span>
+              } @else if (!pedido.clienteId) {
+              <span class="pedido-totem-badge">🖥️ Totem</span>
+              <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome)
+                }}</span>
+              } @else {
+              <span class="pedido-cliente" [title]="pedido.clienteNome">{{ truncarNomeCliente(pedido.clienteNome)
+                }}</span>
+              }
+              <span class="pedido-separador"> - </span>
+              <span class="pedido-data">{{ formatarData(pedido.dataPedido) }}</span>
+            </p>
           </div>
 
           <!-- Informações de Delivery/Retirada -->
@@ -310,7 +312,7 @@
               <span class="delivery-value">{{ pedido.enderecoEntrega || 'Não informado' }}</span>
             </div>
             <!-- Seletor de Motoboy editável (PENDENTE, PREPARANDO, PRONTO) -->
-            @if (pedido.status !== StatusPedido.FINALIZADO && pedido.status !== StatusPedido.CANCELADO) {
+            @if (pedido.status !== StatusPedido.SAIU_PARA_ENTREGA && pedido.status !== StatusPedido.FINALIZADO && pedido.status !== StatusPedido.CANCELADO) {
             <div class="delivery-info-row motoboy-selector-row">
               <span class="delivery-label">🛵 Motoboy:</span>
               <div class="motoboy-selector-wrapper">
@@ -319,7 +321,7 @@
               </div>
             </div>
             } @else if (pedido.motoboyNome || pedido.motoboyId) {
-            <!-- Exibe apenas o nome se FINALIZADO ou CANCELADO -->
+            <!-- Exibe apenas o nome se SAIU_PARA_ENTREGA, FINALIZADO ou CANCELADO -->
             <div class="delivery-info-row">
               <span class="delivery-label">🛵 Motoboy:</span>
               <span class="delivery-value">{{ pedido.motoboyNome || 'Atribuído' }}</span>
