@@ -100,6 +100,19 @@ public class Cliente extends BaseEntity {
         touch();
     }
 
+    /**
+     * Atualiza dados cadastrais básicos.
+     */
+    public void atualizarDadosCadastrais(String nome, String telefone, String email) {
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new ValidationException("Nome do cliente não pode ser nulo ou vazio");
+        }
+        this.nome = nome.trim();
+        this.telefone = telefone != null ? telefone.trim() : null;
+        this.email = email != null && !email.trim().isEmpty() ? email.trim() : null;
+        touch();
+    }
+
     // ========== Métodos de Endereço ==========
 
     /**

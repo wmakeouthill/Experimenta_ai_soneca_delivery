@@ -72,6 +72,22 @@ export interface AtualizarEnderecoRequest {
   longitude?: number;
 }
 
+export interface AtualizarPerfilRequest {
+  nome: string;
+  telefone: string;
+  email?: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  pontoReferencia?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 export interface DefinirSenhaRequest {
   senha: string;
   confirmacaoSenha: string;
@@ -143,6 +159,17 @@ export class ClienteAuthService {
       return throwError(() => new Error('Cliente não está logado'));
     }
     return this.http.put<ClienteAuth>(`${this.contaUrl}/endereco`, request)
+      .pipe(tap(cliente => this._clienteLogado.next(cliente)));
+  }
+
+  /**
+   * Atualiza perfil completo do cliente (dados + endereço)
+   */
+  atualizarPerfil(request: AtualizarPerfilRequest): Observable<ClienteAuth> {
+    if (!this._clienteLogado.value?.id) {
+      return throwError(() => new Error('Cliente não está logado'));
+    }
+    return this.http.put<ClienteAuth>(`${this.contaUrl}/perfil`, request)
       .pipe(tap(cliente => this._clienteLogado.next(cliente)));
   }
 

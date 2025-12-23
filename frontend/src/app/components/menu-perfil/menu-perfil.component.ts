@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef, input, output, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ClienteAuth, ClienteAuthService, AtualizarEnderecoRequest } from '../../services/cliente-auth.service';
+import { ClienteAuth, ClienteAuthService, AtualizarPerfilRequest } from '../../services/cliente-auth.service';
 import { CepService } from '../../services/cep.service';
 import { GoogleMapsService } from '../../services/google-maps.service';
 import { firstValueFrom } from 'rxjs';
@@ -207,7 +207,10 @@ export class MenuPerfilComponent {
         const form = this.formEdicao();
 
         try {
-            const enderecoRequest: AtualizarEnderecoRequest = {
+            const perfilRequest: AtualizarPerfilRequest = {
+                nome: form.nome.trim(),
+                telefone: form.telefone.replace(/\D/g, ''),
+                email: form.email?.trim() || undefined,
                 logradouro: form.logradouro.trim(),
                 numero: form.numero.trim(),
                 complemento: form.complemento.trim() || undefined,
@@ -221,7 +224,7 @@ export class MenuPerfilComponent {
             };
 
             const clienteAtualizado = await firstValueFrom(
-                this.clienteAuthService.atualizarEndereco(enderecoRequest)
+                this.clienteAuthService.atualizarPerfil(perfilRequest)
             );
 
             this.clienteAtualizado.emit(clienteAtualizado);

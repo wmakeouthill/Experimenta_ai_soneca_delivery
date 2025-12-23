@@ -70,6 +70,7 @@ class ClienteContaRestController {
     private final BuscarAvaliacoesUseCase buscarAvaliacoesUseCase;
     private final AtualizarTelefoneClienteUseCase atualizarTelefoneClienteUseCase;
     private final AtualizarEnderecoClienteUseCase atualizarEnderecoClienteUseCase;
+    private final AtualizarPerfilClienteUseCase atualizarPerfilClienteUseCase;
 
     /**
      * Obtém dados do cliente logado
@@ -124,6 +125,17 @@ class ClienteContaRestController {
             @RequestHeader("X-Cliente-Id") String clienteId,
             @Valid @RequestBody AtualizarEnderecoRequest request) {
         ClienteDTO cliente = atualizarEnderecoClienteUseCase.executar(clienteId, request);
+        return ResponseEntity.ok(cliente);
+    }
+
+    /**
+     * Atualiza o perfil completo do cliente (dados pessoais + endereço).
+     */
+    @PutMapping("/perfil")
+    public ResponseEntity<ClienteDTO> atualizarPerfil(
+            @RequestHeader("X-Cliente-Id") String clienteId,
+            @Valid @RequestBody AtualizarPerfilRequest request) {
+        ClienteDTO cliente = atualizarPerfilClienteUseCase.executar(clienteId, request);
         return ResponseEntity.ok(cliente);
     }
 
