@@ -1,4 +1,5 @@
 import { inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { DeliveryService } from '../../../services/delivery.service';
 
 /**
@@ -182,9 +183,22 @@ export function useAvaliacao(
                 return;
             }
 
-            // TODO: Implementar endpoint de avaliação no backend
-            // Por enquanto, apenas marca como submetido localmente
-            console.log('Avaliações a enviar:', avaliacoesParaEnviar, 'Comentário:', comentario);
+            // Envia cada avaliação para o backend
+            let primeiraAvaliacao = true;
+            for (const av of avaliacoesParaEnviar) {
+                // Só envia comentário na primeira avaliação
+                const comentarioParaEnviar = primeiraAvaliacao ? comentario : undefined;
+
+                await firstValueFrom(
+                    deliveryService.avaliarProduto(
+                        av.produtoId,
+                        pedido.id,
+                        av.nota,
+                        comentarioParaEnviar
+                    )
+                );
+                primeiraAvaliacao = false;
+            }
 
             // Marca como salvo
             const novoStatusSalvo = new Map(comentarioSalvo());

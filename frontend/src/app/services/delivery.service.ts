@@ -184,6 +184,41 @@ export class DeliveryService {
     buscarHistoricoPedidos(pagina: number = 0, limite: number = 10): Observable<Page<StatusPedidoDelivery>> {
         return this.http.get<Page<StatusPedidoDelivery>>(`/api/cliente/conta/pedidos?page=${pagina}&size=${limite}`);
     }
+
+    /**
+     * Avalia um produto de um pedido.
+     * Headers são adicionados automaticamente pelo clienteAuthInterceptor
+     */
+    avaliarProduto(
+        produtoId: string,
+        pedidoId: string,
+        nota: number,
+        comentario?: string
+    ): Observable<AvaliacaoResponse> {
+        return this.http.post<AvaliacaoResponse>(
+            `/api/cliente/conta/avaliacoes`,
+            { produtoId, pedidoId, nota, comentario }
+        );
+    }
+
+    /**
+     * Busca avaliações do cliente logado.
+     * Headers são adicionados automaticamente pelo clienteAuthInterceptor
+     */
+    buscarAvaliacoesCliente(): Observable<AvaliacaoResponse[]> {
+        return this.http.get<AvaliacaoResponse[]>(`/api/cliente/conta/avaliacoes`);
+    }
+}
+
+export interface AvaliacaoResponse {
+    id: string;
+    clienteId: string;
+    produtoId: string;
+    pedidoId: string;
+    nota: number;
+    comentario?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Page<T> {
