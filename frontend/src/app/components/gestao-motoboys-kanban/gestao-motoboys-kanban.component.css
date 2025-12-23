@@ -265,6 +265,13 @@
   margin-top: 2px;
 }
 
+.coluna-metadados {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
 .coluna-contador {
   display: flex;
   align-items: center;
@@ -276,6 +283,30 @@
   border-radius: 50%;
   font-weight: 700;
   font-size: 14px;
+}
+
+.coluna-valor-pagar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 6px 12px;
+  background: #ecfdf5;
+  border-radius: 8px;
+  border: 1px solid #10b981;
+}
+
+.valor-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #047857;
+  text-transform: uppercase;
+}
+
+.valor-total {
+  font-size: 16px;
+  font-weight: 700;
+  color: #065f46;
 }
 
 .coluna-conteudo {
@@ -346,21 +377,33 @@
 
 .pedido-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 4px;
   margin-bottom: 8px;
+  align-items: flex-start;
+}
+
+.pedido-numero-wrapper {
+  width: 100%;
 }
 
 .pedido-numero {
   font-weight: 700;
   color: #1a1a1a;
   font-size: 14px;
+  display: block;
+}
+
+.pedido-cliente-wrapper {
+  width: 100%;
 }
 
 .pedido-cliente {
   font-size: 13px;
   color: #6b7280;
   font-weight: 600;
+  display: block;
+  word-break: break-word;
 }
 
 .pedido-endereco {

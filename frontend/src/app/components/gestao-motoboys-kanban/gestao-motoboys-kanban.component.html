@@ -84,8 +84,16 @@
                 }
               </div>
             </div>
-            <div class="coluna-contador">
-              <span class="contador-total">{{ coluna.pedidos.length }}</span>
+            <div class="coluna-metadados">
+              <div class="coluna-contador">
+                <span class="contador-total">{{ coluna.pedidos.length }}</span>
+              </div>
+              @if (coluna.valorAPagar > 0) {
+                <div class="coluna-valor-pagar">
+                  <span class="valor-label">A pagar:</span>
+                  <span class="valor-total">{{ formatarValor(coluna.valorAPagar) }}</span>
+                </div>
+              }
             </div>
           </div>
 
@@ -101,8 +109,12 @@
                   @for (pedido of coluna.pedidosPorStatus.pronto; track pedido.id) {
                     <div class="pedido-card pronto">
                       <div class="pedido-header">
-                        <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
-                        <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                        <div class="pedido-numero-wrapper">
+                          <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                        </div>
+                        <div class="pedido-cliente-wrapper">
+                          <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                        </div>
                       </div>
                       @if (pedido.enderecoEntrega) {
                         <div class="pedido-endereco">
@@ -137,8 +149,12 @@
                   @for (pedido of coluna.pedidosPorStatus.saiuParaEntrega; track pedido.id) {
                     <div class="pedido-card em-entrega">
                       <div class="pedido-header">
-                        <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
-                        <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                        <div class="pedido-numero-wrapper">
+                          <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                        </div>
+                        <div class="pedido-cliente-wrapper">
+                          <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                        </div>
                       </div>
                       @if (pedido.enderecoEntrega) {
                         <div class="pedido-endereco">

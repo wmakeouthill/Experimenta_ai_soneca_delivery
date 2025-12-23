@@ -16,6 +16,7 @@ interface MotoboyKanbanColumn {
   motoboy: Motoboy;
   pedidos: Pedido[];
   pedidosPorStatus: PedidosPorStatus;
+  valorAPagar: number; // Valor total a pagar ao entregador (R$ 5,00 por entrega)
 }
 
 @Component({
@@ -34,6 +35,9 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly StatusPedido = StatusPedido;
+
+  // Valor fixo por entrega (R$ 5,00)
+  private readonly VALOR_POR_ENTREGA = 5.0;
 
   // Estado
   readonly motoboys = signal<Motoboy[]>([]);
@@ -58,10 +62,14 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
         saiuParaEntrega: pedidosDoMotoboy.filter(p => p.status === StatusPedido.SAIU_PARA_ENTREGA)
       };
 
+      // Calcula o valor a pagar: R$ 5,00 por entrega que saiu para entrega
+      const valorAPagar = pedidosPorStatus.saiuParaEntrega.length * this.VALOR_POR_ENTREGA;
+
       return {
         motoboy,
         pedidos: pedidosDoMotoboy,
-        pedidosPorStatus
+        pedidosPorStatus,
+        valorAPagar
       };
     });
   });
