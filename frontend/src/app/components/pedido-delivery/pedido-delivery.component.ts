@@ -106,6 +106,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                     this.favoritos.carregar();
                     this.meusPedidos.carregar();
                     this.inicio.carregar();
+                    this.avaliacao.carregarAvaliacoesCliente();
                 } else {
                     // Limpar dados ao deslogar
                     if (this.favoritos?.limpar) this.favoritos.limpar();

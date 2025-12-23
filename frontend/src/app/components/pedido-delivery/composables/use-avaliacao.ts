@@ -91,11 +91,19 @@ export function useAvaliacao(
         const pedido = getPedidoSelecionado();
         if (!pedido || !pedido.itens) return false;
 
+        const mapAvaliacoes = avaliacoes();
+
         for (const item of pedido.itens) {
-            if (!item.produtoId) continue;
-            const key = getAvaliacaoKey(pedido.id, item.produtoId);
-            if ((avaliacoes().get(key) || 0) > 0) {
-                return true;
+            // Verifica se tem avaliação salva pelo ID
+            if (item.produtoId) {
+                const keyId = getAvaliacaoKey(pedido.id, item.produtoId);
+                if ((mapAvaliacoes.get(keyId) || 0) > 0) return true;
+            }
+
+            // Verifica se tem avaliação salva pelo Nome (usado no template atual)
+            if (item.produtoNome) {
+                const keyNome = getAvaliacaoKey(pedido.id, item.produtoNome);
+                if ((mapAvaliacoes.get(keyNome) || 0) > 0) return true;
             }
         }
         return false;
@@ -105,12 +113,25 @@ export function useAvaliacao(
         const pedido = getPedidoSelecionado();
         if (!pedido || !pedido.itens || pedido.itens.length === 0) return 0;
 
+        const mapAvaliacoes = avaliacoes();
         let soma = 0;
         let count = 0;
+
         for (const item of pedido.itens) {
-            if (!item.produtoId) continue;
-            const key = getAvaliacaoKey(pedido.id, item.produtoId);
-            const nota = avaliacoes().get(key) || 0;
+            let nota = 0;
+
+            // Tenta pegar por Nome (prioridade do template)
+            if (item.produtoNome) {
+                const keyNome = getAvaliacaoKey(pedido.id, item.produtoNome);
+                nota = mapAvaliacoes.get(keyNome) || 0;
+            }
+
+            // Se não achou, tenta por ID
+            if (nota === 0 && item.produtoId) {
+                const keyId = getAvaliacaoKey(pedido.id, item.produtoId);
+                nota = mapAvaliacoes.get(keyId) || 0;
+            }
+
             if (nota > 0) {
                 soma += nota;
                 count++;
@@ -172,11 +193,27 @@ export function useAvaliacao(
             const avaliacoesParaEnviar: { produtoId: string; nota: number }[] = [];
 
             for (const item of itens) {
-                if (!item.produtoId) continue;
-                const key = getAvaliacaoKey(pedido.id, item.produtoId);
-                const nota = avaliacoes().get(key);
-                if (nota && nota > 0) {
-                    avaliacoesParaEnviar.push({ produtoId: item.produtoId, nota });
+                let nota = 0;
+
+                // Tenta encontrar a nota armazenada (pode ter sido salva por ID ou Nome)
+                // O template atual usa Nome, então priorizamos verificar isso
+                if (item.produtoNome) {
+                    const keyNome = getAvaliacaoKey(pedido.id, item.produtoNome);
+                    const n = avaliacoes().get(keyNome);
+                    if (n && n > 0) nota = n;
+                }
+
+                // Se não achou por nome, tenta por ID
+                if (nota === 0 && item.produtoId) {
+                    const keyId = getAvaliacaoKey(pedido.id, item.produtoId);
+                    const n = avaliacoes().get(keyId);
+                    if (n && n > 0) nota = n;
+                }
+
+                if (nota > 0) {
+                    // Para o backend, DEVEMOS usar o ID se disponível
+                    const idParaBackend = item.produtoId || item.produtoNome;
+                    avaliacoesParaEnviar.push({ produtoId: idParaBackend, nota });
                 }
             }
 
@@ -233,9 +270,35 @@ export function useAvaliacao(
         const clienteId = getClienteId();
         if (!clienteId) return;
 
-        // TODO: Implementar busca de avaliações do cliente
-        // Por enquanto, inicia vazio
-        console.log('Carregando avaliações do cliente:', clienteId);
+        deliveryService.buscarAvaliacoesCliente().subscribe({
+            next: (listaAvaliacoes) => {
+                if (!listaAvaliacoes || listaAvaliacoes.length === 0) return;
+
+                const novosAvaliacoes = new Map(avaliacoes());
+                const novosComentarios = new Map(comentariosPedido());
+                const novosSubmetidos = new Map(avaliacaoSubmetida());
+
+                listaAvaliacoes.forEach(av => {
+                    // Armazena a nota usando ID e também Nome (se possível de resolver, mas por ID é o padrão do backend)
+                    // Como aqui só temos ID do backend, armazenamos pela chave ID
+                    const keyId = getAvaliacaoKey(av.pedidoId, av.produtoId);
+                    novosAvaliacoes.set(keyId, av.nota);
+
+                    // Marca pedido como avaliado/submetido
+                    novosSubmetidos.set(av.pedidoId, true);
+
+                    // Se tiver comentário, armazena
+                    if (av.comentario) {
+                        novosComentarios.set(av.pedidoId, av.comentario);
+                    }
+                });
+
+                avaliacoes.set(novosAvaliacoes);
+                comentariosPedido.set(novosComentarios);
+                avaliacaoSubmetida.set(novosSubmetidos);
+            },
+            error: (err) => console.error('Erro ao carregar avaliações:', err)
+        });
     }
 
     /**
