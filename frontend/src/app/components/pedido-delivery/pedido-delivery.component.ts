@@ -166,6 +166,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     readonly adicionaisDisponiveis = signal<Adicional[]>([]);
     readonly adicionaisSelecionados = signal<{ adicional: Adicional; quantidade: number }[]>([]);
     readonly carregandoAdicionais = signal(false);
+    readonly adicionaisExpandido = signal(false);
 
     // PWA
     readonly mostrarBannerPwa = signal(false);
@@ -812,14 +813,23 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.quantidadeSelecionada.set(1);
         this.observacaoItem.set('');
         this.adicionaisSelecionados.set([]);
+        this.adicionaisExpandido.set(false); // Inicia colapsado
         this.mostrarDetalhes.set(true);
         this.carregarAdicionais(produto.id);
+        // Trava scroll do body
+        document.body.style.overflow = 'hidden';
     }
 
     fecharDetalhes(): void {
         this.mostrarDetalhes.set(false);
         this.produtoSelecionado.set(null);
         this.adicionaisDisponiveis.set([]);
+        // Libera scroll do body
+        document.body.style.overflow = '';
+    }
+
+    toggleAdicionaisExpandido(): void {
+        this.adicionaisExpandido.update(v => !v);
     }
 
     private carregarAdicionais(produtoId: string): void {
@@ -859,6 +869,49 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     isAdicionalSelecionado(adicionalId: string): boolean {
         return this.adicionaisSelecionados().some(a => a.adicional.id === adicionalId);
+    }
+
+    getQuantidadeAdicional(adicionalId: string): number {
+        const item = this.adicionaisSelecionados().find(a => a.adicional.id === adicionalId);
+        return item?.quantidade ?? 0;
+    }
+
+    incrementarAdicional(adicionalId: string): void {
+        this.adicionaisSelecionados.update(selecionados =>
+            selecionados.map(a =>
+                a.adicional.id === adicionalId
+                    ? { ...a, quantidade: a.quantidade + 1 }
+                    : a
+            )
+        );
+    }
+
+    decrementarAdicional(adicionalId: string): void {
+        const selecionados = this.adicionaisSelecionados();
+        const item = selecionados.find(a => a.adicional.id === adicionalId);
+
+        if (!item) return;
+
+        if (item.quantidade <= 1) {
+            // Remove o adicional se a quantidade for 1 ou menos
+            this.adicionaisSelecionados.set(selecionados.filter(a => a.adicional.id !== adicionalId));
+        } else {
+            // Decrementa a quantidade
+            this.adicionaisSelecionados.update(s =>
+                s.map(a =>
+                    a.adicional.id === adicionalId
+                        ? { ...a, quantidade: a.quantidade - 1 }
+                        : a
+                )
+            );
+        }
+    }
+
+    subtotalAdicionais(): number {
+        return this.adicionaisSelecionados().reduce(
+            (total, item) => total + (item.adicional.preco * item.quantidade),
+            0
+        );
     }
 
     formatarAdicionaisItem(item: ItemCarrinho): string {

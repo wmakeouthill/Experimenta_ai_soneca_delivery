@@ -342,6 +342,9 @@
                     }
                     <div class="produto-info-mini">
                         <span class="produto-nome-mini">{{ produto.nome }}</span>
+                        @if (produto.quantidadeVendida) {
+                        <span class="produto-pedidos">{{ produto.quantidadeVendida }} pedidos</span>
+                        }
                         <span class="produto-preco-mini">{{ produto.preco | currency:'BRL' }}</span>
                     </div>
                 </div>
@@ -375,6 +378,9 @@
                     }
                     <div class="produto-info-mini">
                         <span class="produto-nome-mini">{{ produto.nome }}</span>
+                        @if (produto.quantidadeFavoritos) {
+                        <span class="produto-pedidos">{{ produto.quantidadeFavoritos }} ❤️</span>
+                        }
                         <span class="produto-preco-mini">{{ produto.preco | currency:'BRL' }}</span>
                     </div>
                 </div>
@@ -406,6 +412,9 @@
                     }
                     <div class="produto-info-mini">
                         <span class="produto-nome-mini">{{ produto.nome }}</span>
+                        @if (produto.mediaAvaliacao) {
+                        <span class="produto-avaliacao">⭐ {{ produto.mediaAvaliacao.toFixed(1) }}</span>
+                        }
                         <span class="produto-preco-mini">{{ produto.preco | currency:'BRL' }}</span>
                     </div>
                 </div>
@@ -476,19 +485,18 @@
                         <p class="produto-descricao">{{ produto.descricao }}</p>
                         }
                         <div class="produto-preco">{{ produto.preco | currency:'BRL' }}</div>
-                        <div class="produto-acoes">
-                            <button class="btn-favorito btn-favorito-inline"
-                                [class.ativo]="favoritos.isFavorito(produto.id)"
-                                (click)="toggleFavorito(produto.id, $event)"
-                                [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
-                                {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
-                            </button>
-                            <button class="btn-adicionar"
-                                (click)="adicionarAoCarrinhoRapido(produto); $event.stopPropagation()"
-                                aria-label="Adicionar ao carrinho">
-                                +
-                            </button>
-                        </div>
+                    </div>
+                    <div class="produto-acoes-lateral">
+                        <button class="btn-favorito-mini" [class.ativo]="favoritos.isFavorito(produto.id)"
+                            (click)="toggleFavorito(produto.id, $event)"
+                            [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                            {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
+                        </button>
+                        <button class="btn-adicionar-card"
+                            (click)="adicionarAoCarrinhoRapido(produto); $event.stopPropagation()"
+                            aria-label="Adicionar ao carrinho">
+                            +
+                        </button>
                     </div>
                 </div>
                 }
@@ -519,19 +527,18 @@
                     <p class="produto-descricao">{{ produto.descricao }}</p>
                     }
                     <div class="produto-preco">{{ produto.preco | currency:'BRL' }}</div>
-                    <div class="produto-acoes">
-                        <button class="btn-favorito btn-favorito-inline"
-                            [class.ativo]="favoritos.isFavorito(produto.id)"
-                            (click)="toggleFavorito(produto.id, $event)"
-                            [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
-                            {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
-                        </button>
-                        <button class="btn-adicionar"
-                            (click)="adicionarAoCarrinhoRapido(produto); $event.stopPropagation()"
-                            aria-label="Adicionar ao carrinho">
-                            +
-                        </button>
-                    </div>
+                </div>
+                <div class="produto-acoes-lateral">
+                    <button class="btn-favorito-mini" [class.ativo]="favoritos.isFavorito(produto.id)"
+                        (click)="toggleFavorito(produto.id, $event)"
+                        [title]="favoritos.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+                        {{ favoritos.isFavorito(produto.id) ? '❤️' : '🤍' }}
+                    </button>
+                    <button class="btn-adicionar-card"
+                        (click)="adicionarAoCarrinhoRapido(produto); $event.stopPropagation()"
+                        aria-label="Adicionar ao carrinho">
+                        +
+                    </button>
                 </div>
             </div>
             } @empty {
@@ -815,16 +822,46 @@
             </div>
 
             <!-- Adicionais -->
-            @if (adicionaisDisponiveis().length > 0) {
-            <div class="adicionais-section">
-                <h3>Adicionais</h3>
-                @for (adicional of adicionaisDisponiveis(); track adicional.id) {
-                <label class="adicional-item" [class.selecionado]="isAdicionalSelecionado(adicional.id)">
-                    <input type="checkbox" [checked]="isAdicionalSelecionado(adicional.id)"
-                        (change)="toggleAdicional(adicional)">
-                    <span class="adicional-nome">{{ adicional.nome }}</span>
-                    <span class="adicional-preco">+{{ adicional.preco | currency:'BRL' }}</span>
-                </label>
+            @if (carregandoAdicionais()) {
+            <div class="adicionais-loading">
+                <span class="spinner-adicionais"></span>
+                <span>Carregando adicionais...</span>
+            </div>
+            } @else if (adicionaisDisponiveis().length > 0) {
+            <div class="adicionais-secao">
+                <button class="btn-expandir-adicionais" [class.expandido]="adicionaisExpandido()"
+                    (click)="toggleAdicionaisExpandido()">
+                    <span class="adicionais-titulo">🍕 Adicionais ({{ adicionaisDisponiveis().length }})</span>
+                    @if (adicionaisSelecionados().length > 0) {
+                    <span class="adicionais-badge">{{ adicionaisSelecionados().length }} selecionado(s)</span>
+                    }
+                    <span class="expandir-icone">{{ adicionaisExpandido() ? '▲' : '▼' }}</span>
+                </button>
+
+                @if (adicionaisExpandido()) {
+                <div class="adicionais-lista">
+                    @for (adicional of adicionaisDisponiveis(); track adicional.id) {
+                    <div class="adicional-item" [class.selecionado]="isAdicionalSelecionado(adicional.id)"
+                        (click)="toggleAdicional(adicional)">
+                        <div class="adicional-info">
+                            <span class="adicional-nome">{{ adicional.nome }}</span>
+                            <span class="adicional-preco">+ {{ adicional.preco | currency:'BRL' }}</span>
+                        </div>
+                        @if (isAdicionalSelecionado(adicional.id)) {
+                        <div class="adicional-quantidade" (click)="$event.stopPropagation()">
+                            <button class="btn-adicional-qtd" (click)="decrementarAdicional(adicional.id)">−</button>
+                            <span class="adicional-qtd-valor">{{ getQuantidadeAdicional(adicional.id) }}</span>
+                            <button class="btn-adicional-qtd" (click)="incrementarAdicional(adicional.id)">+</button>
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+                }
+                @if (subtotalAdicionais() > 0) {
+                <div class="adicionais-subtotal">
+                    Adicionais: {{ subtotalAdicionais() | currency:'BRL' }}
+                </div>
                 }
             </div>
             }

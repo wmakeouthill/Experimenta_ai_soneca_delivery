@@ -105,27 +105,93 @@
 }
 
 /* Adicionais */
-.adicionais-section {
+.adicionais-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     padding: 1rem 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.spinner-adicionais {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.adicionais-secao {
+    padding: 0 1.25rem;
     border-top: 1px solid var(--border-color);
 }
 
-.adicionais-section h3 {
-    margin: 0 0 0.75rem;
+/* Botão expansível para adicionais */
+.btn-expandir-adicionais {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.btn-expandir-adicionais .adicionais-titulo {
     font-size: 1rem;
+    font-weight: 600;
     color: var(--text-primary);
+}
+
+.btn-expandir-adicionais .adicionais-badge {
+    background: var(--primary-light);
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    margin-left: auto;
+    margin-right: 0.5rem;
+}
+
+.expandir-icone {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+}
+
+.btn-expandir-adicionais.expandido .expandir-icone {
+    transform: rotate(180deg);
+}
+
+.adicionais-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
 }
 
 .adicional-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
     padding: 0.75rem;
     background: var(--background);
     border-radius: var(--radius-sm);
-    margin-bottom: 0.5rem;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, border 0.2s;
+    border: 1px solid transparent;
 }
 
 .adicional-item:hover {
@@ -134,24 +200,70 @@
 
 .adicional-item.selecionado {
     background: var(--primary-light);
-    border: 1px solid var(--primary-color);
+    border-color: var(--primary-color);
 }
 
-.adicional-item input {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary-color);
+.adicional-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .adicional-nome {
-    flex: 1;
     font-size: 0.9375rem;
+    color: var(--text-primary);
 }
 
 .adicional-preco {
     font-size: 0.875rem;
     color: var(--primary-color);
     font-weight: 500;
+}
+
+.adicional-quantidade {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border-radius: 20px;
+    padding: 0.25rem;
+}
+
+.btn-adicional-qtd {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-adicional-qtd:active {
+    transform: scale(0.95);
+}
+
+.adicional-qtd-valor {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.adicionais-subtotal {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border-color);
+    text-align: right;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-color);
 }
 
 /* Observação */
