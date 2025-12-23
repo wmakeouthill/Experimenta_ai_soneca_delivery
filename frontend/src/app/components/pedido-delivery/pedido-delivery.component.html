@@ -754,9 +754,15 @@
             <div class="item-pedido clicavel" (click)="meusPedidos.selecionarPedido(pedido)">
                 <div class="pedido-header">
                     <span class="pedido-data">{{ pedido.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-                    <span class="pedido-status" [class]="meusPedidos.classeStatus(pedido.status)">
-                        {{ meusPedidos.formatarStatus(pedido.status) }}
-                    </span>
+                    <div class="pedido-status-wrapper">
+                        @if ((pedido.status === 'FINALIZADO' || pedido.status === 'ENTREGUE') &&
+                        !avaliacao.isPedidoAvaliado(pedido.id)) {
+                        <span class="badge-pendente-avaliacao">⭐ Avaliar</span>
+                        }
+                        <span class="pedido-status" [class]="meusPedidos.classeStatus(pedido.status)">
+                            {{ meusPedidos.formatarStatus(pedido.status) }}
+                        </span>
+                    </div>
                 </div>
                 <div class="pedido-itens">
                     @for (item of pedido.itens; track item.produtoNome) {
@@ -985,11 +991,21 @@
     </div>
     }
 
-    <!-- ========== CTAs DE NOTIFICAÇÃO ========== -->
-    @if (abaAtual() === 'cardapio') {
+    <!-- ========== CTAs GLOBAIS DE NOTIFICAÇÃO ========== -->
+    @if (etapaAtual() !== 'sucesso' && etapaAtual() !== 'checkout' && !ctaAvaliacaoFechado()) {
     <div class="ctas-container">
+        <!-- CTA Acompanhar Pedido em andamento -->
+        @if (sucessoPedido.pedidoId() && !sucessoPedido.pedidoTerminado()) {
+        <div class="cta-acompanhar-float" (click)="irParaAcompanhamento()">
+            <button class="cta-close" (click)="fecharCtaAcompanhamento(); $event.stopPropagation()">✕</button>
+            <span class="cta-icon">🛵</span>
+            <span class="cta-texto">Seu pedido está <strong>{{ sucessoPedido.statusDescricao() }}</strong></span>
+            <span class="cta-seta">›</span>
+        </div>
+        }
+
         <!-- CTA Avaliação -->
-        @if (meusPedidos.temPedidosParaAvaliar() && etapaAtual() !== 'sucesso') {
+        @if (meusPedidos.temPedidosParaAvaliar() && !sucessoPedido.pedidoId()) {
         <div class="cta-avaliacao-float" (click)="abrirAvaliacaoPedido()">
             <button class="cta-close" (click)="fecharCtaAvaliacao(); $event.stopPropagation()">✕</button>
             <span class="cta-icon">⭐</span>
@@ -1000,7 +1016,7 @@
         }
 
         <!-- CTA Telefone -->
-        @if (deveMostrarCtaTelefone()) {
+        @if (deveMostrarCtaTelefoneGlobal()) {
         <div class="cta-telefone-float" (click)="abrirPerfilParaCadastrarTelefone()">
             <button class="cta-close" (click)="fecharCtaTelefone(); $event.stopPropagation()">✕</button>
             <span class="cta-icon">📱</span>

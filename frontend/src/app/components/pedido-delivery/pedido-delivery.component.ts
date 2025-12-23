@@ -283,6 +283,16 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             !this.ctaTelefoneFechado();
     });
 
+    readonly deveMostrarCtaTelefoneGlobal = computed(() => {
+        // Mostra CTA global quando cliente logado não tem telefone
+        return this.cliente() &&
+            !this.cliente()?.telefone &&
+            !this.ctaTelefoneFechado() &&
+            this.etapaAtual() !== 'boas-vindas' &&
+            this.etapaAtual() !== 'login' &&
+            this.etapaAtual() !== 'cadastro';
+    });
+
     readonly loginValido = computed(() => {
         const tel = this.loginTelefone().replace(/\D/g, '');
         return tel.length >= 10 && this.loginSenha().length >= 6;
@@ -924,6 +934,18 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             }, 100);
         }
         this.ctaAvaliacaoFechado.set(true);
+    }
+
+    // ========== CTA ACOMPANHAMENTO ==========
+
+    readonly ctaAcompanhamentoFechado = signal(false);
+
+    fecharCtaAcompanhamento(): void {
+        this.ctaAcompanhamentoFechado.set(true);
+    }
+
+    irParaAcompanhamento(): void {
+        this.etapaAtual.set('sucesso');
     }
 
     // ========== CARDÁPIO ==========

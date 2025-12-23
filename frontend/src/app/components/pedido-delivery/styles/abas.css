@@ -481,6 +481,13 @@
     border-bottom: 1px solid #f0f0f0;
 }
 
+.pedido-status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
 .pedido-data {
     font-size: 0.9rem;
     color: #333;
@@ -1203,6 +1210,55 @@
 .cta-avaliacao-float:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+/* ========== CTA ACOMPANHAR PEDIDO FLUTUANTE ========== */
+.cta-acompanhar-float {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    animation: slideUpCta 0.3s ease-out;
+}
+
+.cta-acompanhar-float:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+/* ========== BADGE PENDENTE AVALIAÇÃO ========== */
+.badge-pendente-avaliacao {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    color: #B45309;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    margin-left: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 
 /* Mapa de Entrega */
