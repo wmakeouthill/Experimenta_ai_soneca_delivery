@@ -1261,6 +1261,31 @@
     }
 }
 
+/* ========== BADGE EM ANDAMENTO ========== */
+.badge-em-andamento {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+    color: #1D4ED8;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    margin-left: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+/* ========== LINK ACOMPANHAR PEDIDO ========== */
+.pedido-acompanhar {
+    font-size: 0.85rem;
+    color: #10B981;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
 /* Mapa de Entrega */
 .mapa-wrapper {
     margin-top: 1rem;

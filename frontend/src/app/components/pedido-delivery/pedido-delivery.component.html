@@ -751,11 +751,15 @@
             </div>
             } @else {
             @for (pedido of meusPedidos.pedidos(); track pedido.id) {
-            <div class="item-pedido clicavel" (click)="meusPedidos.selecionarPedido(pedido)">
+            <div class="item-pedido clicavel" (click)="meusPedidos.isPedidoEmAndamento(pedido) 
+                    ? acompanharPedidoPorId(pedido.id, pedido.tipoPedido) 
+                    : meusPedidos.selecionarPedido(pedido)">
                 <div class="pedido-header">
                     <span class="pedido-data">{{ pedido.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
                     <div class="pedido-status-wrapper">
-                        @if ((pedido.status === 'FINALIZADO' || pedido.status === 'ENTREGUE') &&
+                        @if (meusPedidos.isPedidoEmAndamento(pedido)) {
+                        <span class="badge-em-andamento">🔵 Ativo</span>
+                        } @else if ((pedido.status === 'FINALIZADO' || pedido.status === 'ENTREGUE') &&
                         !avaliacao.isPedidoAvaliado(pedido.id)) {
                         <span class="badge-pendente-avaliacao">⭐ Avaliar</span>
                         }
@@ -778,7 +782,11 @@
                         <span class="pedido-tipo">{{ pedido.tipoPedido === 'DELIVERY' ? '🛵 Delivery' : '🏪 Retirada'
                             }}</span>
                         }
+                        @if (meusPedidos.isPedidoEmAndamento(pedido)) {
+                        <span class="pedido-acompanhar">📍 Acompanhar ›</span>
+                        } @else {
                         <span class="pedido-ver-mais">Ver detalhes ›</span>
+                        }
                     </div>
                 </div>
             </div>
@@ -994,12 +1002,23 @@
     <!-- ========== CTAs GLOBAIS DE NOTIFICAÇÃO ========== -->
     @if (etapaAtual() !== 'sucesso' && etapaAtual() !== 'checkout' && !ctaAvaliacaoFechado()) {
     <div class="ctas-container">
-        <!-- CTA Acompanhar Pedido em andamento -->
+        <!-- CTA Acompanhar Pedido em andamento (sucesso recente) -->
         @if (sucessoPedido.pedidoId() && !sucessoPedido.pedidoTerminado()) {
         <div class="cta-acompanhar-float" (click)="irParaAcompanhamento()">
             <button class="cta-close" (click)="fecharCtaAcompanhamento(); $event.stopPropagation()">✕</button>
             <span class="cta-icon">🛵</span>
             <span class="cta-texto">Seu pedido está <strong>{{ sucessoPedido.statusDescricao() }}</strong></span>
+            <span class="cta-seta">›</span>
+        </div>
+        }
+
+        <!-- CTA Acompanhar Pedidos em andamento (do histórico) -->
+        @if (!sucessoPedido.pedidoId() && meusPedidos.temPedidosEmAndamento() && !ctaAcompanhamentoFechado()) {
+        <div class="cta-acompanhar-float" (click)="acompanharPedidoEmAndamento()">
+            <button class="cta-close" (click)="fecharCtaAcompanhamento(); $event.stopPropagation()">✕</button>
+            <span class="cta-icon">🛵</span>
+            <span class="cta-texto">Você tem <strong>{{ meusPedidos.pedidosEmAndamento().length }} pedido(s)</strong> em
+                andamento</span>
             <span class="cta-seta">›</span>
         </div>
         }

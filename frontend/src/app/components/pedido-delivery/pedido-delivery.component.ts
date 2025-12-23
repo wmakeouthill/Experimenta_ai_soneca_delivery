@@ -133,6 +133,24 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                 });
             }
         });
+
+        // Efeito para iniciar polling quando cliente logado tem pedidos em andamento
+        // O polling mantém os status atualizados para o CTA global funcionar
+        effect(() => {
+            const secao = this.secaoPerfil();
+            const cliente = this.cliente();
+            const temEmAndamento = this.meusPedidos.temPedidosEmAndamento();
+            untracked(() => {
+                // Inicia polling se:
+                // 1. Cliente está logado E está na seção de pedidos (para ver atualizações na lista)
+                // 2. OU tem pedidos em andamento (para o CTA global funcionar)
+                if (cliente && (secao === 'pedidos' || temEmAndamento)) {
+                    this.meusPedidos.iniciarPolling();
+                } else {
+                    this.meusPedidos.pararPolling();
+                }
+            });
+        });
     }
 
     protected readonly Math = Math;
@@ -518,6 +536,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.destroy$.next();
         this.destroy$.complete();
         this.sucessoPedido.destroy();
+        this.meusPedidos.destroy();
     }
 
     // ========== GOOGLE AUTH ==========
@@ -946,6 +965,42 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     irParaAcompanhamento(): void {
+        this.etapaAtual.set('sucesso');
+    }
+
+    /**
+     * Acompanha o primeiro pedido em andamento do histórico.
+     * Inicia o polling de status e navega para a tela de acompanhamento.
+     */
+    acompanharPedidoEmAndamento(): void {
+        const pedidosEmAndamento = this.meusPedidos.pedidosEmAndamento();
+        if (pedidosEmAndamento.length > 0) {
+            const pedido = pedidosEmAndamento[0];
+            // Inicia o acompanhamento deste pedido
+            this.sucessoPedido.iniciarAcompanhamento(pedido.id);
+            // Configura o tipo de pedido para a exibição correta da timeline
+            if (pedido.tipoPedido === 'RETIRADA') {
+                this.tipoPedido.set('RETIRADA');
+            } else {
+                this.tipoPedido.set('DELIVERY');
+            }
+            this.etapaAtual.set('sucesso');
+        }
+    }
+
+    /**
+     * Acompanha um pedido específico pelo ID.
+     * Útil para quando o usuário clica em um pedido específico em "Meus Pedidos".
+     */
+    acompanharPedidoPorId(pedidoId: string, tipoPedido: 'DELIVERY' | 'RETIRADA' | 'MESA'): void {
+        this.sucessoPedido.iniciarAcompanhamento(pedidoId);
+        if (tipoPedido === 'RETIRADA') {
+            this.tipoPedido.set('RETIRADA');
+        } else {
+            this.tipoPedido.set('DELIVERY');
+        }
+        // Fecha o modal de detalhes se estiver aberto
+        this.meusPedidos.fecharDetalhes();
         this.etapaAtual.set('sucesso');
     }
 

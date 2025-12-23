@@ -1,9 +1,19 @@
 import { signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DeliveryService, StatusPedidoDelivery } from '../../../services/delivery.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, interval, Subscription, switchMap, catchError, of, takeWhile } from 'rxjs';
 
 const ITENS_POR_PAGINA = 10;
+const POLLING_INTERVAL_MS = 5000; // 5 segundos para atualização em tempo real
+
+// Status que indicam que o pedido ainda está em andamento
+const STATUS_EM_ANDAMENTO = [
+    'AGUARDANDO_ACEITACAO',
+    'ACEITO',
+    'PREPARANDO',
+    'PRONTO',
+    'SAIU_PARA_ENTREGA'
+];
 
 export interface HistoricoPedidoDelivery {
     id: string;
@@ -21,11 +31,15 @@ export interface HistoricoPedidoDelivery {
 
 /**
  * Composable para gerenciar o histórico de pedidos do cliente delivery.
+ * Inclui polling para atualização em tempo real de pedidos em andamento.
  */
 export function useMeusPedidos(clienteIdFn: () => string | undefined) {
     const deliveryService = inject(DeliveryService);
     const platformId = inject(PLATFORM_ID);
     const isBrowser = isPlatformBrowser(platformId);
+
+    // Subscription para polling
+    let pollingSubscription: Subscription | null = null;
 
     // Estado
     const pedidos = signal<HistoricoPedidoDelivery[]>([]);
@@ -62,6 +76,14 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
 
     // Primeiro pedido não avaliado (para CTA)
     const primeiroPedidoNaoAvaliado = computed(() => pedidosNaoAvaliados()[0] ?? null);
+
+    // Pedidos que ainda estão em andamento (precisam de atualização em tempo real)
+    const pedidosEmAndamento = computed(() =>
+        pedidos().filter(p => STATUS_EM_ANDAMENTO.includes(p.status))
+    );
+
+    // Tem pedidos em andamento?
+    const temPedidosEmAndamento = computed(() => pedidosEmAndamento().length > 0);
 
     /**
      * Marca um pedido como avaliado (localmente)
@@ -187,9 +209,96 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
     }
 
     /**
+     * Inicia o polling para atualização em tempo real dos pedidos em andamento.
+     */
+    function iniciarPolling(): void {
+        if (!isBrowser) return;
+        pararPolling(); // Limpa polling anterior
+
+        pollingSubscription = interval(POLLING_INTERVAL_MS)
+            .pipe(
+                switchMap(() => {
+                    // Se não houver pedidos em andamento, não precisa fazer polling
+                    if (!temPedidosEmAndamento()) {
+                        return of(null);
+                    }
+                    return deliveryService.buscarHistoricoPedidos(0, ITENS_POR_PAGINA).pipe(
+                        catchError(() => of(null))
+                    );
+                }),
+                takeWhile(() => temPedidosEmAndamento(), true)
+            )
+            .subscribe({
+                next: (response) => {
+                    if (!response) return;
+
+                    let listaBruta: any[] = [];
+
+                    if (response && Array.isArray((response as any).pedidos)) {
+                        listaBruta = (response as any).pedidos;
+                    } else if (Array.isArray(response)) {
+                        listaBruta = response;
+                    } else if (response && Array.isArray((response as any).content)) {
+                        listaBruta = (response as any).content;
+                    }
+
+                    // Mapeia para o formato esperado
+                    const listaMapeada: HistoricoPedidoDelivery[] = listaBruta.map(p => ({
+                        id: p.id || p.pedidoId,
+                        status: p.status,
+                        total: p.valorTotal || p.total || 0,
+                        tipoPedido: p.tipoPedido || (p.numeroMesa ? 'MESA' : 'DELIVERY'),
+                        createdAt: p.dataHoraPedido || p.dataHoraSolicitacao || p.createdAt,
+                        itens: p.itens ? p.itens.map((i: any) => ({
+                            produtoId: i.produtoId,
+                            produtoNome: i.nomeProduto || i.produtoNome || 'Item',
+                            quantidade: i.quantidade || 1,
+                            preco: i.precoUnitario || i.preco || 0
+                        })) : []
+                    }));
+
+                    // Atualiza a lista de pedidos
+                    pedidos.set(listaMapeada);
+
+                    // Atualiza o pedido selecionado se ainda estiver aberto
+                    const selecionadoAtual = pedidoSelecionado();
+                    if (selecionadoAtual) {
+                        const atualizado = listaMapeada.find(p => p.id === selecionadoAtual.id);
+                        if (atualizado) {
+                            pedidoSelecionado.set(atualizado);
+                        }
+                    }
+                }
+            });
+    }
+
+    /**
+     * Para o polling.
+     */
+    function pararPolling(): void {
+        pollingSubscription?.unsubscribe();
+        pollingSubscription = null;
+    }
+
+    /**
+     * Verifica se um pedido está em andamento (pode ser acompanhado na timeline).
+     */
+    function isPedidoEmAndamento(pedido: HistoricoPedidoDelivery): boolean {
+        return STATUS_EM_ANDAMENTO.includes(pedido.status);
+    }
+
+    /**
+     * Cleanup ao destruir.
+     */
+    function destroy(): void {
+        pararPolling();
+    }
+
+    /**
      * Limpa o estado.
      */
     function limpar(): void {
+        pararPolling();
         pedidos.set([]);
         paginaAtual.set(0);
         totalPaginas.set(0);
@@ -258,6 +367,10 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
         temPedidosParaAvaliar,
         primeiroPedidoNaoAvaliado,
 
+        // Computed
+        pedidosEmAndamento,
+        temPedidosEmAndamento,
+
         // Métodos
         carregar,
         carregarMais,
@@ -267,6 +380,10 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
         selecionarPedido,
         fecharDetalhes,
         marcarComoAvaliado,
-        carregarPedidosAvaliados
+        carregarPedidosAvaliados,
+        isPedidoEmAndamento,
+        iniciarPolling,
+        pararPolling,
+        destroy
     };
 }
