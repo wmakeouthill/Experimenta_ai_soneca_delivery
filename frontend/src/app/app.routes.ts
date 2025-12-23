@@ -74,6 +74,11 @@ export const routes: Routes = [
     canActivate: [adminGuard]
   },
   {
+    path: 'gestao-motoboys-kanban',
+    loadComponent: () => import('./components/gestao-motoboys-kanban/gestao-motoboys-kanban.component').then(m => m.GestaoMotoboysKanbanComponent),
+    canActivate: [operadorGuard]
+  },
+  {
     path: 'mesa/:token',
     loadComponent: () => import('./components/pedido-cliente-mesa/pedido-cliente-mesa.component').then(m => m.PedidoClienteMesaComponent)
   },

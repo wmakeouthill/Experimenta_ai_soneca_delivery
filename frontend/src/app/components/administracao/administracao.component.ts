@@ -23,6 +23,7 @@ export class AdministracaoComponent implements OnInit {
   readonly mostrarModal = signal(false);
   readonly usuarioEditando = signal<UsuarioDTO | null>(null);
   readonly linkCopiado = signal(false);
+  readonly linkLobbyCopiado = signal(false);
   readonly form: FormGroup;
 
   constructor() {
@@ -194,6 +195,21 @@ export class AdministracaoComponent implements OnInit {
     navigator.clipboard.writeText(linkDelivery).then(() => {
       this.linkCopiado.set(true);
       setTimeout(() => this.linkCopiado.set(false), 2000);
+    }).catch(err => {
+      console.error('Erro ao copiar link:', err);
+      this.erro.set('Erro ao copiar link. Tente manualmente.');
+    });
+  }
+
+  copiarLinkLobby(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const baseUrl = window.location.origin;
+    const linkLobby = `${baseUrl}/lobby-pedidos`;
+
+    navigator.clipboard.writeText(linkLobby).then(() => {
+      this.linkLobbyCopiado.set(true);
+      setTimeout(() => this.linkLobbyCopiado.set(false), 2000);
     }).catch(err => {
       console.error('Erro ao copiar link:', err);
       this.erro.set('Erro ao copiar link. Tente manualmente.');

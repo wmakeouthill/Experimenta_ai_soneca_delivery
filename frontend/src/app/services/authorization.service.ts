@@ -36,6 +36,12 @@ export class AuthorizationService {
       requerAutenticacao: true
     });
 
+    permissoes.set('gestao-motoboys-kanban', {
+      id: 'gestao-motoboys-kanban',
+      rolesPermitidos: ['ADMINISTRADOR', 'OPERADOR'],
+      requerAutenticacao: true
+    });
+
     permissoes.set('fila-pedidos-mesa', {
       id: 'fila-pedidos-mesa',
       rolesPermitidos: ['ADMINISTRADOR', 'OPERADOR'],

@@ -1,0 +1,171 @@
+<div class="kanban-container">
+  <header class="kanban-header">
+    <div class="header-content">
+      <h1 class="kanban-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.png" alt="Experimenta aí" class="kanban-logo" />
+        Gestão de Motoboys
+      </h1>
+
+      <div class="header-info">
+        @if (temSessaoAtiva()) {
+          <div class="sessao-info">
+            <span class="sessao-label">Sessão:</span>
+            <span class="sessao-nome">{{ sessaoAtiva()!.nome }}</span>
+            <span class="sessao-status sessao-aberta-badge">● ABERTA</span>
+          </div>
+        } @else {
+          <div class="sessao-info sessao-sem-sessao">
+            <span class="sessao-label">⚠️ Sem sessão</span>
+            <a routerLink="/sessoes" class="sessao-link-criar">Criar</a>
+          </div>
+        }
+
+        <div class="total-entregas">
+          <span class="total-label">Total de Entregas:</span>
+          <span class="total-value">{{ totalEntregas() }}</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-voltar" routerLink="/" aria-label="Voltar para home">
+          ← Voltar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (erro()) {
+    <div class="erro-mensagem">
+      <p>{{ erro() }}</p>
+      <button class="btn-recarregar" (click)="carregarSessaoAtiva()">
+        Tentar novamente
+      </button>
+    </div>
+  }
+
+  @if (estaCarregando() && pedidos().length === 0) {
+    <div class="estado-carregando">
+      <div class="spinner"></div>
+      <p>Carregando entregas...</p>
+    </div>
+  }
+
+  @if (!temSessaoAtiva()) {
+    <div class="sem-sessao">
+      <p>Não há sessão de trabalho ativa.</p>
+      <a routerLink="/sessoes" class="btn-primary">Criar Sessão</a>
+    </div>
+  } @else if (colunasKanban().length === 0) {
+    <div class="sem-motoboys">
+      <p>Não há motoboys ativos cadastrados.</p>
+      <a routerLink="/gestao-motoboys" class="btn-primary">Gerenciar Motoboys</a>
+    </div>
+  } @else if (totalEntregas() === 0) {
+    <div class="sem-entregas">
+      <p>Não há entregas atribuídas a motoboys no momento.</p>
+    </div>
+  } @else {
+    <div class="kanban-board">
+      @for (coluna of colunasKanban(); track coluna.motoboy.id) {
+        <div class="kanban-coluna">
+          <div class="coluna-header">
+            <div class="motoboy-info">
+              <div class="motoboy-avatar">🛵</div>
+              <div class="motoboy-detalhes">
+                <h3 class="motoboy-nome">{{ coluna.motoboy.nome }}</h3>
+                <span class="motoboy-telefone">📞 {{ formatarTelefone(coluna.motoboy.telefone) }}</span>
+                @if (coluna.motoboy.veiculo || coluna.motoboy.placa) {
+                  <span class="motoboy-veiculo">
+                    {{ coluna.motoboy.veiculo || 'Veículo' }}
+                    @if (coluna.motoboy.placa) {
+                      - {{ coluna.motoboy.placa }}
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+            <div class="coluna-contador">
+              <span class="contador-total">{{ coluna.pedidos.length }}</span>
+            </div>
+          </div>
+
+          <div class="coluna-conteudo">
+            <!-- Coluna: PRONTO -->
+            @if (coluna.pedidosPorStatus.pronto.length > 0) {
+              <div class="status-section">
+                <div class="status-header">
+                  <h4 class="status-titulo">✅ Pronto</h4>
+                  <span class="status-count">{{ coluna.pedidosPorStatus.pronto.length }}</span>
+                </div>
+                <div class="pedidos-lista">
+                  @for (pedido of coluna.pedidosPorStatus.pronto; track pedido.id) {
+                    <div class="pedido-card pronto">
+                      <div class="pedido-header">
+                        <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                        <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                      </div>
+                      @if (pedido.enderecoEntrega) {
+                        <div class="pedido-endereco">
+                          📍 {{ pedido.enderecoEntrega }}
+                        </div>
+                      }
+                      <div class="pedido-valor">
+                        {{ formatarValor(pedido.valorTotal) }}
+                      </div>
+                      <div class="pedido-acoes">
+                        <button 
+                          class="btn-acao btn-saiu-entrega"
+                          (click)="marcarComoSaiuParaEntrega(pedido)"
+                          title="Marcar como saiu para entrega">
+                          🚚 Saiu para Entrega
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Coluna: SAIU_PARA_ENTREGA -->
+            @if (coluna.pedidosPorStatus.saiuParaEntrega.length > 0) {
+              <div class="status-section">
+                <div class="status-header">
+                  <h4 class="status-titulo">🚚 Saiu para Entrega</h4>
+                  <span class="status-count">{{ coluna.pedidosPorStatus.saiuParaEntrega.length }}</span>
+                </div>
+                <div class="pedidos-lista">
+                  @for (pedido of coluna.pedidosPorStatus.saiuParaEntrega; track pedido.id) {
+                    <div class="pedido-card em-entrega">
+                      <div class="pedido-header">
+                        <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                        <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                      </div>
+                      @if (pedido.enderecoEntrega) {
+                        <div class="pedido-endereco">
+                          📍 {{ pedido.enderecoEntrega }}
+                        </div>
+                      }
+                      <div class="pedido-valor">
+                        {{ formatarValor(pedido.valorTotal) }}
+                      </div>
+                      <div class="pedido-tempo">
+                        <span class="tempo-label">Em trânsito</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (coluna.pedidos.length === 0) {
+              <div class="sem-pedidos">
+                <p>Nenhuma entrega atribuída</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+

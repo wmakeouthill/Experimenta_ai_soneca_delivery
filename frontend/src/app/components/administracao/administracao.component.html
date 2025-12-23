@@ -13,6 +13,13 @@
             📋 Copiar Link Delivery
           }
         </button>
+        <button class="btn-header btn-link-lobby" (click)="copiarLinkLobby()" title="Copiar link para tela de lobby de pedidos">
+          @if (linkLobbyCopiado()) {
+            ✅ Link copiado!
+          } @else {
+            🖥️ Copiar Link Lobby
+          }
+        </button>
         <button class="btn-header" routerLink="/gestao-motoboys">
           🛵 Motoboys
         </button>

@@ -49,12 +49,12 @@ export class HomeComponent {
         disponivel: true
       },
       {
-        id: 'lobby-pedidos',
-        nome: 'Lobby de Pedidos',
-        descricao: 'Visualizar fila de pedidos em tempo real (preparando/pronto)',
-        icone: '🖥️',
-        rota: '/lobby-pedidos',
-        cor: 'secondary',
+        id: 'gestao-motoboys-kanban',
+        nome: 'Gestão de Motoboys',
+        descricao: 'Visualizar entregas por motoboy em formato kanban',
+        icone: '🛵',
+        rota: '/gestao-motoboys-kanban',
+        cor: 'info',
         disponivel: true
       },
       {
