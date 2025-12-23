@@ -151,6 +151,25 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                 }
             });
         });
+
+        // Efeito para sincronizar o status do pedido em acompanhamento 
+        // quando o meusPedidos atualiza via polling
+        effect(() => {
+            const pedidos = this.meusPedidos.pedidos();
+            const pedidoEmAcompanhamento = this.sucessoPedido.pedidoId();
+            untracked(() => {
+                if (pedidoEmAcompanhamento && pedidos.length > 0) {
+                    const pedidoAtualizado = pedidos.find(p => p.id === pedidoEmAcompanhamento);
+                    if (pedidoAtualizado) {
+                        // Atualiza o status no sucessoPedido com dados do histórico
+                        this.sucessoPedido.atualizarStatusComDados(
+                            pedidoAtualizado.status,
+                            pedidoAtualizado.tipoPedido
+                        );
+                    }
+                }
+            });
+        });
     }
 
     protected readonly Math = Math;
@@ -888,6 +907,14 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /**
+     * Volta para a tela inicial mantendo o pedido em acompanhamento.
+     */
+    voltarParaInicio(): void {
+        this.etapaAtual.set('cardapio');
+        this.abaAtual.set('inicio');
+    }
+
     // ========== FAVORITOS ==========
 
     toggleFavorito(produtoId: string, event: Event): void {
@@ -970,14 +997,20 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     /**
      * Acompanha o primeiro pedido em andamento do histórico.
-     * Inicia o polling de status e navega para a tela de acompanhamento.
+     * Inicia o acompanhamento com dados do histórico e navega para a tela.
      */
     acompanharPedidoEmAndamento(): void {
         const pedidosEmAndamento = this.meusPedidos.pedidosEmAndamento();
         if (pedidosEmAndamento.length > 0) {
             const pedido = pedidosEmAndamento[0];
-            // Inicia o acompanhamento deste pedido
-            this.sucessoPedido.iniciarAcompanhamento(pedido.id);
+            // Inicia o acompanhamento com dados do histórico (sem chamar API pública)
+            this.sucessoPedido.iniciarAcompanhamentoComDados({
+                id: pedido.id,
+                status: pedido.status,
+                tipoPedido: pedido.tipoPedido,
+                total: pedido.total,
+                createdAt: pedido.createdAt
+            });
             // Configura o tipo de pedido para a exibição correta da timeline
             if (pedido.tipoPedido === 'RETIRADA') {
                 this.tipoPedido.set('RETIRADA');
@@ -993,7 +1026,25 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
      * Útil para quando o usuário clica em um pedido específico em "Meus Pedidos".
      */
     acompanharPedidoPorId(pedidoId: string, tipoPedido: 'DELIVERY' | 'RETIRADA' | 'MESA'): void {
-        this.sucessoPedido.iniciarAcompanhamento(pedidoId);
+        // Busca os dados completos do pedido no histórico
+        const pedido = this.meusPedidos.pedidos().find(p => p.id === pedidoId);
+        if (pedido) {
+            // Usa dados do histórico (sem chamar API pública que retorna 404)
+            this.sucessoPedido.iniciarAcompanhamentoComDados({
+                id: pedido.id,
+                status: pedido.status,
+                tipoPedido: pedido.tipoPedido,
+                total: pedido.total,
+                createdAt: pedido.createdAt
+            });
+        } else {
+            // Fallback: cria dados mínimos se não encontrar no histórico
+            this.sucessoPedido.iniciarAcompanhamentoComDados({
+                id: pedidoId,
+                status: 'AGUARDANDO_ACEITACAO',
+                tipoPedido: tipoPedido
+            });
+        }
         if (tipoPedido === 'RETIRADA') {
             this.tipoPedido.set('RETIRADA');
         } else {

@@ -128,6 +128,8 @@ export function useSucessoPedido() {
     /**
      * Inicia o acompanhamento do pedido.
      * Aguarda a hidratação completar antes de iniciar o polling.
+     * Nota: Este método usa o endpoint público de delivery, que pode retornar 404
+     * para pedidos que não foram criados pela API pública.
      */
     function iniciarAcompanhamento(id: string): void {
         if (!isBrowser) return;
@@ -145,6 +147,86 @@ export function useSucessoPedido() {
                 iniciarPolling();
             }
         }, 100);
+    }
+
+    /**
+     * Inicia o acompanhamento com dados já conhecidos do histórico.
+     * Use este método quando tiver os dados do pedido do histórico
+     * ao invés de chamar o endpoint público.
+     */
+    function iniciarAcompanhamentoComDados(dados: {
+        id: string;
+        status: string;
+        tipoPedido: 'DELIVERY' | 'RETIRADA' | 'MESA';
+        total?: number;
+        createdAt?: string;
+    }): void {
+        if (!isBrowser) return;
+
+        pedidoId.set(dados.id);
+        erroStatus.set(null);
+
+        // Monta um objeto StatusPedidoDelivery a partir dos dados do histórico
+        const statusMapeado: StatusPedidoDelivery = {
+            pedidoId: dados.id,
+            status: dados.status as any,
+            statusDescricao: mapearStatusParaDescricao(dados.status),
+            tipoPedido: dados.tipoPedido === 'MESA' ? 'DELIVERY' : dados.tipoPedido,
+            dataHoraSolicitacao: dados.createdAt || new Date().toISOString(),
+            tempoEsperaSegundos: calcularTempoEspera(dados.createdAt),
+            total: dados.total
+        };
+
+        statusPedido.set(statusMapeado);
+        // Não inicia polling aqui - o polling do meusPedidos cuidará das atualizações
+    }
+
+    /**
+     * Atualiza o status do pedido com novos dados do histórico.
+     * Chamado pelo meusPedidos quando há atualização via polling.
+     */
+    function atualizarStatusComDados(status: string, tipoPedido: 'DELIVERY' | 'RETIRADA' | 'MESA'): void {
+        const idAtual = pedidoId();
+        if (!idAtual) return;
+
+        const statusAtualObj = statusPedido();
+        if (statusAtualObj) {
+            statusPedido.set({
+                ...statusAtualObj,
+                status: status as any,
+                statusDescricao: mapearStatusParaDescricao(status),
+                tipoPedido: tipoPedido === 'MESA' ? 'DELIVERY' : tipoPedido
+            });
+        }
+    }
+
+    /**
+     * Mapeia o código do status para uma descrição amigável.
+     */
+    function mapearStatusParaDescricao(status: string): string {
+        const mapa: Record<string, string> = {
+            'AGUARDANDO_ACEITACAO': 'Aguardando confirmação do estabelecimento',
+            'PENDENTE': 'Aguardando confirmação',
+            'ACEITO': 'Pedido aceito',
+            'PREPARANDO': 'Seu pedido está sendo preparado',
+            'PRONTO': 'Pedido pronto',
+            'SAIU_PARA_ENTREGA': 'Pedido saiu para entrega',
+            'A_CAMINHO': 'Pedido a caminho',
+            'ENTREGUE': 'Pedido entregue',
+            'FINALIZADO': 'Pedido finalizado',
+            'CANCELADO': 'Pedido cancelado'
+        };
+        return mapa[status] || status;
+    }
+
+    /**
+     * Calcula o tempo de espera em segundos desde a criação do pedido.
+     */
+    function calcularTempoEspera(createdAt?: string): number {
+        if (!createdAt) return 0;
+        const criacao = new Date(createdAt).getTime();
+        const agora = Date.now();
+        return Math.max(0, Math.floor((agora - criacao) / 1000));
     }
 
     /**
@@ -330,6 +412,8 @@ export function useSucessoPedido() {
 
         // Métodos
         iniciarAcompanhamento,
+        iniciarAcompanhamentoComDados,
+        atualizarStatusComDados,
         buscarStatus,
         limpar,
         destroy,

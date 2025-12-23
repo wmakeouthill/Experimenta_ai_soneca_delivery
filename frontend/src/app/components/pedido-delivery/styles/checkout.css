@@ -475,8 +475,8 @@
 .sucesso-actions {
     width: 100%;
     max-width: 350px;
-    padding: 1.5rem 0;
     text-align: center;
+    box-sizing: border-box;
 }
 
 .sucesso-actions .btn-primary {
@@ -485,7 +485,7 @@
 
 .sucesso-actions .btn-secondary {
     width: 100%;
-    padding: 0.875rem;
+    padding: 0.875rem 1.5rem;
     background: white;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -501,9 +501,21 @@
 }
 
 .aguardando-finalizacao {
-    margin: 0 0 1rem;
+    margin: 0 0 0.75rem;
     font-size: 0.9rem;
     color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Container para navegação na tela de acompanhamento */
+.sucesso-navegacao {
+    width: 100%;
+    text-align: center;
+}
+
+.sucesso-navegacao .aguardando-finalizacao {
+    margin-bottom: 0.75rem;
 }
 
 /* Estilos antigos - compatibilidade */
