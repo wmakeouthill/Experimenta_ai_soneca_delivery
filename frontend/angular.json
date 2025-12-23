@@ -77,7 +77,10 @@
             "port": 4200,
             "disableHostCheck": true,
             "hmr": true,
-            "liveReload": true
+            "liveReload": true,
+            "headers": {
+              "Cross-Origin-Opener-Policy": "same-origin-allow-popups"
+            }
           },
           "configurations": {
             "production": {

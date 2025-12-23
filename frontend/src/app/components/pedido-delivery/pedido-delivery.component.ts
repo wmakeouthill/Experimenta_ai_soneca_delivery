@@ -99,6 +99,25 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                 }
             });
         }, { allowSignalWrites: true });
+
+        // Efeito para resetar renderização do botão Google quando a loja reabre
+        effect(() => {
+            const status = this.statusLoja();
+            if (status === StatusLoja.ABERTA) {
+                untracked(() => {
+                    // Resetar flags de renderização pois o DOM pode ter sido recriado pelo @if/@else
+                    this.googleButtonBoasVindasRendered = false;
+                    this.googleButtonLoginRendered = false;
+                    this.googleButtonCadastroRendered = false;
+
+                    // Tenta renderizar novamente após um breve delay para o DOM estabilizar
+                    setTimeout(() => {
+                        this.renderizarBotaoGoogle();
+                        this.cdr.detectChanges();
+                    }, 200);
+                });
+            }
+        });
     }
 
     protected readonly Math = Math;
