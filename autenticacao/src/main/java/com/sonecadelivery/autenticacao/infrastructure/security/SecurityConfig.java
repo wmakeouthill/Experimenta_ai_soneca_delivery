@@ -38,6 +38,7 @@ public class SecurityConfig {
     private static final String PUBLIC_DELIVERY_PATTERN = "/api/public/delivery/**";
     private static final String PUBLIC_CLIENTE_AUTH_PATTERN = "/api/publico/cliente/auth/**";
     private static final String CLIENTE_CONTA_PATTERN = "/api/cliente/conta/**";
+    private static final String CLIENTE_PEDIDOS_HISTORICO_PATTERN = "/api/cliente/pedidos-historico/**";
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -77,6 +78,8 @@ public class SecurityConfig {
                         // Endpoints de conta do cliente (favoritos, perfil, etc.) - usa header
                         // X-Cliente-Id
                         .requestMatchers(CLIENTE_CONTA_PATTERN).permitAll()
+                        // Endpoint de histórico de pedidos do cliente - usa header X-Cliente-Id
+                        .requestMatchers(CLIENTE_PEDIDOS_HISTORICO_PATTERN).permitAll()
 
                         // Endpoints do Chat IA - Público para clientes no auto-atendimento
                         // Usa header X-Cliente-Id para identificação opcional do cliente

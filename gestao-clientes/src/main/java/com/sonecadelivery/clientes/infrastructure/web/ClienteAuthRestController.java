@@ -66,8 +66,6 @@ class ClienteContaRestController {
     private final AdicionarFavoritoUseCase adicionarFavoritoUseCase;
     private final RemoverFavoritoUseCase removerFavoritoUseCase;
     private final ListarFavoritosUseCase listarFavoritosUseCase;
-    private final AvaliarProdutoUseCase avaliarProdutoUseCase;
-    private final BuscarAvaliacoesUseCase buscarAvaliacoesUseCase;
     private final AtualizarTelefoneClienteUseCase atualizarTelefoneClienteUseCase;
     private final AtualizarEnderecoClienteUseCase atualizarEnderecoClienteUseCase;
     private final AtualizarPerfilClienteUseCase atualizarPerfilClienteUseCase;
@@ -204,26 +202,6 @@ class ClienteContaRestController {
         return ResponseEntity.ok(ids);
     }
 
-    // ========== AVALIAÇÕES (endpoint público para cliente) ==========
-
-    /**
-     * Avalia ou atualiza avaliação de um produto
-     */
-    @PostMapping("/avaliacoes")
-    public ResponseEntity<ClienteAvaliacaoDTO> avaliarProduto(
-            @RequestHeader("X-Cliente-Id") String clienteId,
-            @Valid @RequestBody AvaliarProdutoRequest request) {
-        ClienteAvaliacaoDTO avaliacao = avaliarProdutoUseCase.executar(clienteId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(avaliacao);
-    }
-
-    /**
-     * Lista avaliações do cliente
-     */
-    @GetMapping("/avaliacoes")
-    public ResponseEntity<List<ClienteAvaliacaoDTO>> listarAvaliacoes(
-            @RequestHeader("X-Cliente-Id") String clienteId) {
-        List<ClienteAvaliacaoDTO> avaliacoes = buscarAvaliacoesUseCase.buscarPorCliente(clienteId);
-        return ResponseEntity.ok(avaliacoes);
-    }
+    // Avaliações foram movidas para ClienteContaAvaliacoesController
+    // seguindo Single Responsibility Principle (SRP)
 }

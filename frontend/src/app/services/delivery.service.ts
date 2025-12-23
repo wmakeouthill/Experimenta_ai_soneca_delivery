@@ -182,7 +182,7 @@ export class DeliveryService {
      * Busca histórico de pedidos do cliente logado.
      */
     buscarHistoricoPedidos(pagina: number = 0, limite: number = 10): Observable<Page<StatusPedidoDelivery>> {
-        return this.http.get<Page<StatusPedidoDelivery>>(`/api/cliente/conta/pedidos?page=${pagina}&size=${limite}`);
+        return this.http.get<Page<StatusPedidoDelivery>>(`/api/cliente/pedidos-historico?pagina=${pagina}&tamanho=${limite}`);
     }
 
     /**

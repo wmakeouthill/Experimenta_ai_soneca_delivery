@@ -182,7 +182,7 @@ export class PedidoMesaService {
      */
     buscarHistoricoPedidos(clienteId: string, pagina: number, tamanho: number): Observable<HistoricoPedidosResponse> {
         return this.http.get<HistoricoPedidosResponse>(
-            `/api/cliente/conta/pedidos?pagina=${pagina}&tamanho=${tamanho}`
+            `/api/cliente/pedidos-historico?pagina=${pagina}&tamanho=${tamanho}`
         );
     }
 
