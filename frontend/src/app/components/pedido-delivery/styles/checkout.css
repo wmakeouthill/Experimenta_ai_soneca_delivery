@@ -257,3 +257,62 @@
     font-weight: 500;
     color: var(--text-primary);
 }
+
+/* ========== Novos Estilos de Pagamento ========== */
+
+.meio-pagamento-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.valor-input-container {
+    padding: 0 0.5rem 0.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.valor-input-container label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.valor-input-container input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+}
+
+.resumo-pagamento {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary, #f5f5f5);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.resumo-linha {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.resumo-linha:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

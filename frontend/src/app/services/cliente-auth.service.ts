@@ -159,7 +159,7 @@ export class ClienteAuthService {
       return throwError(() => new Error('Cliente não está logado'));
     }
     return this.http.put<ClienteAuth>(`${this.contaUrl}/endereco`, request)
-      .pipe(tap(cliente => this._clienteLogado.next(cliente)));
+      .pipe(tap(cliente => this.atualizarDadosCliente(cliente)));
   }
 
   /**
@@ -170,7 +170,7 @@ export class ClienteAuthService {
       return throwError(() => new Error('Cliente não está logado'));
     }
     return this.http.put<ClienteAuth>(`${this.contaUrl}/perfil`, request)
-      .pipe(tap(cliente => this._clienteLogado.next(cliente)));
+      .pipe(tap(cliente => this.atualizarDadosCliente(cliente)));
   }
 
   /**
@@ -193,7 +193,7 @@ export class ClienteAuthService {
       return throwError(() => new Error('Cliente não está logado'));
     }
     return this.http.post<ClienteAuth>(`${this.contaUrl}/vincular-google`, { googleToken })
-      .pipe(tap(cliente => this._clienteLogado.next(cliente)));
+      .pipe(tap(cliente => this.atualizarDadosCliente(cliente)));
   }
 
   /**
@@ -205,7 +205,7 @@ export class ClienteAuthService {
       return throwError(() => new Error('Cliente não está logado'));
     }
     return this.http.delete<ClienteAuth>(`${this.contaUrl}/desvincular-google`)
-      .pipe(tap(cliente => this._clienteLogado.next(cliente)));
+      .pipe(tap(cliente => this.atualizarDadosCliente(cliente)));
   }
 
   /**
@@ -217,7 +217,7 @@ export class ClienteAuthService {
       return throwError(() => new Error('Cliente não está logado'));
     }
     return this.http.put<ClienteAuth>(`${this.contaUrl}/telefone`, { telefone })
-      .pipe(tap(cliente => this._clienteLogado.next(cliente)));
+      .pipe(tap(cliente => this.atualizarDadosCliente(cliente)));
   }
 
   /**
@@ -263,6 +263,16 @@ export class ClienteAuthService {
       } catch {
         this.logout();
       }
+    }
+  }
+
+  /**
+   * Atualiza dados do cliente no Subject e no sessionStorage
+   */
+  private atualizarDadosCliente(cliente: ClienteAuth): void {
+    this._clienteLogado.next(cliente);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(CLIENTE_KEY, JSON.stringify(cliente));
     }
   }
 }

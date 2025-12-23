@@ -1,0 +1,258 @@
+import { inject, signal, computed } from '@angular/core';
+import { DeliveryService } from '../../../services/delivery.service';
+
+/**
+ * Interface para item do pedido (simplificada)
+ * Aceita tanto 'produtoId' quanto 'produtoNome' para compatibilidade
+ */
+interface ItemPedido {
+    produtoId?: string;
+    produtoNome: string;
+}
+
+/**
+ * Interface para pedido selecionado
+ * Flexível para aceitar diferentes formatos de itens
+ */
+interface PedidoSelecionado {
+    id: string;
+    itens?: Array<{ produtoId?: string; produtoNome: string; quantidade?: number }>;
+}
+
+/**
+ * Composable para gerenciar avaliações de produtos em pedidos de delivery.
+ * Encapsula toda a lógica de avaliação com estrelas e comentários.
+ *
+ * @param getClienteId - Função que retorna o ID do cliente atual
+ * @param getPedidoSelecionado - Função que retorna o pedido selecionado
+ */
+export function useAvaliacao(
+    getClienteId: () => string | undefined,
+    getPedidoSelecionado: () => PedidoSelecionado | null
+) {
+    const deliveryService = inject(DeliveryService);
+
+    // ========== Estado Interno ==========
+    // Chave: "pedidoId:produtoId" => nota (número de estrelas)
+    const avaliacoes = signal<Map<string, number>>(new Map());
+    // Comentário por pedido (não por produto)
+    const comentariosPedido = signal<Map<string, string>>(new Map());
+    // Feedback visual: pedidoId => true se comentário foi salvo
+    const comentarioSalvo = signal<Map<string, boolean>>(new Map());
+    // Loading state
+    const salvando = signal(false);
+    // Modo de edição de avaliação por pedido
+    const editandoAvaliacao = signal<Map<string, boolean>>(new Map());
+    // Avaliação submetida (enviada pelo botão Enviar) por pedido
+    const avaliacaoSubmetida = signal<Map<string, boolean>>(new Map());
+
+    // ========== Funções Auxiliares ==========
+    function getAvaliacaoKey(pedidoId: string, produtoId: string): string {
+        return `${pedidoId}:${produtoId}`;
+    }
+
+    // ========== Getters ==========
+    function getAvaliacaoProduto(produtoId: string): number {
+        const pedido = getPedidoSelecionado();
+        if (!pedido) return 0;
+        const key = getAvaliacaoKey(pedido.id, produtoId);
+        return avaliacoes().get(key) || 0;
+    }
+
+    function getComentarioPedido(): string {
+        const pedido = getPedidoSelecionado();
+        if (!pedido) return '';
+        return comentariosPedido().get(pedido.id) || '';
+    }
+
+    function isComentarioSalvo(): boolean {
+        const pedido = getPedidoSelecionado();
+        if (!pedido) return false;
+        return comentarioSalvo().get(pedido.id) || false;
+    }
+
+    // ========== Verificações de Estado ==========
+    function pedidoJaAvaliado(): boolean {
+        const pedido = getPedidoSelecionado();
+        if (!pedido) return false;
+        return avaliacaoSubmetida().get(pedido.id) || false;
+    }
+
+    function isEditando(): boolean {
+        const pedido = getPedidoSelecionado();
+        if (!pedido) return false;
+        return editandoAvaliacao().get(pedido.id) || false;
+    }
+
+    function temAlgumaAvaliacao(): boolean {
+        const pedido = getPedidoSelecionado();
+        if (!pedido || !pedido.itens) return false;
+
+        for (const item of pedido.itens) {
+            if (!item.produtoId) continue;
+            const key = getAvaliacaoKey(pedido.id, item.produtoId);
+            if ((avaliacoes().get(key) || 0) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function getMediaAvaliacaoPedido(): number {
+        const pedido = getPedidoSelecionado();
+        if (!pedido || !pedido.itens || pedido.itens.length === 0) return 0;
+
+        let soma = 0;
+        let count = 0;
+        for (const item of pedido.itens) {
+            if (!item.produtoId) continue;
+            const key = getAvaliacaoKey(pedido.id, item.produtoId);
+            const nota = avaliacoes().get(key) || 0;
+            if (nota > 0) {
+                soma += nota;
+                count++;
+            }
+        }
+        return count > 0 ? Math.round(soma / count) : 0;
+    }
+
+    // ========== Setters ==========
+    function setComentarioPedido(comentario: string): void {
+        const pedido = getPedidoSelecionado();
+        if (!pedido) return;
+
+        const novosComentarios = new Map(comentariosPedido());
+        novosComentarios.set(pedido.id, comentario);
+        comentariosPedido.set(novosComentarios);
+
+        // Remove o status de "salvo" quando editar
+        const novoStatus = new Map(comentarioSalvo());
+        novoStatus.delete(pedido.id);
+        comentarioSalvo.set(novoStatus);
+    }
+
+    // ========== Ações ==========
+    function entrarModoEdicao(): void {
+        const pedido = getPedidoSelecionado();
+        if (!pedido) return;
+        const novoStatus = new Map(editandoAvaliacao());
+        novoStatus.set(pedido.id, true);
+        editandoAvaliacao.set(novoStatus);
+    }
+
+    function avaliarProduto(produtoId: string, nota: number): void {
+        const clienteId = getClienteId();
+        const pedido = getPedidoSelecionado();
+        if (!clienteId || !pedido) return;
+
+        const key = getAvaliacaoKey(pedido.id, produtoId);
+
+        // Atualiza localmente
+        const novasAvaliacoes = new Map(avaliacoes());
+        novasAvaliacoes.set(key, nota);
+        avaliacoes.set(novasAvaliacoes);
+    }
+
+    async function enviarAvaliacao(): Promise<void> {
+        const clienteId = getClienteId();
+        const pedido = getPedidoSelecionado();
+        if (!clienteId || !pedido) return;
+
+        const comentario = comentariosPedido().get(pedido.id) || '';
+        const itens = pedido.itens || [];
+        if (itens.length === 0) return;
+
+        salvando.set(true);
+
+        try {
+            // Coleta todas as avaliações para enviar
+            const avaliacoesParaEnviar: { produtoId: string; nota: number }[] = [];
+
+            for (const item of itens) {
+                if (!item.produtoId) continue;
+                const key = getAvaliacaoKey(pedido.id, item.produtoId);
+                const nota = avaliacoes().get(key);
+                if (nota && nota > 0) {
+                    avaliacoesParaEnviar.push({ produtoId: item.produtoId, nota });
+                }
+            }
+
+            if (avaliacoesParaEnviar.length === 0) {
+                salvando.set(false);
+                return;
+            }
+
+            // TODO: Implementar endpoint de avaliação no backend
+            // Por enquanto, apenas marca como submetido localmente
+            console.log('Avaliações a enviar:', avaliacoesParaEnviar, 'Comentário:', comentario);
+
+            // Marca como salvo
+            const novoStatusSalvo = new Map(comentarioSalvo());
+            novoStatusSalvo.set(pedido.id, true);
+            comentarioSalvo.set(novoStatusSalvo);
+
+            // Marca como submetida
+            const novoStatusSubmetida = new Map(avaliacaoSubmetida());
+            novoStatusSubmetida.set(pedido.id, true);
+            avaliacaoSubmetida.set(novoStatusSubmetida);
+
+            // Sai do modo edição
+            const novoStatusEditando = new Map(editandoAvaliacao());
+            novoStatusEditando.delete(pedido.id);
+            editandoAvaliacao.set(novoStatusEditando);
+
+        } catch (error) {
+            console.error('Erro ao enviar avaliação:', error);
+        } finally {
+            salvando.set(false);
+        }
+    }
+
+    function carregarAvaliacoesCliente(): void {
+        const clienteId = getClienteId();
+        if (!clienteId) return;
+
+        // TODO: Implementar busca de avaliações do cliente
+        // Por enquanto, inicia vazio
+        console.log('Carregando avaliações do cliente:', clienteId);
+    }
+
+    /**
+     * Gera array de estrelas para renderização.
+     * @param nota Nota atual (1-5)
+     * @returns Array de 5 elementos indicando se cada estrela está preenchida
+     */
+    function getEstrelas(nota: number): boolean[] {
+        return [1, 2, 3, 4, 5].map(i => i <= nota);
+    }
+
+    // ========== API Pública ==========
+    return {
+        // Estado (readonly)
+        salvando: salvando.asReadonly(),
+        comentarioSalvo: comentarioSalvo.asReadonly(),
+        pedidosAvaliados: avaliacaoSubmetida.asReadonly(),
+
+        // Getters
+        getAvaliacaoProduto,
+        getComentarioPedido,
+        isComentarioSalvo,
+        getMediaAvaliacaoPedido,
+        getEstrelas,
+
+        // Verificações
+        pedidoJaAvaliado,
+        isEditando,
+        temAlgumaAvaliacao,
+        isPedidoAvaliado: (pedidoId: string) => avaliacaoSubmetida().get(pedidoId) || false,
+
+        // Setters
+        setComentarioPedido,
+
+        // Ações
+        entrarModoEdicao,
+        avaliarProduto,
+        enviarAvaliacao,
+        carregarAvaliacoesCliente
+    };
+}

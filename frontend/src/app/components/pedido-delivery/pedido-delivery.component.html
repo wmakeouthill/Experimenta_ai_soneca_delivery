@@ -738,7 +738,7 @@
             <h2 class="secao-titulo">Meus Pedidos</h2>
         </div>
         <div class="lista-pedidos">
-            @if (meusPedidos.carregando()) {
+            @if (meusPedidos.carregando() && meusPedidos.pedidos().length === 0) {
             <div class="lista-carregando">
                 <div class="loading-spinner"></div>
                 <p>Carregando pedidos...</p>
@@ -746,26 +746,185 @@
             } @else if (meusPedidos.pedidos().length === 0) {
             <div class="lista-vazia">
                 <span class="lista-vazia-icon">📋</span>
-                <p>Nenhum pedido ainda</p>
+                <p>Nenhum pedido realizado ainda</p>
                 <small>Seus pedidos aparecerão aqui</small>
             </div>
             } @else {
             @for (pedido of meusPedidos.pedidos(); track pedido.id) {
-            <div class="pedido-item" (click)="meusPedidos.selecionarPedido(pedido)">
-                <div class="pedido-info">
+            <div class="item-pedido clicavel" (click)="meusPedidos.selecionarPedido(pedido)">
+                <div class="pedido-header">
                     <span class="pedido-data">{{ pedido.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
                     <span class="pedido-status" [class]="meusPedidos.classeStatus(pedido.status)">
                         {{ meusPedidos.formatarStatus(pedido.status) }}
                     </span>
                 </div>
-                <div class="pedido-total">
-                    <span>{{ pedido.total | currency:'BRL' }}</span>
-                    <span class="item-arrow">›</span>
+                <div class="pedido-itens">
+                    @for (item of pedido.itens; track item.produtoNome) {
+                    <div class="pedido-item-container">
+                        <span class="pedido-item">{{ item.quantidade }}x {{ item.produtoNome }}</span>
+                    </div>
+                    }
+                </div>
+                <div class="pedido-footer">
+                    <span class="pedido-total">{{ pedido.total | currency:'BRL' }}</span>
+                    <div class="pedido-footer-right">
+                        @if (pedido.tipoPedido) {
+                        <span class="pedido-tipo">{{ pedido.tipoPedido === 'DELIVERY' ? '🛵 Delivery' : '🏪 Retirada'
+                            }}</span>
+                        }
+                        <span class="pedido-ver-mais">Ver detalhes ›</span>
+                    </div>
                 </div>
             </div>
             }
+
+            @if (meusPedidos.temMais()) {
+            <button class="btn-carregar-mais" (click)="meusPedidos.carregarMais()"
+                [disabled]="meusPedidos.carregando()">
+                @if (meusPedidos.carregando()) {
+                <span class="spinner-sm"></span>
+                } @else {
+                Ver mais pedidos
+                }
+            </button>
+            }
             }
         </div>
+
+        <!-- Modal Detalhes do Pedido -->
+        @if (meusPedidos.mostrandoDetalhes() && meusPedidos.pedidoSelecionado()) {
+        <div class="modal-overlay" (click)="meusPedidos.fecharDetalhes()">
+            <div class="modal-detalhes-pedido" (click)="$event.stopPropagation()">
+                <div class="modal-header">
+                    <h3>Pedido</h3>
+                    <button class="btn-fechar-modal" (click)="meusPedidos.fecharDetalhes()">✕</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="detalhes-info">
+                        <div class="info-row">
+                            <span class="info-label">Data:</span>
+                            <span class="info-value">{{ meusPedidos.pedidoSelecionado()?.createdAt | date:'dd/MM/yyyy
+                                HH:mm' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value pedido-status"
+                                [class]="meusPedidos.classeStatus(meusPedidos.pedidoSelecionado()?.status || '')">
+                                {{ meusPedidos.formatarStatus(meusPedidos.pedidoSelecionado()?.status || '') }}
+                            </span>
+                        </div>
+                        @if (meusPedidos.pedidoSelecionado()?.tipoPedido) {
+                        <div class="info-row">
+                            <span class="info-label">Tipo:</span>
+                            <span class="info-value">{{ meusPedidos.pedidoSelecionado()?.tipoPedido === 'DELIVERY' ? '🛵
+                                Delivery' : '🏪 Retirada' }}</span>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="detalhes-itens">
+                        <h4>Itens do Pedido</h4>
+                        @for (item of meusPedidos.pedidoSelecionado()?.itens; track item.produtoNome) {
+                        <div class="detalhe-item">
+                            <div class="detalhe-item-header">
+                                <div class="item-info">
+                                    <span class="item-qtd">{{ item.quantidade }}x</span>
+                                    <span class="item-nome">{{ item.produtoNome }}</span>
+                                </div>
+                                <span class="item-preco">{{ (item.preco * item.quantidade) | currency:'BRL' }}</span>
+                            </div>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="detalhes-total">
+                        <span>Total:</span>
+                        <strong>{{ meusPedidos.pedidoSelecionado()?.total | currency:'BRL' }}</strong>
+                    </div>
+
+                    <!-- Seção de Avaliação -->
+                    @if (meusPedidos.pedidoSelecionado()?.status === 'FINALIZADO') {
+                    <div class="secao-avaliacao">
+                        <!-- Se já avaliou e não está editando: mostra resumo -->
+                        @if (avaliacao.pedidoJaAvaliado() && !avaliacao.isEditando()) {
+                        <div class="avaliacao-resumo">
+                            <div class="avaliacao-resumo-header">
+                                <div class="avaliacao-resumo-info">
+                                    <span class="avaliacao-resumo-titulo">Sua avaliação</span>
+                                    <div class="avaliacao-resumo-estrelas">
+                                        @for (estrela of [1, 2, 3, 4, 5]; track estrela) {
+                                        <span class="estrela-resumo"
+                                            [class.ativa]="avaliacao.getMediaAvaliacaoPedido() >= estrela">
+                                            {{ avaliacao.getMediaAvaliacaoPedido() >= estrela ? '★' : '☆' }}
+                                        </span>
+                                        }
+                                    </div>
+                                </div>
+                                <button class="btn-editar-avaliacao" (click)="avaliacao.entrarModoEdicao()">
+                                    ✏️ Editar
+                                </button>
+                            </div>
+
+                            @if (avaliacao.getComentarioPedido()) {
+                            <div class="avaliacao-comentario-salvo">
+                                <span class="comentario-label">💬 Seu comentário:</span>
+                                <p class="comentario-texto">"{{ avaliacao.getComentarioPedido() }}"</p>
+                            </div>
+                            }
+                        </div>
+                        } @else {
+                        <!-- Modo de edição ou primeira avaliação -->
+                        <div class="avaliacao-edicao">
+                            <div class="avaliacao-edicao-header">
+                                <h4>⭐ Avalie este pedido</h4>
+                                @if (avaliacao.pedidoJaAvaliado()) {
+                                <span class="avaliacao-modo-edicao">Editando</span>
+                                }
+                            </div>
+
+                            <div class="itens-avaliacao-lista">
+                                @for (item of meusPedidos.pedidoSelecionado()?.itens; track item.produtoNome) {
+                                <div class="item-avaliacao">
+                                    <span class="item-nome-avaliacao">{{ item.produtoNome }}</span>
+                                    <div class="estrelas-avaliacao">
+                                        @for (estrela of [1, 2, 3, 4, 5]; track estrela) {
+                                        <button class="estrela-btn"
+                                            [class.ativa]="avaliacao.getAvaliacaoProduto(item.produtoNome) >= estrela"
+                                            (click)="avaliacao.avaliarProduto(item.produtoNome, estrela)">
+                                            {{ avaliacao.getAvaliacaoProduto(item.produtoNome) >= estrela ? '★' : '☆' }}
+                                        </button>
+                                        }
+                                    </div>
+                                </div>
+                                }
+                            </div>
+
+                            <!-- Campo de comentário -->
+                            <div class="comentario-avaliacao">
+                                <label for="comentario-pedido">💬 Deixe um comentário (opcional)</label>
+                                <textarea id="comentario-pedido" [value]="avaliacao.getComentarioPedido()"
+                                    (input)="avaliacao.setComentarioPedido($any($event.target).value)"
+                                    placeholder="O que você achou do pedido?" rows="3" maxlength="500"></textarea>
+                            </div>
+
+                            <button class="btn-enviar-avaliacao"
+                                [disabled]="!avaliacao.temAlgumaAvaliacao() || avaliacao.salvando()"
+                                (click)="avaliacao.enviarAvaliacao()">
+                                @if (avaliacao.salvando()) {
+                                <span class="spinner-sm"></span> Enviando...
+                                } @else {
+                                Enviar avaliação
+                                }
+                            </button>
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+        }
         }
         <!-- Seção Favoritos -->
         @if (secaoPerfil() === 'favoritos') {
@@ -994,82 +1153,179 @@
 
             <!-- Forma de Pagamento -->
             <section class="checkout-section">
-                <h3>💳 Forma de pagamento</h3>
-                <div class="pagamento-options">
-                    <button class="pagamento-option" [class.selected]="meioPagamentoSelecionado() === 'PIX'"
-                        (click)="selecionarMeioPagamento('PIX')">
-                        📱 PIX
-                    </button>
-                    <button class="pagamento-option" [class.selected]="meioPagamentoSelecionado() === 'CARTAO_CREDITO'"
-                        (click)="selecionarMeioPagamento('CARTAO_CREDITO')">
-                        💳 Crédito
-                    </button>
-                    <button class="pagamento-option" [class.selected]="meioPagamentoSelecionado() === 'CARTAO_DEBITO'"
-                        (click)="selecionarMeioPagamento('CARTAO_DEBITO')">
-                        💳 Débito
-                    </button>
-                    <button class="pagamento-option" [class.selected]="meioPagamentoSelecionado() === 'DINHEIRO'"
-                        (click)="selecionarMeioPagamento('DINHEIRO')">
-                        💵 Dinheiro
-                    </button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0;">💳 Forma de pagamento</h3>
+                    <label class="toggle-container"
+                        style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" [checked]="pagamentoDividido()" (change)="toggleDividido()"
+                            style="width: auto;">
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">Dividir pagamento</span>
+                    </label>
                 </div>
-            </section>
-        </div>
 
-        <div class="checkout-footer">
-            <button class="btn-primary btn-large" [disabled]="!podeEnviarPedido() || enviando()"
-                (click)="enviarPedido()">
-                @if (enviando()) {
-                <span class="spinner"></span> Enviando...
-                } @else {
-                Confirmar Pedido
+                <div class="pagamento-options">
+                    <!-- PIX -->
+                    <div class="meio-pagamento-item">
+                        <button class="pagamento-option" [class.selected]="isMeioSelecionado('PIX')"
+                            (click)="selecionarMeioPagamento('PIX')">
+                            <span>📱</span> PIX
+                        </button>
+                        @if (pagamentoDividido() && isMeioSelecionado('PIX')) {
+                        <div class="valor-input-container">
+                            <label>Valor</label>
+                            <input type="number" [ngModel]="getValorMeio('PIX')"
+                                (ngModelChange)="atualizarValorMeio('PIX', $event)" placeholder="0.00" step="0.01">
+                        </div>
+                        }
+                    </div>
+
+                    <!-- CRÉDITO -->
+                    <div class="meio-pagamento-item">
+                        <button class="pagamento-option" [class.selected]="isMeioSelecionado('CARTAO_CREDITO')"
+                            (click)="selecionarMeioPagamento('CARTAO_CREDITO')">
+                            <span>💳</span> Crédito
+                        </button>
+                        @if (pagamentoDividido() && isMeioSelecionado('CARTAO_CREDITO')) {
+                        <div class="valor-input-container">
+                            <label>Valor</label>
+                            <input type="number" [ngModel]="getValorMeio('CARTAO_CREDITO')"
+                                (ngModelChange)="atualizarValorMeio('CARTAO_CREDITO', $event)" placeholder="0.00"
+                                step="0.01">
+                        </div>
+                        }
+                    </div>
+
+                    <!-- DÉBITO -->
+                    <div class="meio-pagamento-item">
+                        <button class="pagamento-option" [class.selected]="isMeioSelecionado('CARTAO_DEBITO')"
+                            (click)="selecionarMeioPagamento('CARTAO_DEBITO')">
+                            <span>💳</span> Débito
+                        </button>
+                        @if (pagamentoDividido() && isMeioSelecionado('CARTAO_DEBITO')) {
+                        <div class="valor-input-container">
+                            <label>Valor</label>
+                            <input type="number" [ngModel]="getValorMeio('CARTAO_DEBITO')"
+                                (ngModelChange)="atualizarValorMeio('CARTAO_DEBITO', $event)" placeholder="0.00"
+                                step="0.01">
+                        </div>
+                        }
+                    </div>
+
+                    <!-- VOUCHER -->
+                    <div class="meio-pagamento-item">
+                        <button class="pagamento-option" [class.selected]="isMeioSelecionado('VALE_REFEICAO')"
+                            (click)="selecionarMeioPagamento('VALE_REFEICAO')">
+                            <span>🎫</span> Voucher
+                        </button>
+                        @if (pagamentoDividido() && isMeioSelecionado('VALE_REFEICAO')) {
+                        <div class="valor-input-container">
+                            <label>Valor</label>
+                            <input type="number" [ngModel]="getValorMeio('VALE_REFEICAO')"
+                                (ngModelChange)="atualizarValorMeio('VALE_REFEICAO', $event)" placeholder="0.00"
+                                step="0.01">
+                        </div>
+                        }
+                    </div>
+
+                    <!-- DINHEIRO -->
+                    <div class="meio-pagamento-item">
+                        <button class="pagamento-option" [class.selected]="isMeioSelecionado('DINHEIRO')"
+                            (click)="selecionarMeioPagamento('DINHEIRO')">
+                            <span>💵</span> Dinheiro
+                        </button>
+                        @if (pagamentoDividido() && isMeioSelecionado('DINHEIRO')) {
+                        <div class="valor-input-container">
+                            <label>Valor</label>
+                            <input type="number" [ngModel]="getValorMeio('DINHEIRO')"
+                                (ngModelChange)="atualizarValorMeio('DINHEIRO', $event)" placeholder="0.00" step="0.01">
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                @if (pagamentoDividido()) {
+                <div class="resumo-pagamento"
+                    style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                    <div class="resumo-linha"
+                        style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Total alocado:</span>
+                        <span [style.color]="pagamentoValido() ? 'var(--success)' : 'var(--text-primary)'">
+                            {{ totalAlocado() | currency:'BRL' }}
+                        </span>
+                    </div>
+
+                    @if (valorRestante() > 0.01) {
+                    <div class="resumo-linha"
+                        style="display: flex; justify-content: space-between; color: var(--error);">
+                        <span>Falta alocar:</span>
+                        <span>{{ valorRestante() | currency:'BRL' }}</span>
+                    </div>
+                    }
+
+                    @if (valorRestante() < -0.01) { <div class="resumo-linha"
+                        style="display: flex; justify-content: space-between; color: var(--error);">
+                        <span>Valor excedente:</span>
+                        <span>{{ (valorRestante() * -1) | currency:'BRL' }}</span>
+                </div>
                 }
-            </button>
         </div>
+        }
+        </section>
     </div>
-    }
 
-    <!-- ========== SUCESSO ========== -->
-    @if (etapaAtual() === 'sucesso') {
-    <div class="sucesso-screen">
-        <div class="sucesso-content">
-            <div class="sucesso-icon">🎉</div>
-            <h1>Pedido enviado!</h1>
-            <p>Seu pedido foi recebido e está sendo preparado.</p>
-
-            @if (statusPedido()) {
-            <div class="status-card">
-                <span class="status-icon">{{ getStatusIcon(statusPedido()!.status) }}</span>
-                <span class="status-text">{{ getStatusDescricao(statusPedido()!.status) }}</span>
-            </div>
+    <div class="checkout-footer">
+        <button class="btn-primary btn-large" [disabled]="!podeEnviarPedido() || enviando()" (click)="enviarPedido()">
+            @if (enviando()) {
+            <span class="spinner"></span> Enviando...
+            } @else {
+            Confirmar Pedido
             }
-
-            <button class="btn-primary btn-large" (click)="novoPedido()">
-                Fazer novo pedido
-            </button>
-        </div>
+        </button>
     </div>
-    }
-    <!-- ========== CHAT IA ========== -->
-    @if (etapaAtual() !== 'boas-vindas' && etapaAtual() !== 'login' && etapaAtual() !== 'cadastro') {
-    @if (!mostrarDetalhes()) {
-    <app-chat-ia-button-delivery [pulse]="(chatIA.mensagens().length <= 1) || !chatIA.isOpen()"
-        (onClick)="chatIA.toggleChat()">
-    </app-chat-ia-button-delivery>
-    }
+</div>
+}
 
-    <app-chat-ia-fullscreen-delivery [isOpen]="chatIA.isOpen()" [isLoading]="chatIA.isLoading()"
-        [inputText]="chatIA.inputText()" [canSend]="chatIA.canSend()" [mensagens]="chatIA.mensagens()"
-        [quantidadeItensCarrinho]="itensCarrinho().length" [historicoConversas]="chatIA.historicoConversas()"
-        [mostrarHistorico]="chatIA.mostrarHistorico()" [isHidden]="mostrarDetalhes() || mostrarCarrinho()"
-        (onClose)="chatIA.fecharChat()" (onSend)="chatIA.enviarMensagem()" (onInputChange)="chatIA.setInputText($event)"
-        (onNovaConversa)="chatIA.novaConversa()"
-        (onAdicionarProduto)="executarAcaoChat({tipo: 'ADICIONAR_CARRINHO', produtoId: $event.id, produtoNome: $event.nome, quantidade: 1, observacao: null})"
-        (onAbrirCarrinho)="navegarPara('carrinho'); chatIA.fecharChat()" (onToggleHistorico)="chatIA.toggleHistorico()"
-        (onCarregarConversa)="chatIA.carregarConversaDoHistorico($event)"
-        (onRemoverConversa)="chatIA.removerDoHistorico($event)">
-    </app-chat-ia-fullscreen-delivery>
-    }
+<!-- ========== SUCESSO ========== -->
+@if (etapaAtual() === 'sucesso') {
+<div class="sucesso-screen">
+    <div class="sucesso-content">
+        <div class="sucesso-icon">🎉</div>
+        <h1>Pedido enviado!</h1>
+        <p>Seu pedido foi recebido e está sendo preparado.</p>
 
-    } <!-- Fim do @else statusLoja === ABERTA -->
+        @if (statusPedido()) {
+        <div class="status-card">
+            <span class="status-icon">{{ getStatusIcon(statusPedido()!.status) }}</span>
+            <span class="status-text">{{ getStatusDescricao(statusPedido()!.status) }}</span>
+        </div>
+        }
+
+        <button class="btn-primary btn-large" (click)="novoPedido()">
+            Fazer novo pedido
+        </button>
+    </div>
+</div>
+}
+<!-- ========== CHAT IA ========== -->
+@if (etapaAtual() !== 'boas-vindas' && etapaAtual() !== 'login' && etapaAtual() !== 'cadastro') {
+@if (!mostrarDetalhes()) {
+<app-chat-ia-button-delivery [pulse]="(chatIA.mensagens().length <= 1) || !chatIA.isOpen()"
+    (onClick)="chatIA.toggleChat()">
+</app-chat-ia-button-delivery>
+}
+
+<app-chat-ia-fullscreen-delivery [isOpen]="chatIA.isOpen()" [isLoading]="chatIA.isLoading()"
+    [inputText]="chatIA.inputText()" [canSend]="chatIA.canSend()" [mensagens]="chatIA.mensagens()"
+    [quantidadeItensCarrinho]="itensCarrinho().length" [historicoConversas]="chatIA.historicoConversas()"
+    [mostrarHistorico]="chatIA.mostrarHistorico()" [isHidden]="mostrarDetalhes() || mostrarCarrinho()"
+    (onClose)="chatIA.fecharChat()" (onSend)="chatIA.enviarMensagem()" (onInputChange)="chatIA.setInputText($event)"
+    (onNovaConversa)="chatIA.novaConversa()"
+    (onAdicionarProduto)="executarAcaoChat({tipo: 'ADICIONAR_CARRINHO', produtoId: $event.id, produtoNome: $event.nome, quantidade: 1, observacao: null})"
+    (onAbrirCarrinho)="navegarPara('carrinho'); chatIA.fecharChat()" (onToggleHistorico)="chatIA.toggleHistorico()"
+    (onCarregarConversa)="chatIA.carregarConversaDoHistorico($event)"
+    (onRemoverConversa)="chatIA.removerDoHistorico($event)">
+</app-chat-ia-fullscreen-delivery>
+}
+
+} <!-- Fim do @else statusLoja === ABERTA -->
 </div>

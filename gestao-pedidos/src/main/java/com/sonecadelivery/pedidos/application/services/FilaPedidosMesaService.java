@@ -130,6 +130,150 @@ public class FilaPedidosMesaService {
     }
 
     /**
+     * Adiciona um pedido de delivery/retirada à fila de pendentes.
+     * 
+     * Este método permite que clientes externos (delivery/retirada) façam pedidos
+     * que ficam aguardando aceitação pelo funcionário, assim como os pedidos de
+     * mesa.
+     * 
+     * @param request Request do pedido de delivery
+     * @return DTO do pedido pendente criado
+     */
+    @Transactional
+    public PedidoPendenteDTO adicionarPedidoDelivery(CriarPedidoDeliveryRequest request) {
+        String pedidoId = UUID.randomUUID().toString();
+
+        // Busca informações dos produtos e calcula valores
+        List<ItemPedidoPendenteDTO> itens = new ArrayList<>();
+        BigDecimal valorTotal = BigDecimal.ZERO;
+
+        for (ItemPedidoRequest itemReq : request.getItens()) {
+            var produto = cardapioService.buscarProdutoPorId(itemReq.getProdutoId());
+            BigDecimal precoUnitario = produto.getPreco();
+
+            // Processa adicionais do item
+            List<AdicionalPedidoPendenteDTO> adicionaisDTO = new ArrayList<>();
+            BigDecimal subtotalAdicionais = BigDecimal.ZERO;
+
+            if (itemReq.getAdicionais() != null && !itemReq.getAdicionais().isEmpty()) {
+                for (ItemPedidoAdicionalRequest adicionalReq : itemReq.getAdicionais()) {
+                    var adicional = cardapioService.buscarAdicionalPorId(adicionalReq.getAdicionalId());
+                    BigDecimal precoAdicional = adicional.getPreco();
+                    BigDecimal subtotalAdicional = precoAdicional
+                            .multiply(BigDecimal.valueOf(adicionalReq.getQuantidade()));
+
+                    adicionaisDTO.add(AdicionalPedidoPendenteDTO.builder()
+                            .adicionalId(adicionalReq.getAdicionalId())
+                            .nome(adicional.getNome())
+                            .quantidade(adicionalReq.getQuantidade())
+                            .precoUnitario(precoAdicional)
+                            .subtotal(subtotalAdicional)
+                            .build());
+
+                    subtotalAdicionais = subtotalAdicionais.add(subtotalAdicional);
+                }
+            }
+
+            // Subtotal = (preço unitário + adicionais) * quantidade
+            BigDecimal precoComAdicionais = precoUnitario.add(subtotalAdicionais);
+            BigDecimal subtotal = precoComAdicionais.multiply(BigDecimal.valueOf(itemReq.getQuantidade()));
+
+            itens.add(ItemPedidoPendenteDTO.builder()
+                    .produtoId(itemReq.getProdutoId())
+                    .nomeProduto(produto.getNome())
+                    .quantidade(itemReq.getQuantidade())
+                    .precoUnitario(precoUnitario)
+                    .subtotal(subtotal)
+                    .observacoes(itemReq.getObservacoes())
+                    .adicionais(adicionaisDTO.isEmpty() ? null : adicionaisDTO)
+                    .build());
+
+            valorTotal = valorTotal.add(subtotal);
+        }
+
+        // Adiciona taxa de entrega ao total se houver
+        if (request.getTaxaEntrega() != null) {
+            valorTotal = valorTotal.add(request.getTaxaEntrega());
+        }
+
+        // Subtrai desconto se houver
+        if (request.getValorDesconto() != null) {
+            valorTotal = valorTotal.subtract(request.getValorDesconto());
+        }
+
+        // Monta endereço completo se campos detalhados forem informados
+        String enderecoFormatado = request.getEnderecoEntrega();
+        if (enderecoFormatado == null || enderecoFormatado.isBlank()) {
+            enderecoFormatado = formatarEndereco(request);
+        }
+
+        PedidoPendenteDTO pedidoPendente = PedidoPendenteDTO.builder()
+                .id(pedidoId)
+                // SEM mesa para pedidos de delivery
+                .mesaToken(null)
+                .mesaId(null)
+                .numeroMesa(null)
+                .clienteId(request.getClienteId())
+                .nomeCliente(request.getNomeCliente())
+                .telefoneCliente(request.getTelefoneCliente())
+                .itens(itens)
+                .meiosPagamento(request.getMeiosPagamento())
+                .observacoes(request.getObservacoes())
+                .valorTotal(valorTotal)
+                .dataHoraSolicitacao(LocalDateTime.now())
+                .tempoEsperaSegundos(0)
+                // Campos de delivery
+                .tipoPedido(request.getTipoPedido())
+                .enderecoEntrega(enderecoFormatado)
+                .previsaoEntregaCliente(request.getPrevisaoEntregaCliente())
+                .build();
+
+        // Persiste no banco de dados
+        PedidoPendenteDTO salvo = pedidoPendenteRepository.salvar(pedidoPendente);
+
+        log.info("Pedido DELIVERY adicionado à fila - ID: {}, Tipo: {}, Cliente: {}, Tel: {}",
+                pedidoId, request.getTipoPedido(), request.getNomeCliente(), request.getTelefoneCliente());
+
+        return salvo;
+    }
+
+    /**
+     * Formata o endereço a partir dos campos detalhados.
+     */
+    private String formatarEndereco(CriarPedidoDeliveryRequest request) {
+        if (request.getLogradouro() == null || request.getLogradouro().isBlank()) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(request.getLogradouro());
+
+        if (request.getNumero() != null && !request.getNumero().isBlank()) {
+            sb.append(", ").append(request.getNumero());
+        }
+        if (request.getComplemento() != null && !request.getComplemento().isBlank()) {
+            sb.append(" - ").append(request.getComplemento());
+        }
+        if (request.getBairro() != null && !request.getBairro().isBlank()) {
+            sb.append(", ").append(request.getBairro());
+        }
+        if (request.getCidade() != null && !request.getCidade().isBlank()) {
+            sb.append(" - ").append(request.getCidade());
+        }
+        if (request.getEstado() != null && !request.getEstado().isBlank()) {
+            sb.append("/").append(request.getEstado());
+        }
+        if (request.getCep() != null && !request.getCep().isBlank()) {
+            sb.append(" - CEP: ").append(request.getCep());
+        }
+        if (request.getPontoReferencia() != null && !request.getPontoReferencia().isBlank()) {
+            sb.append(" (Ref: ").append(request.getPontoReferencia()).append(")");
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Lista todos os pedidos pendentes na fila, ordenados por tempo de espera.
      * Remove automaticamente pedidos expirados.
      */

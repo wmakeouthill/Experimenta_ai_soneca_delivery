@@ -3,14 +3,18 @@ package com.sonecadelivery.orquestrador.controller;
 import com.sonecadelivery.cardapio.application.dto.AdicionalDTO;
 import com.sonecadelivery.cardapio.application.dto.CategoriaDTO;
 import com.sonecadelivery.cardapio.application.dto.ProdutoDTO;
-import com.sonecadelivery.cardapio.application.usecases.BuscarProdutoPorIdUseCase;
 import com.sonecadelivery.cardapio.application.usecases.GerenciarAdicionaisProdutoUseCase;
 import com.sonecadelivery.cardapio.application.usecases.ListarCategoriasUseCase;
 import com.sonecadelivery.cardapio.application.usecases.ListarProdutosUseCase;
+import com.sonecadelivery.pedidos.application.dto.CriarPedidoDeliveryRequest;
+import com.sonecadelivery.pedidos.application.dto.ItemPedidoAdicionalRequest;
+import com.sonecadelivery.pedidos.application.dto.ItemPedidoRequest;
+import com.sonecadelivery.pedidos.application.dto.MeioPagamentoRequest;
+import com.sonecadelivery.pedidos.application.dto.PedidoPendenteDTO;
 import com.sonecadelivery.pedidos.application.dto.ProdutoPopularDTO;
-import com.sonecadelivery.pedidos.application.usecase.CriarPedidoDeliveryUseCase;
-import com.sonecadelivery.pedidos.application.usecase.CriarPedidoDeliveryUseCase.*;
+import com.sonecadelivery.pedidos.application.services.FilaPedidosMesaService;
 import com.sonecadelivery.pedidos.application.usecases.BuscarProdutosPopularesUseCase;
+import com.sonecadelivery.pedidos.domain.entities.MeioPagamento;
 import com.sonecadelivery.pedidos.infrastructure.persistence.PedidoDeliveryEntity;
 import com.sonecadelivery.pedidos.infrastructure.persistence.PedidoDeliveryJpaRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +30,6 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Controller público para operações de delivery.
@@ -44,8 +47,7 @@ public class DeliveryPublicoRestController {
 
         private final ListarCategoriasUseCase listarCategoriasUseCase;
         private final ListarProdutosUseCase listarProdutosUseCase;
-        private final BuscarProdutoPorIdUseCase buscarProdutoPorIdUseCase;
-        private final CriarPedidoDeliveryUseCase criarPedidoDeliveryUseCase;
+        private final FilaPedidosMesaService filaPedidosMesaService;
         private final PedidoDeliveryJpaRepository pedidoDeliveryRepository;
         private final BuscarProdutosPopularesUseCase buscarProdutosPopularesUseCase;
         private final GerenciarAdicionaisProdutoUseCase gerenciarAdicionaisProdutoUseCase;
@@ -106,133 +108,143 @@ public class DeliveryPublicoRestController {
         /**
          * Cria um novo pedido de delivery/retirada.
          * 
-         * IDEMPOTÊNCIA:
-         * - Se o header X-Idempotency-Key for fornecido e já existir um pedido com essa
-         * key,
-         * retorna o pedido existente com status 200 (OK) em vez de 201 (Created).
-         * - Isso garante que o cliente pode fazer retry da requisição sem criar
-         * duplicatas.
+         * O pedido é adicionado à FILA DE PENDENTES para ser aceito por um funcionário.
+         * Isso permite que o pedido apareça em tempo real na tela de Gestão de Pedidos.
          * 
-         * RECOMENDAÇÃO: O frontend deve gerar um UUID único para cada tentativa de
-         * pedido
-         * e enviar no header X-Idempotency-Key.
+         * FLUXO:
+         * 1. Cliente envia pedido → vai para fila de pendentes
+         * 2. Funcionário vê o pedido na tela de gestão (em tempo real via polling)
+         * 3. Funcionário aceita → pedido é criado de verdade no sistema
+         * 
+         * Este é o mesmo fluxo dos pedidos de mesa (QR code).
          */
         @PostMapping("/pedido")
         public ResponseEntity<PedidoDeliveryResponse> criarPedido(
-                        @Valid @RequestBody CriarPedidoDeliveryRequest request,
+                        @Valid @RequestBody CriarPedidoDeliveryRequestInternal requestDTO,
                         @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey) {
 
-                log.info("Criando pedido delivery para cliente: {}. IdempotencyKey: {}",
-                                request.nomeCliente(), idempotencyKey);
+                log.info("Criando pedido delivery para fila de pendentes - Cliente: {}, Tipo: {}",
+                                requestDTO.nomeCliente(), requestDTO.tipoPedido());
 
-                // Gerar idempotencyKey se não fornecido
-                String finalIdempotencyKey = idempotencyKey != null ? idempotencyKey : UUID.randomUUID().toString();
+                // Converter DTO do request para o DTO do domínio
+                CriarPedidoDeliveryRequest request = converterParaRequest(requestDTO);
 
-                // Converter DTOs para comandos do UseCase
-                List<ItemPedidoInput> itensInput = new ArrayList<>();
-                for (ItemPedidoDeliveryRequest itemRequest : request.itens()) {
-                        // Buscar dados do produto
-                        ProdutoDTO produto = buscarProdutoPorIdUseCase.executar(itemRequest.produtoId());
+                // Adicionar à fila de pendentes (mesmo fluxo dos pedidos de mesa)
+                PedidoPendenteDTO pedidoPendente = filaPedidosMesaService.adicionarPedidoDelivery(request);
 
-                        List<AdicionalItemInput> adicionaisInput = new ArrayList<>();
-                        if (itemRequest.adicionais() != null) {
-                                for (AdicionalItemDeliveryRequest adicionalRequest : itemRequest.adicionais()) {
-                                        // TODO: Buscar dados do adicional
-                                        adicionaisInput.add(new AdicionalItemInput(
-                                                        adicionalRequest.adicionalId(),
-                                                        adicionalRequest.nomeAdicional() != null
-                                                                        ? adicionalRequest.nomeAdicional()
-                                                                        : "Adicional",
-                                                        adicionalRequest.quantidade(),
-                                                        adicionalRequest.precoUnitario() != null
-                                                                        ? adicionalRequest.precoUnitario()
-                                                                        : BigDecimal.ZERO));
+                // Mapear para response
+                PedidoDeliveryResponse response = new PedidoDeliveryResponse(
+                                pedidoPendente.getId(),
+                                "PEND-" + pedidoPendente.getId().substring(0, 8).toUpperCase(), // Número temporário
+                                pedidoPendente.getNomeCliente(),
+                                pedidoPendente.getTelefoneCliente(),
+                                pedidoPendente.getTipoPedido(),
+                                pedidoPendente.getEnderecoEntrega(),
+                                "AGUARDANDO_ACEITACAO", // Status inicial
+                                pedidoPendente.getValorTotal(),
+                                null, // Previsão de entrega será definida ao aceitar
+                                pedidoPendente.getDataHoraSolicitacao().toString());
+
+                log.info("Pedido delivery adicionado à fila de pendentes - ID: {}", pedidoPendente.getId());
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        }
+
+        /**
+         * Converte o DTO do request HTTP para o DTO do domínio.
+         */
+        private CriarPedidoDeliveryRequest converterParaRequest(CriarPedidoDeliveryRequestInternal requestDTO) {
+                // Converter itens
+                List<ItemPedidoRequest> itens = new ArrayList<>();
+                for (ItemPedidoDeliveryRequest itemDTO : requestDTO.itens()) {
+                        List<ItemPedidoAdicionalRequest> adicionais = null;
+                        if (itemDTO.adicionais() != null && !itemDTO.adicionais().isEmpty()) {
+                                adicionais = new ArrayList<>();
+                                for (AdicionalItemDeliveryRequest adicionalDTO : itemDTO.adicionais()) {
+                                        ItemPedidoAdicionalRequest adicional = new ItemPedidoAdicionalRequest();
+                                        adicional.setAdicionalId(adicionalDTO.adicionalId());
+                                        adicional.setQuantidade(adicionalDTO.quantidade());
+                                        adicionais.add(adicional);
                                 }
                         }
 
-                        itensInput.add(new ItemPedidoInput(
-                                        itemRequest.produtoId(),
-                                        produto != null ? produto.getNome() : "Produto",
-                                        produto != null ? produto.getDescricao() : "",
-                                        itemRequest.quantidade(),
-                                        produto != null ? produto.getPreco() : BigDecimal.ZERO,
-                                        itemRequest.observacoes(),
-                                        adicionaisInput));
+                        ItemPedidoRequest item = new ItemPedidoRequest();
+                        item.setProdutoId(itemDTO.produtoId());
+                        item.setQuantidade(itemDTO.quantidade());
+                        item.setObservacoes(itemDTO.observacoes());
+                        item.setAdicionais(adicionais);
+                        itens.add(item);
                 }
 
                 // Converter meios de pagamento
-                List<MeioPagamentoInput> meiosPagamentoInput = new ArrayList<>();
-                if (request.meiosPagamento() != null) {
-                        for (MeioPagamentoDeliveryRequest mpRequest : request.meiosPagamento()) {
-                                meiosPagamentoInput.add(new MeioPagamentoInput(
-                                                mpRequest.meioPagamento(),
-                                                mpRequest.valor(),
-                                                mpRequest.trocoPara(),
-                                                null));
+                // Nota: A conversão de meios de pagamento requer mapeamento do tipo String para
+                // o enum MeioPagamento
+                List<MeioPagamentoRequest> meiosPagamento = new ArrayList<>();
+                if (requestDTO.meiosPagamento() != null && !requestDTO.meiosPagamento().isEmpty()) {
+                        for (MeioPagamentoDeliveryRequest mpDTO : requestDTO.meiosPagamento()) {
+                                try {
+                                        MeioPagamento tipo = MeioPagamento.valueOf(mpDTO.meioPagamento().toUpperCase()
+                                                        .replace(" ", "_"));
+                                        meiosPagamento.add(new MeioPagamentoRequest(tipo, mpDTO.valor()));
+                                } catch (IllegalArgumentException e) {
+                                        // Se não conseguir converter, usa DINHEIRO como padrão
+                                        meiosPagamento.add(new MeioPagamentoRequest(MeioPagamento.DINHEIRO,
+                                                        mpDTO.valor()));
+                                }
                         }
                 }
 
-                // Criar comando
-                ComandoCriarPedido comando = new ComandoCriarPedido(
-                                finalIdempotencyKey,
-                                request.clienteId(),
-                                request.nomeCliente(),
-                                request.telefoneCliente(),
-                                request.emailCliente(),
-                                request.enderecoEntrega(),
-                                request.logradouro(),
-                                request.numero(),
-                                request.complemento(),
-                                request.bairro(),
-                                request.cidade(),
-                                request.estado(),
-                                request.cep(),
-                                request.pontoReferencia(),
-                                "RETIRADA".equalsIgnoreCase(request.tipoPedido())
-                                                ? PedidoDeliveryEntity.TipoPedidoDelivery.RETIRADA
-                                                : PedidoDeliveryEntity.TipoPedidoDelivery.DELIVERY,
-                                request.taxaEntrega(),
-                                request.valorDesconto(),
-                                request.meioPagamento(),
-                                request.trocoPara(),
-                                request.observacoes(),
-                                itensInput,
-                                meiosPagamentoInput);
-
-                // Executar criação com idempotência
-                ResultadoCriacaoPedido resultado = criarPedidoDeliveryUseCase.executar(comando);
-
-                // Mapear para response
-                PedidoDeliveryEntity pedido = resultado.pedido();
-                PedidoDeliveryResponse response = new PedidoDeliveryResponse(
-                                pedido.getId(),
-                                pedido.getNumeroPedido(),
-                                pedido.getNomeCliente(),
-                                pedido.getTelefoneCliente(),
-                                pedido.getTipoPedido().name(),
-                                pedido.getEnderecoEntrega(),
-                                pedido.getStatus().name(),
-                                pedido.getValorTotal(),
-                                pedido.getPrevisaoEntrega() != null ? pedido.getPrevisaoEntrega().toString() : null,
-                                pedido.getCreatedAt().toString());
-
-                // Retornar 200 se já existia, 201 se criou novo
-                if (resultado.jáExistia()) {
-                        log.info("Pedido já existia. Retornando existente: {}", pedido.getId());
-                        return ResponseEntity.ok(response);
-                } else {
-                        log.info("Pedido criado com sucesso: {}", pedido.getId());
-                        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-                }
+                return CriarPedidoDeliveryRequest.builder()
+                                .clienteId(requestDTO.clienteId())
+                                .nomeCliente(requestDTO.nomeCliente())
+                                .telefoneCliente(requestDTO.telefoneCliente())
+                                .emailCliente(requestDTO.emailCliente())
+                                .itens(itens)
+                                .meiosPagamento(meiosPagamento.isEmpty() ? null : meiosPagamento)
+                                .tipoPedido(requestDTO.tipoPedido())
+                                .enderecoEntrega(requestDTO.enderecoEntrega())
+                                .logradouro(requestDTO.logradouro())
+                                .numero(requestDTO.numero())
+                                .complemento(requestDTO.complemento())
+                                .bairro(requestDTO.bairro())
+                                .cidade(requestDTO.cidade())
+                                .estado(requestDTO.estado())
+                                .cep(requestDTO.cep())
+                                .pontoReferencia(requestDTO.pontoReferencia())
+                                .taxaEntrega(requestDTO.taxaEntrega())
+                                .valorDesconto(requestDTO.valorDesconto())
+                                .previsaoEntregaCliente(null)
+                                .trocoPara(requestDTO.trocoPara())
+                                .observacoes(requestDTO.observacoes())
+                                .build();
         }
 
         /**
          * Busca o status de um pedido.
+         * 
+         * FLUXO:
+         * 1. Primeiro verifica se o pedido está na fila de pendentes
+         * (AGUARDANDO_ACEITACAO)
+         * 2. Se não estiver, busca na tabela de pedidos delivery aceitos
          */
         @GetMapping("/pedido/{pedidoId}/status")
         public ResponseEntity<StatusPedidoResponse> buscarStatusPedido(@PathVariable String pedidoId) {
                 log.info("Buscando status do pedido: {}", pedidoId);
 
+                // 1. Primeiro verifica na fila de pendentes
+                var pedidoPendente = filaPedidosMesaService.buscarPorId(pedidoId);
+                if (pedidoPendente.isPresent()) {
+                        PedidoPendenteDTO pendente = pedidoPendente.get();
+                        StatusPedidoResponse response = new StatusPedidoResponse(
+                                        pendente.getId(),
+                                        "PEND-" + pendente.getId().substring(0, 8).toUpperCase(),
+                                        "AGUARDANDO_ACEITACAO",
+                                        null, // Sem motoboy ainda
+                                        null,
+                                        null); // Sem previsão ainda
+                        return ResponseEntity.ok(response);
+                }
+
+                // 2. Se não está pendente, busca nos pedidos aceitos
                 return pedidoDeliveryRepository.findById(pedidoId)
                                 .map(pedido -> {
                                         StatusPedidoResponse response = new StatusPedidoResponse(
@@ -349,7 +361,7 @@ public class DeliveryPublicoRestController {
                         List<ProdutoDTO> produtos) {
         }
 
-        public record CriarPedidoDeliveryRequest(
+        public record CriarPedidoDeliveryRequestInternal(
                         String clienteId,
                         @NotBlank(message = "Nome do cliente é obrigatório") String nomeCliente,
                         @NotBlank(message = "Telefone do cliente é obrigatório") String telefoneCliente,

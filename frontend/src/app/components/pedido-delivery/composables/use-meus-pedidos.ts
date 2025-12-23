@@ -9,9 +9,10 @@ export interface HistoricoPedidoDelivery {
     id: string;
     status: string;
     total: number;
-    tipoPedido: 'DELIVERY' | 'RETIRADA';
+    tipoPedido: 'DELIVERY' | 'RETIRADA' | 'MESA';
     createdAt: string;
     itens: Array<{
+        produtoId?: string;
         produtoNome: string;
         quantidade: number;
         preco: number;
@@ -76,7 +77,13 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
 
             let listaBruta: any[] = [];
 
-            if (Array.isArray(response)) {
+            // O backend retorna HistoricoPedidosResponseDTO com campo 'pedidos'
+            if (response && Array.isArray(response.pedidos)) {
+                listaBruta = response.pedidos;
+                totalPaginas.set(response.totalPaginas || 1);
+                totalPedidos.set(response.totalPedidos || listaBruta.length);
+                paginaAtual.set(response.paginaAtual || 0);
+            } else if (Array.isArray(response)) {
                 listaBruta = response;
                 totalPaginas.set(1);
                 totalPedidos.set(response.length);
@@ -86,24 +93,32 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
                 totalPedidos.set(response.totalElements || listaBruta.length);
             }
 
+            // Mapeia para o formato esperado pelo frontend
+            // Backend: id, numeroPedido, status, statusDescricao, dataHoraPedido, valorTotal, numeroMesa, itens
+            // itens: produtoId, nomeProduto, quantidade, precoUnitario, subtotal, adicionais
             const listaMapeada: HistoricoPedidoDelivery[] = listaBruta.map(p => ({
-                id: p.pedidoId,
+                id: p.id || p.pedidoId,
                 status: p.status,
-                total: p.total || 0,
-                tipoPedido: p.tipoPedido,
-                createdAt: p.dataHoraSolicitacao,
+                total: p.valorTotal || p.total || 0,
+                tipoPedido: p.tipoPedido || (p.numeroMesa ? 'MESA' : 'DELIVERY'),
+                createdAt: p.dataHoraPedido || p.dataHoraSolicitacao || p.createdAt,
                 itens: p.itens ? p.itens.map((i: any) => ({
-                    produtoNome: i.nomeProduto || i.produto?.nome || 'Item',
-                    quantidade: i.quantidade,
-                    preco: i.precoUnitario || 0
+                    produtoId: i.produtoId,
+                    produtoNome: i.nomeProduto || i.produtoNome || 'Item',
+                    quantidade: i.quantidade || 1,
+                    preco: i.precoUnitario || i.preco || 0
                 })) : []
             }));
 
             pedidos.set(listaMapeada);
             carregado.set(true);
-        } catch (e) {
+        } catch (e: any) {
             console.error('Erro ao carregar histórico de pedidos:', e);
-            erro.set('Não foi possível carregar seus pedidos.');
+            if (e?.status === 401 || e?.status === 403) {
+                erro.set('Você precisa estar logado para ver seus pedidos.');
+            } else {
+                erro.set('Não foi possível carregar seus pedidos.');
+            }
             pedidos.set([]);
         } finally {
             carregando.set(false);
@@ -136,10 +151,15 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
      */
     function formatarStatus(status: string): string {
         const statusMap: Record<string, string> = {
+            'AGUARDANDO_ACEITACAO': 'Aguardando confirmação',
             'PENDENTE': 'Aguardando',
+            'ACEITO': 'Aceito',
             'PREPARANDO': 'Preparando',
+            'PRONTO': 'Pronto',
+            'SAIU_PARA_ENTREGA': 'A caminho',
             'A_CAMINHO': 'A caminho',
             'ENTREGUE': 'Entregue',
+            'FINALIZADO': 'Finalizado',
             'CANCELADO': 'Cancelado'
         };
         return statusMap[status] || status;
@@ -150,10 +170,15 @@ export function useMeusPedidos(clienteIdFn: () => string | undefined) {
      */
     function classeStatus(status: string): string {
         const classeMap: Record<string, string> = {
+            'AGUARDANDO_ACEITACAO': 'status-pendente',
             'PENDENTE': 'status-pendente',
+            'ACEITO': 'status-aceito',
             'PREPARANDO': 'status-preparando',
+            'PRONTO': 'status-pronto',
+            'SAIU_PARA_ENTREGA': 'status-caminho',
             'A_CAMINHO': 'status-caminho',
             'ENTREGUE': 'status-entregue',
+            'FINALIZADO': 'status-finalizado',
             'CANCELADO': 'status-cancelado'
         };
         return classeMap[status] || '';

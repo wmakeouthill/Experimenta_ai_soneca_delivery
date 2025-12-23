@@ -17,6 +17,7 @@ import com.sonecadelivery.pedidos.domain.entities.ItemPedido;
 import com.sonecadelivery.pedidos.domain.entities.ItemPedidoAdicional;
 import com.sonecadelivery.pedidos.domain.entities.MeioPagamentoPedido;
 import com.sonecadelivery.pedidos.domain.entities.Pedido;
+import com.sonecadelivery.pedidos.domain.entities.TipoPedido;
 import com.sonecadelivery.pedidos.domain.valueobjects.NumeroPedido;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -125,8 +126,35 @@ public class AceitarPedidoMesaUseCase {
                 pedidoPendente.getNomeCliente(),
                 usuarioId);
 
-        // Define a mesa
-        pedido.definirMesa(pedidoPendente.getMesaId(), pedidoPendente.getNumeroMesa(), pedidoPendente.getNomeCliente());
+        // Define a mesa (se houver - pedidos delivery não têm mesa)
+        if (pedidoPendente.getMesaId() != null) {
+            pedido.definirMesa(pedidoPendente.getMesaId(), pedidoPendente.getNumeroMesa(),
+                    pedidoPendente.getNomeCliente());
+        }
+
+        // Define dados de delivery/retirada conforme o tipo do pedido
+        String tipoPedidoStr = pedidoPendente.getTipoPedido();
+        if (tipoPedidoStr != null) {
+            switch (tipoPedidoStr.toUpperCase()) {
+                case "DELIVERY":
+                    pedido.definirDadosDelivery(
+                            pedidoPendente.getEnderecoEntrega(),
+                            Preco.zero(), // Taxa de entrega pode ser definida depois
+                            null); // Previsão será definida depois
+                    log.info("Pedido DELIVERY aceito - Endereço: {}", pedidoPendente.getEnderecoEntrega());
+                    break;
+                case "RETIRADA":
+                    pedido.definirDadosRetirada(null); // Previsão será definida depois
+                    log.info("Pedido RETIRADA aceito");
+                    break;
+                case "MESA":
+                    pedido.definirTipoPedido(TipoPedido.MESA);
+                    break;
+                default:
+                    // Mantém BALCAO como padrão
+                    break;
+            }
+        }
 
         // Adiciona os itens
         for (ItemPedidoPendenteDTO itemPendente : pedidoPendente.getItens()) {

@@ -18,7 +18,7 @@ import { CepService } from '../../services/cep.service';
 import { MenuPerfilComponent } from '../menu-perfil/menu-perfil.component';
 import { FooterNavComponent } from './components/footer-nav/footer-nav.component';
 import { DraggableScrollDirective } from '../pedido-cliente-mesa/directives/draggable-scroll.directive';
-import { useFavoritos, useInicio, useMeusPedidos } from './composables';
+import { useFavoritos, useInicio, useMeusPedidos, useSucessoPedido, useAvaliacao } from './composables';
 import { useChatIA } from './composables/use-chat-ia';
 import { GoogleMapsService } from '../../services/google-maps.service';
 import { ChatIAButtonDeliveryComponent } from './components/chat-ia-button.component';
@@ -37,7 +37,12 @@ interface ItemCarrinho {
     adicionais?: { adicional: Adicional; quantidade: number }[];
 }
 
-type MeioPagamento = 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'VALE_REFEICAO' | 'DINHEIRO';
+export type MeioPagamentoTipo = 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'VALE_REFEICAO' | 'DINHEIRO';
+
+export interface MeioPagamentoSelecionado {
+    tipo: MeioPagamentoTipo;
+    valor: number;
+}
 
 interface FormCadastro {
     nome: string;
@@ -208,7 +213,25 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     private deferredPrompt: any = null;
 
     // Pagamento
-    readonly meioPagamentoSelecionado = signal<MeioPagamento | null>(null);
+    // Pagamento
+    readonly meiosPagamentoSelecionados = signal<MeioPagamentoSelecionado[]>([]);
+    readonly pagamentoDividido = signal(false);
+
+    readonly totalAlocado = computed(() =>
+        this.meiosPagamentoSelecionados().reduce((sum, m) => sum + m.valor, 0)
+    );
+
+    readonly valorRestante = computed(() =>
+        this.totalCarrinho() - this.totalAlocado()
+    );
+
+    readonly pagamentoValido = computed(() => {
+        if (this.meiosPagamentoSelecionados().length === 0) return false;
+        if (this.pagamentoDividido()) {
+            return Math.abs(this.totalAlocado() - this.totalCarrinho()) < 0.01;
+        }
+        return true;
+    });
 
     // Sucesso
     readonly pedidoId = signal<string | null>(null);
@@ -240,6 +263,13 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     readonly chatIA = useChatIA(
         () => this.cliente()?.id,
         (acao: AcaoChat) => this.executarAcaoChat(acao)
+    );
+
+    readonly sucessoPedido = useSucessoPedido();
+
+    readonly avaliacao = useAvaliacao(
+        () => this.cliente()?.id,
+        () => this.meusPedidos.pedidoSelecionado()
     );
 
     // ========== COMPUTED ==========
@@ -332,7 +362,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     readonly podeEnviarPedido = computed(() => {
         if (this.carrinhoVazio()) return false;
-        if (!this.meioPagamentoSelecionado()) return false;
+        if (!this.pagamentoValido()) return false;
         if (this.tipoPedido() === 'DELIVERY' && !this.enderecoEntrega().trim()) return false;
         return true;
     });
@@ -475,6 +505,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     ngOnDestroy(): void {
         this.destroy$.next();
         this.destroy$.complete();
+        this.sucessoPedido.destroy();
     }
 
     // ========== GOOGLE AUTH ==========
@@ -1179,86 +1210,116 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.navegarPara('cardapio');
     }
 
-    selecionarMeioPagamento(meio: MeioPagamento): void {
-        this.meioPagamentoSelecionado.set(meio);
+    // ========== PAGAMENTO ==========
+
+    toggleDividido(): void {
+        this.pagamentoDividido.update(v => !v);
+        if (!this.pagamentoDividido()) {
+            this.meiosPagamentoSelecionados.set([]);
+        }
     }
 
-    async enviarPedido(): Promise<void> {
-        if (!this.podeEnviarPedido() || !this.cliente()) return;
+    selecionarMeioPagamento(tipo: MeioPagamentoTipo): void {
+        if (this.pagamentoDividido()) {
+            const meios = [...this.meiosPagamentoSelecionados()];
+            const index = meios.findIndex(m => m.tipo === tipo);
+            if (index >= 0) {
+                meios.splice(index, 1);
+            } else {
+                const totalJaAlocado = meios.reduce((sum, m) => sum + m.valor, 0);
+                const restante = this.totalCarrinho() - totalJaAlocado;
+                meios.push({ tipo, valor: restante > 0 ? restante : 0 });
+            }
+            this.meiosPagamentoSelecionados.set(meios);
+        } else {
+            this.meiosPagamentoSelecionados.set([{ tipo, valor: this.totalCarrinho() }]);
+        }
+    }
+
+    atualizarValorMeio(tipo: MeioPagamentoTipo, valor: number): void {
+        const meios = [...this.meiosPagamentoSelecionados()];
+        const index = meios.findIndex(m => m.tipo === tipo);
+        if (index >= 0) {
+            meios[index].valor = valor;
+            this.meiosPagamentoSelecionados.set(meios);
+        }
+    }
+
+    isMeioSelecionado(tipo: MeioPagamentoTipo): boolean {
+        return this.meiosPagamentoSelecionados().some(m => m.tipo === tipo);
+    }
+
+    getValorMeio(tipo: MeioPagamentoTipo): number {
+        const meio = this.meiosPagamentoSelecionados().find(m => m.tipo === tipo);
+        return meio?.valor ?? 0;
+    }
+
+    enviarPedido(): void {
+        if (!this.podeEnviarPedido()) return;
 
         this.enviando.set(true);
-        this.erro.set(null);
 
-        const clienteData = this.cliente()!;
         const itens: ItemPedidoDeliveryRequest[] = this.itensCarrinho().map(item => ({
             produtoId: item.produto.id,
             quantidade: item.quantidade,
-            observacoes: item.observacao,
-            adicionais: item.adicionais?.map(a => ({
-                adicionalId: a.adicional.id,
-                nomeAdicional: a.adicional.nome,
-                quantidade: a.quantidade,
-                precoUnitario: a.adicional.preco
-            }))
+            observacoes: item.observacao || undefined,
+            adicionais: item.adicionais && item.adicionais.length > 0
+                ? item.adicionais.map(ad => ({ adicionalId: ad.adicional.id, quantidade: ad.quantidade }))
+                : undefined
+        }));
+
+        const cliente = this.cliente();
+        if (!cliente) return;
+
+        // Formata os meios de pagamento
+        const meiosPagamento = this.meiosPagamentoSelecionados().map(m => ({
+            meioPagamento: m.tipo,
+            valor: m.valor
         }));
 
         const request: CriarPedidoDeliveryRequest = {
-            clienteId: clienteData.id,
-            nomeCliente: clienteData.nome,
-            telefoneCliente: clienteData.telefone || '',
-            emailCliente: clienteData.email,
-            itens,
-            meiosPagamento: [{
-                meioPagamento: this.meioPagamentoSelecionado()!,
-                valor: this.totalCarrinho()
-            }],
-            tipoPedido: this.tipoPedido(),
+            clienteId: cliente.id,
+            nomeCliente: cliente.nome,
+            telefoneCliente: cliente.telefone || '',
             enderecoEntrega: this.tipoPedido() === 'DELIVERY' ? this.enderecoEntrega() : undefined,
-            logradouro: clienteData.logradouro,
-            numero: clienteData.numero,
-            complemento: clienteData.complemento,
-            bairro: clienteData.bairro,
-            cidade: clienteData.cidade,
-            estado: clienteData.estado,
-            cep: clienteData.cep,
-            pontoReferencia: clienteData.pontoReferencia,
-            meioPagamento: this.meioPagamentoSelecionado() ?? undefined
+            tipoPedido: this.tipoPedido(),
+            itens,
+            meiosPagamento
         };
 
-        try {
-            const response = await firstValueFrom(this.deliveryService.criarPedido(request));
-            this.pedidoId.set(response.id);
-            this.itensCarrinho.set([]);
-            this.etapaAtual.set('sucesso');
-            this.iniciarPollingStatus(response.id);
-        } catch (e: any) {
-            console.error('Erro ao enviar pedido:', e);
-            this.erro.set(e?.error?.message || 'Erro ao enviar pedido. Tente novamente.');
-        } finally {
-            this.enviando.set(false);
-        }
+        this.deliveryService.criarPedido(request).subscribe({
+            next: (response) => {
+                this.enviando.set(false);
+                this.etapaAtual.set('sucesso');
+                this.itensCarrinho.set([]);
+                this.meiosPagamentoSelecionados.set([]);
+                this.pagamentoDividido.set(false);
+                this.observacaoItem.set('');
+                this.categoriaSelecionada.set(null);
+
+                // Acompanhar status usando o composable
+                if (response.id) {
+                    this.pedidoId.set(response.id);
+                    this.sucessoPedido.iniciarAcompanhamento(response.id);
+                }
+            },
+            error: (e) => {
+                this.enviando.set(false);
+                this.erro.set(e?.error?.message || 'Erro ao enviar pedido. Tente novamente.');
+            }
+        });
     }
 
     // ========== SUCESSO/STATUS ==========
 
-    private iniciarPollingStatus(pedidoId: string): void {
-        interval(10000)
-            .pipe(
-                takeUntil(this.destroy$),
-                switchMap(() => this.deliveryService.buscarStatusPedido(pedidoId)),
-                catchError(() => of(null))
-            )
-            .subscribe(status => {
-                if (status) {
-                    this.statusPedido.set(status);
-                }
-            });
-    }
-
     novoPedido(): void {
+        // Limpa o estado do composable de sucesso
+        this.sucessoPedido.limpar();
+
         this.pedidoId.set(null);
         this.statusPedido.set(null);
-        this.meioPagamentoSelecionado.set(null);
+        this.meiosPagamentoSelecionados.set([]);
+        this.pagamentoDividido.set(false);
         this.etapaAtual.set('cardapio');
     }
 

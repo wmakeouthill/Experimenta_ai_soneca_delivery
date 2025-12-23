@@ -35,13 +35,13 @@ public class PedidoPendenteEntity {
     @Column(length = 36)
     private String id;
 
-    @Column(name = "mesa_token", nullable = false, length = 100)
+    @Column(name = "mesa_token", nullable = true, length = 100)
     private String mesaToken;
 
-    @Column(name = "mesa_id", nullable = false, length = 36)
+    @Column(name = "mesa_id", nullable = true, length = 36)
     private String mesaId;
 
-    @Column(name = "numero_mesa", nullable = false)
+    @Column(name = "numero_mesa", nullable = true)
     private Integer numeroMesa;
 
     @Column(name = "cliente_id", length = 36)

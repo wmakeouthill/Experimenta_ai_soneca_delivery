@@ -150,6 +150,9 @@
     <!-- Migration: Adiciona latitude e longitude na tabela clientes para delivery -->
     <include file="changes/046-add-coordinates-clientes.xml" relativeToChangelogFile="true" />
 
+    <!-- Migration: Permite campos de mesa nulos para pedidos de delivery na fila de pendentes -->
+    <include file="changes/047-allow-null-mesa-fields-pedidos-pendentes.sql" relativeToChangelogFile="true" />
+
     <!-- 
     NOTA: O usuário administrador inicial é criado automaticamente via CommandLineRunner
     (UsuarioInicialConfig) na primeira execução da aplicação.
