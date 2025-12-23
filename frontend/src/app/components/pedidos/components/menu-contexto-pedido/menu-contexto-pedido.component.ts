@@ -26,6 +26,7 @@ export class MenuContextoPedidoComponent {
       StatusPedido.PENDENTE,
       StatusPedido.PREPARANDO,
       StatusPedido.PRONTO,
+      StatusPedido.SAIU_PARA_ENTREGA,
       StatusPedido.FINALIZADO
     ];
     // CANCELADO não pode ser alterado (regra de negócio)
@@ -58,6 +59,7 @@ export class MenuContextoPedidoComponent {
       [StatusPedido.PENDENTE]: 'Aguardando',
       [StatusPedido.PREPARANDO]: 'Preparando',
       [StatusPedido.PRONTO]: 'Pronto',
+      [StatusPedido.SAIU_PARA_ENTREGA]: 'Saiu p/ Entrega',
       [StatusPedido.FINALIZADO]: 'Finalizado',
       [StatusPedido.CANCELADO]: 'Cancelado'
     };

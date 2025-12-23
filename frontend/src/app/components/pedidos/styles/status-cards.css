@@ -76,6 +76,14 @@
   background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 100%);
 }
 
+.status-card.saiu-para-entrega {
+  border-color: #B2EBF2;
+}
+
+.status-card.saiu-para-entrega::before {
+  background: linear-gradient(90deg, #00ACC1 0%, #26C6DA 100%);
+}
+
 .status-card.finalizado {
   border-color: #BBDEFB;
 }
@@ -113,6 +121,16 @@
 .status-card.selected.pronto::before {
   height: 3px;
   background: linear-gradient(90deg, #2e7d32 0%, #4CAF50 50%, #66BB6A 100%);
+}
+
+.status-card.selected.saiu-para-entrega {
+  border-color: #00ACC1;
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #80deea 100%);
+}
+
+.status-card.selected.saiu-para-entrega::before {
+  height: 3px;
+  background: linear-gradient(90deg, #00838f 0%, #00ACC1 50%, #26C6DA 100%);
 }
 
 .status-card.selected.aguardando {
@@ -234,11 +252,12 @@
   0% {
     box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.7);
   }
+
   70% {
     box-shadow: 0 0 0 8px rgba(156, 39, 176, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(156, 39, 176, 0);
   }
 }
-

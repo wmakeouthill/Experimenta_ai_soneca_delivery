@@ -81,6 +81,7 @@ export class RelatorioFinanceiroComponent implements OnInit {
       [StatusPedido.PENDENTE]: 'Pendente',
       [StatusPedido.PREPARANDO]: 'Preparando',
       [StatusPedido.PRONTO]: 'Pronto',
+      [StatusPedido.SAIU_PARA_ENTREGA]: 'Saiu p/ Entrega',
       [StatusPedido.FINALIZADO]: 'Finalizado',
       [StatusPedido.CANCELADO]: 'Cancelado'
     };
@@ -103,6 +104,7 @@ export class RelatorioFinanceiroComponent implements OnInit {
       [StatusPedido.PENDENTE]: 'status-pendente',
       [StatusPedido.PREPARANDO]: 'status-preparando',
       [StatusPedido.PRONTO]: 'status-pronto',
+      [StatusPedido.SAIU_PARA_ENTREGA]: 'status-saiu-para-entrega',
       [StatusPedido.FINALIZADO]: 'status-finalizado',
       [StatusPedido.CANCELADO]: 'status-cancelado'
     };

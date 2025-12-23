@@ -50,7 +50,8 @@
   flex-wrap: wrap;
 }
 
-.btn-header, .btn-voltar {
+.btn-header,
+.btn-voltar {
   background: rgba(255, 255, 255, 0.2);
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -64,7 +65,8 @@
   display: inline-block;
 }
 
-.btn-header:hover, .btn-voltar:hover {
+.btn-header:hover,
+.btn-voltar:hover {
   background: rgba(255, 255, 255, 0.35);
   border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-2px);
@@ -391,6 +393,11 @@
   color: #065F46;
 }
 
+.status-saiu-para-entrega {
+  background: #CFFAFE;
+  color: #0E7490;
+}
+
 .status-finalizado {
   background: #D1FAE5;
   color: #065F46;
@@ -552,4 +559,3 @@
     font-size: 0.85rem;
   }
 }
-

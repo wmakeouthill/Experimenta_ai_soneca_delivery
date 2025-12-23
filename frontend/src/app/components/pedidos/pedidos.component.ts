@@ -514,6 +514,7 @@ export class PedidosComponent implements OnInit, OnDestroy {
       [StatusPedido.PENDENTE]: 'Aguardando',
       [StatusPedido.PREPARANDO]: 'Preparando',
       [StatusPedido.PRONTO]: 'Pronto',
+      [StatusPedido.SAIU_PARA_ENTREGA]: 'Saiu p/ Entrega',
       [StatusPedido.FINALIZADO]: 'Finalizado',
       [StatusPedido.CANCELADO]: 'Cancelado'
     };

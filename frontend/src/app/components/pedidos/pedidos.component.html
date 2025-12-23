@@ -74,6 +74,11 @@
               Pronto
             </button>
             <button class="filtro-opcao"
+              [class.active]="pedidosComposable.statusSelecionado() === StatusPedido.SAIU_PARA_ENTREGA"
+              (click)="filtrarPorStatus(StatusPedido.SAIU_PARA_ENTREGA)">
+              Saiu p/ Entrega
+            </button>
+            <button class="filtro-opcao"
               [class.active]="pedidosComposable.statusSelecionado() === StatusPedido.FINALIZADO"
               (click)="filtrarPorStatus(StatusPedido.FINALIZADO)">
               Finalizado
@@ -144,6 +149,14 @@
           <div class="status-card-header">
             <h3>✅ Pronto</h3>
             <span class="status-count">{{ pedidosPorStatus().pronto.length }}</span>
+          </div>
+        </button>
+        <button class="status-card saiu-para-entrega"
+          [class.selected]="pedidosComposable.statusSelecionado() === StatusPedido.SAIU_PARA_ENTREGA && !filtroFilaMesa()"
+          (click)="filtrarPorStatus(StatusPedido.SAIU_PARA_ENTREGA)">
+          <div class="status-card-header">
+            <h3>🚚 Saiu p/ Entrega</h3>
+            <span class="status-count">{{ pedidosPorStatus().saiuParaEntrega.length }}</span>
           </div>
         </button>
         <button class="status-card finalizado"
@@ -383,11 +396,23 @@
               </button>
               }
               @if (pedido.status === StatusPedido.PRONTO) {
+              @if (isDelivery(pedido)) {
+              <button class="btn-acao btn-saiu-entrega"
+                (click)="atualizarStatus(pedido.id, StatusPedido.SAIU_PARA_ENTREGA)">
+                🚚 Saiu p/ Entrega
+              </button>
+              } @else {
               <button class="btn-acao btn-finalizar" (click)="atualizarStatus(pedido.id, StatusPedido.FINALIZADO)">
                 Finalizar
               </button>
               }
-              @if (pedido.status !== StatusPedido.CANCELADO) {
+              }
+              @if (pedido.status === StatusPedido.SAIU_PARA_ENTREGA) {
+              <button class="btn-acao btn-finalizar" (click)="atualizarStatus(pedido.id, StatusPedido.FINALIZADO)">
+                ✅ Entregue
+              </button>
+              }
+              @if (pedido.status !== StatusPedido.CANCELADO && pedido.status !== StatusPedido.FINALIZADO) {
               <button class="btn-acao btn-cancelar" (click)="cancelarPedido(pedido.id)">
                 Cancelar
               </button>

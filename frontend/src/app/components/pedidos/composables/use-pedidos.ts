@@ -68,6 +68,7 @@ export function usePedidos() {
       aguardando: todos.filter(p => p.status === StatusPedido.PENDENTE),
       preparando: todos.filter(p => p.status === StatusPedido.PREPARANDO),
       pronto: todos.filter(p => p.status === StatusPedido.PRONTO),
+      saiuParaEntrega: todos.filter(p => p.status === StatusPedido.SAIU_PARA_ENTREGA),
       finalizado: todos.filter(p => p.status === StatusPedido.FINALIZADO),
       cancelado: todos.filter(p => p.status === StatusPedido.CANCELADO)
     };
