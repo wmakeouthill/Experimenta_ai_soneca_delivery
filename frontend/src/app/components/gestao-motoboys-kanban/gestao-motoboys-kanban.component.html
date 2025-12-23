@@ -85,15 +85,15 @@
               </div>
             </div>
             <div class="coluna-metadados">
+              @if (coluna.valorAPagar > 0) {
+                <div class="coluna-valor-pagar-compacto">
+                  <span class="valor-label-compacto">A pagar:</span>
+                  <span class="valor-total-compacto">{{ formatarValor(coluna.valorAPagar) }}</span>
+                </div>
+              }
               <div class="coluna-contador">
                 <span class="contador-total">{{ coluna.pedidos.length }}</span>
               </div>
-              @if (coluna.valorAPagar > 0) {
-                <div class="coluna-valor-pagar">
-                  <span class="valor-label">A pagar:</span>
-                  <span class="valor-total">{{ formatarValor(coluna.valorAPagar) }}</span>
-                </div>
-              }
             </div>
           </div>
 
@@ -121,8 +121,44 @@
                           📍 {{ pedido.enderecoEntrega }}
                         </div>
                       }
-                      <div class="pedido-valor">
-                        {{ formatarValor(pedido.valorTotal) }}
+                      <div class="pedido-valor-pedido">
+                        Pedido: {{ formatarValor(pedido.valorTotal) }}
+                      </div>
+                      <div class="pedido-valor-entrega">
+                        @if (editandoValor() === pedido.id) {
+                          <div class="editar-valor-wrapper">
+                            <input 
+                              type="number" 
+                              class="input-valor-motoboy"
+                              [value]="valorEditando()"
+                              (input)="valorEditando.set(+$any($event.target).value)"
+                              step="0.01"
+                              min="0"
+                              (keydown.enter)="salvarValorMotoboy(pedido)"
+                              (keydown.escape)="cancelarEdicaoValor()"
+                              autofocus>
+                            <div class="acoes-edicao">
+                              <button 
+                                class="btn-salvar-valor"
+                                (click)="salvarValorMotoboy(pedido)"
+                                title="Salvar">
+                                ✓
+                              </button>
+                              <button 
+                                class="btn-cancelar-valor"
+                                (click)="cancelarEdicaoValor()"
+                                title="Cancelar">
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        } @else {
+                          <div class="valor-motoboy-display" (click)="iniciarEdicaoValor(pedido)" (keydown.enter)="iniciarEdicaoValor(pedido)" tabindex="0" role="button" title="Clique para editar">
+                            <span class="valor-motoboy-label">Valor entrega:</span>
+                            <span class="valor-motoboy-valor">{{ formatarValor(obterValorMotoboy(pedido)) }}</span>
+                            <span class="icone-editar">✏️</span>
+                          </div>
+                        }
                       </div>
                       <div class="pedido-acoes">
                         <button 
@@ -161,8 +197,44 @@
                           📍 {{ pedido.enderecoEntrega }}
                         </div>
                       }
-                      <div class="pedido-valor">
-                        {{ formatarValor(pedido.valorTotal) }}
+                      <div class="pedido-valor-pedido">
+                        Pedido: {{ formatarValor(pedido.valorTotal) }}
+                      </div>
+                      <div class="pedido-valor-entrega">
+                        @if (editandoValor() === pedido.id) {
+                          <div class="editar-valor-wrapper">
+                            <input 
+                              type="number" 
+                              class="input-valor-motoboy"
+                              [value]="valorEditando()"
+                              (input)="valorEditando.set(+$any($event.target).value)"
+                              step="0.01"
+                              min="0"
+                              (keydown.enter)="salvarValorMotoboy(pedido)"
+                              (keydown.escape)="cancelarEdicaoValor()"
+                              autofocus>
+                            <div class="acoes-edicao">
+                              <button 
+                                class="btn-salvar-valor"
+                                (click)="salvarValorMotoboy(pedido)"
+                                title="Salvar">
+                                ✓
+                              </button>
+                              <button 
+                                class="btn-cancelar-valor"
+                                (click)="cancelarEdicaoValor()"
+                                title="Cancelar">
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        } @else {
+                          <div class="valor-motoboy-display" (click)="iniciarEdicaoValor(pedido)" (keydown.enter)="iniciarEdicaoValor(pedido)" tabindex="0" role="button" title="Clique para editar">
+                            <span class="valor-motoboy-label">Valor entrega:</span>
+                            <span class="valor-motoboy-valor">{{ formatarValor(obterValorMotoboy(pedido)) }}</span>
+                            <span class="icone-editar">✏️</span>
+                          </div>
+                        }
                       </div>
                       <div class="pedido-tempo">
                         <span class="tempo-label">Em trânsito</span>

@@ -34,6 +34,7 @@ public class Pedido extends BaseEntity {
     private String enderecoEntrega; // Endereço de entrega (JSON ou texto)
     private String motoboyId; // ID do motoboy atribuído
     private Preco taxaEntrega; // Taxa de entrega
+    private Preco valorMotoboy; // Valor pago ao motoboy por esta entrega (padrão R$ 5,00)
     private LocalDateTime previsaoEntrega; // Previsão de entrega
 
     private Pedido() {
@@ -45,6 +46,7 @@ public class Pedido extends BaseEntity {
         this.dataFinalizacao = null; // Inicialmente nulo, será definido apenas quando finalizado
         this.tipoPedido = TipoPedido.BALCAO; // Padrão é balcão
         this.taxaEntrega = Preco.zero();
+        this.valorMotoboy = Preco.of(5.0); // Valor padrão de R$ 5,00 por entrega
     }
 
     public static Pedido criar(NumeroPedido numeroPedido, String clienteId, String clienteNome, String usuarioId) {
@@ -268,6 +270,7 @@ public class Pedido extends BaseEntity {
         this.tipoPedido = TipoPedido.DELIVERY;
         this.enderecoEntrega = enderecoEntrega;
         this.taxaEntrega = taxaEntrega != null ? taxaEntrega : Preco.zero();
+        this.valorMotoboy = Preco.of(5.0); // Inicializa com valor padrão
         this.previsaoEntrega = previsaoEntrega;
         touch();
     }
@@ -291,6 +294,25 @@ public class Pedido extends BaseEntity {
             throw new ValidationException("Só é possível atribuir motoboy a pedidos de delivery");
         }
         this.motoboyId = motoboyId;
+        // Inicializa valorMotoboy com padrão de R$ 5,00 se ainda não estiver definido
+        if (this.valorMotoboy == null) {
+            this.valorMotoboy = Preco.of(5.0);
+        }
+        touch();
+    }
+
+    /**
+     * Define o valor a ser pago ao motoboy por esta entrega.
+     * Apenas para pedidos de delivery com motoboy atribuído.
+     */
+    public void definirValorMotoboy(Preco valor) {
+        if (tipoPedido != TipoPedido.DELIVERY || motoboyId == null) {
+            throw new ValidationException("Só é possível definir valor do motoboy para pedidos de delivery com motoboy atribuído");
+        }
+        if (valor == null || valor.getAmount().compareTo(java.math.BigDecimal.ZERO) < 0) {
+            throw new ValidationException("Valor do motoboy deve ser maior ou igual a zero");
+        }
+        this.valorMotoboy = valor;
         touch();
     }
 
@@ -314,11 +336,12 @@ public class Pedido extends BaseEntity {
      * Restaura os dados de delivery do banco de dados (usado pelos mappers).
      */
     public void restaurarDeliveryDoBanco(TipoPedido tipoPedido, String enderecoEntrega, String motoboyId,
-            Preco taxaEntrega, LocalDateTime previsaoEntrega) {
+            Preco taxaEntrega, Preco valorMotoboy, LocalDateTime previsaoEntrega) {
         this.tipoPedido = tipoPedido != null ? tipoPedido : TipoPedido.BALCAO;
         this.enderecoEntrega = enderecoEntrega;
         this.motoboyId = motoboyId;
         this.taxaEntrega = taxaEntrega != null ? taxaEntrega : Preco.zero();
+        this.valorMotoboy = valorMotoboy != null ? valorMotoboy : Preco.of(5.0); // Padrão R$ 5,00
         this.previsaoEntrega = previsaoEntrega;
     }
 

@@ -38,6 +38,8 @@ public class PedidoMapper {
                 .enderecoEntrega(pedido.getEnderecoEntrega())
                 .motoboyId(pedido.getMotoboyId())
                 .taxaEntrega(pedido.getTaxaEntrega() != null ? pedido.getTaxaEntrega().getAmount() : null)
+                .valorMotoboy(pedido.getValorMotoboy() != null ? pedido.getValorMotoboy().getAmount()
+                        : new java.math.BigDecimal("5.00"))
                 .previsaoEntrega(pedido.getPrevisaoEntrega())
                 .dataPedido(pedido.getDataPedido())
                 .dataFinalizacao(pedido.getDataFinalizacao())
@@ -162,11 +164,13 @@ public class PedidoMapper {
 
         // Restaurar dados de delivery (se houver)
         Preco taxaEntrega = entity.getTaxaEntrega() != null ? Preco.of(entity.getTaxaEntrega()) : null;
+        Preco valorMotoboy = entity.getValorMotoboy() != null ? Preco.of(entity.getValorMotoboy()) : Preco.of(5.0);
         pedido.restaurarDeliveryDoBanco(
                 entity.getTipoPedido(),
                 entity.getEnderecoEntrega(),
                 entity.getMotoboyId(),
                 taxaEntrega,
+                valorMotoboy,
                 entity.getPrevisaoEntrega());
 
         // Restaurar data do pedido do banco (preserva a data original de criação)

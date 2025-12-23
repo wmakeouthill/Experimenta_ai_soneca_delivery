@@ -86,6 +86,7 @@ public class CriarPedidoDeliveryUseCase {
                 .valorItens(BigDecimal.ZERO)
                 .valorAdicionais(BigDecimal.ZERO)
                 .taxaEntrega(comando.taxaEntrega() != null ? comando.taxaEntrega() : BigDecimal.ZERO)
+                .valorMotoboy(new BigDecimal("5.00")) // Valor padrão R$ 5,00 por entrega
                 .valorDesconto(comando.valorDesconto() != null ? comando.valorDesconto() : BigDecimal.ZERO)
                 .valorTotal(BigDecimal.ZERO)
                 // Pagamento

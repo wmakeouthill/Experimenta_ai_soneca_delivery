@@ -77,6 +77,7 @@ export interface Pedido {
   motoboyId?: string;
   motoboyNome?: string;
   taxaEntrega?: number;
+  valorMotoboy?: number; // Valor pago ao motoboy por esta entrega (padrão R$ 5,00)
   previsaoEntrega?: string;
 }
 
@@ -201,6 +202,15 @@ export class PedidoService {
    */
   atribuirMotoboy(pedidoId: string, motoboyId: string): Observable<Pedido> {
     return this.http.put<Pedido>(`${this.apiUrl}/${pedidoId}/motoboy`, { motoboyId });
+  }
+
+  /**
+   * Atualiza o valor a ser pago ao motoboy por esta entrega específica.
+   * @param pedidoId ID do pedido
+   * @param valor Valor a ser pago ao motoboy (padrão R$ 5,00)
+   */
+  atualizarValorMotoboy(pedidoId: string, valor: number): Observable<Pedido> {
+    return this.http.put<Pedido>(`${this.apiUrl}/${pedidoId}/valor-motoboy`, { valor });
   }
 }
 

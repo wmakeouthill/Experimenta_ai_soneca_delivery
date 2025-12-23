@@ -267,9 +267,9 @@
 
 .coluna-metadados {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
+  flex-direction: row-reverse;
 }
 
 .coluna-contador {
@@ -283,28 +283,28 @@
   border-radius: 50%;
   font-weight: 700;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
-.coluna-valor-pagar {
+.coluna-valor-pagar-compacto {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  padding: 6px 12px;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 10px;
   background: #ecfdf5;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #10b981;
+  white-space: nowrap;
 }
 
-.valor-label {
-  font-size: 10px;
+.valor-label-compacto {
+  font-size: 11px;
   font-weight: 600;
   color: #047857;
-  text-transform: uppercase;
 }
 
-.valor-total {
-  font-size: 16px;
+.valor-total-compacto {
+  font-size: 14px;
   font-weight: 700;
   color: #065f46;
 }
@@ -413,11 +413,113 @@
   word-break: break-word;
 }
 
-.pedido-valor {
-  font-size: 16px;
-  font-weight: 700;
+.pedido-valor-pedido {
+  font-size: 14px;
+  font-weight: 600;
   color: #059669;
+  margin-bottom: 6px;
+}
+
+.pedido-valor-entrega {
   margin-bottom: 8px;
+}
+
+.valor-motoboy-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: #fef3c7;
+  border-radius: 6px;
+  border: 1px solid #f59e0b;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.valor-motoboy-display:hover {
+  background: #fde68a;
+}
+
+.valor-motoboy-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  margin-right: 6px;
+}
+
+.valor-motoboy-valor {
+  font-size: 14px;
+  font-weight: 700;
+  color: #78350f;
+  flex: 1;
+}
+
+.icone-editar {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.editar-valor-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-valor-motoboy {
+  flex: 1;
+  padding: 6px 8px;
+  border: 2px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #78350f;
+  background: white;
+}
+
+.input-valor-motoboy:focus {
+  outline: none;
+  border-color: #d97706;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+.acoes-edicao {
+  display: flex;
+  gap: 2px;
+}
+
+.btn-salvar-valor,
+.btn-cancelar-valor {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.btn-salvar-valor {
+  background: #10b981;
+  color: white;
+}
+
+.btn-salvar-valor:hover {
+  background: #059669;
+  transform: scale(1.1);
+}
+
+.btn-cancelar-valor {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-cancelar-valor:hover {
+  background: #dc2626;
+  transform: scale(1.1);
 }
 
 .pedido-tempo {

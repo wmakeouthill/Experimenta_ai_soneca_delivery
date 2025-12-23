@@ -153,6 +153,9 @@
     <!-- Migration: Permite campos de mesa nulos para pedidos de delivery na fila de pendentes -->
     <include file="changes/047-allow-null-mesa-fields-pedidos-pendentes.sql" relativeToChangelogFile="true" />
 
+    <!-- Migration: Adiciona coluna valor_motoboy nas tabelas pedidos e pedidos_delivery -->
+    <include file="changes/048-add-valor-motoboy-pedidos.sql" relativeToChangelogFile="true" />
+
     <!-- 
     NOTA: O usuário administrador inicial é criado automaticamente via CommandLineRunner
     (UsuarioInicialConfig) na primeira execução da aplicação.

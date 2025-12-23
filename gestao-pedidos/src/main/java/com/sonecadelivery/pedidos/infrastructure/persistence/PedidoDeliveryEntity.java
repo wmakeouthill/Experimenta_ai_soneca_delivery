@@ -108,6 +108,10 @@ public class PedidoDeliveryEntity {
     @Builder.Default
     private BigDecimal taxaEntrega = BigDecimal.ZERO;
 
+    @Column(name = "valor_motoboy", precision = 10, scale = 2, nullable = false)
+    @Builder.Default
+    private BigDecimal valorMotoboy = new BigDecimal("5.00");
+
     @Column(name = "valor_desconto", precision = 10, scale = 2, nullable = false)
     @Builder.Default
     private BigDecimal valorDesconto = BigDecimal.ZERO;

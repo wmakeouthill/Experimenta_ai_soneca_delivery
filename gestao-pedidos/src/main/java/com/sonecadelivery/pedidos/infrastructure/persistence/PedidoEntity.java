@@ -79,6 +79,10 @@ public class PedidoEntity {
     @Column(name = "taxa_entrega", precision = 10, scale = 2)
     private BigDecimal taxaEntrega;
 
+    @Column(name = "valor_motoboy", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal valorMotoboy = new BigDecimal("5.00");
+
     @Column(name = "previsao_entrega")
     private LocalDateTime previsaoEntrega;
 

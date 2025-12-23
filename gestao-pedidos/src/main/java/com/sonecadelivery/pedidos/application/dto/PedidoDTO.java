@@ -41,6 +41,7 @@ public class PedidoDTO {
         private String motoboyId;
         private String motoboyNome;
         private BigDecimal taxaEntrega;
+        private BigDecimal valorMotoboy; // Valor pago ao motoboy por esta entrega (padrão R$ 5,00)
         private LocalDateTime previsaoEntrega;
 
         public static PedidoDTO de(Pedido pedido) {
@@ -91,6 +92,8 @@ public class PedidoDTO {
                                 .motoboyId(pedido.getMotoboyId())
                                 .taxaEntrega(pedido.getTaxaEntrega() != null ? pedido.getTaxaEntrega().getAmount()
                                                 : null)
+                                .valorMotoboy(pedido.getValorMotoboy() != null ? pedido.getValorMotoboy().getAmount()
+                                                : new BigDecimal("5.00"))
                                 .previsaoEntrega(pedido.getPrevisaoEntrega())
                                 .dataPedido(pedido.getDataPedido())
                                 .dataFinalizacao(pedido.getDataFinalizacao())

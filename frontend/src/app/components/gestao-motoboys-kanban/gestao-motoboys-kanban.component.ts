@@ -45,13 +45,15 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
   readonly sessaoAtiva = signal<SessaoTrabalho | null>(null);
   readonly estaCarregando = signal(false);
   readonly erro = signal<string | null>(null);
+  readonly editandoValor = signal<string | null>(null); // ID do pedido sendo editado
+  readonly valorEditando = signal<number>(5.0);
 
   // Computed: Colunas do kanban agrupadas por motoboy
   readonly colunasKanban = computed(() => {
     const motoboysAtivos = this.motoboys().filter(m => m.ativo);
-    const pedidosDelivery = this.pedidos().filter(p => 
-      p.tipoPedido === TipoPedido.DELIVERY && 
-      p.motoboyId && 
+    const pedidosDelivery = this.pedidos().filter(p =>
+      p.tipoPedido === TipoPedido.DELIVERY &&
+      p.motoboyId &&
       (p.status === StatusPedido.PRONTO || p.status === StatusPedido.SAIU_PARA_ENTREGA)
     );
 
@@ -62,8 +64,11 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
         saiuParaEntrega: pedidosDoMotoboy.filter(p => p.status === StatusPedido.SAIU_PARA_ENTREGA)
       };
 
-      // Calcula o valor a pagar: R$ 5,00 por entrega que saiu para entrega
-      const valorAPagar = pedidosPorStatus.saiuParaEntrega.length * this.VALOR_POR_ENTREGA;
+      // Calcula o valor a pagar: soma dos valores individuais de cada entrega que saiu para entrega
+      const valorAPagar = pedidosPorStatus.saiuParaEntrega.reduce((total, pedido) => {
+        const valor = pedido.valorMotoboy || this.VALOR_POR_ENTREGA;
+        return total + valor;
+      }, 0);
 
       return {
         motoboy,
@@ -75,9 +80,9 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
   });
 
   readonly temSessaoAtiva = computed(() => this.sessaoAtiva() !== null);
-  readonly totalEntregas = computed(() => this.pedidos().filter(p => 
-    p.tipoPedido === TipoPedido.DELIVERY && 
-    p.motoboyId && 
+  readonly totalEntregas = computed(() => this.pedidos().filter(p =>
+    p.tipoPedido === TipoPedido.DELIVERY &&
+    p.motoboyId &&
     (p.status === StatusPedido.PRONTO || p.status === StatusPedido.SAIU_PARA_ENTREGA)
   ).length);
 
@@ -166,7 +171,7 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
     this.pedidoService.atualizarStatus(pedidoId, novoStatus).subscribe({
       next: (pedidoAtualizado) => {
         // Atualiza o pedido na lista
-        this.pedidos.update(pedidos => 
+        this.pedidos.update(pedidos =>
           pedidos.map(p => p.id === pedidoId ? pedidoAtualizado : p)
         );
       },
@@ -183,10 +188,46 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
     }
   }
 
+  iniciarEdicaoValor(pedido: Pedido): void {
+    this.editandoValor.set(pedido.id);
+    this.valorEditando.set(pedido.valorMotoboy || this.VALOR_POR_ENTREGA);
+  }
+
+  cancelarEdicaoValor(): void {
+    this.editandoValor.set(null);
+  }
+
+  salvarValorMotoboy(pedido: Pedido): void {
+    const novoValor = this.valorEditando();
+    if (novoValor < 0) {
+      this.erro.set('Valor deve ser maior ou igual a zero');
+      return;
+    }
+
+    this.pedidoService.atualizarValorMotoboy(pedido.id, novoValor).subscribe({
+      next: (pedidoAtualizado) => {
+        // Atualiza o pedido na lista
+        this.pedidos.update(pedidos =>
+          pedidos.map(p => p.id === pedido.id ? pedidoAtualizado : p)
+        );
+        this.editandoValor.set(null);
+        this.erro.set(null);
+      },
+      error: (err) => {
+        console.error('Erro ao atualizar valor do motoboy:', err);
+        this.erro.set('Erro ao atualizar valor da entrega');
+      }
+    });
+  }
+
+  obterValorMotoboy(pedido: Pedido): number {
+    return pedido.valorMotoboy || this.VALOR_POR_ENTREGA;
+  }
+
   formatarTelefone(telefone: string): string {
     // Remove caracteres não numéricos
     const numeros = telefone.replace(/\D/g, '');
-    
+
     // Formata: (XX) XXXXX-XXXX
     if (numeros.length === 11) {
       return `(${numeros.substring(0, 2)}) ${numeros.substring(2, 7)}-${numeros.substring(7)}`;
@@ -195,7 +236,7 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
     if (numeros.length === 10) {
       return `(${numeros.substring(0, 2)}) ${numeros.substring(2, 6)}-${numeros.substring(6)}`;
     }
-    
+
     return telefone;
   }
 

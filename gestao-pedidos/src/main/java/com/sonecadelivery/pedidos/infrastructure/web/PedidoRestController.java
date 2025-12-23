@@ -3,6 +3,7 @@ package com.sonecadelivery.pedidos.infrastructure.web;
 import com.sonecadelivery.pedidos.infrastructure.idempotency.IdempotencyService;
 import com.sonecadelivery.pedidos.application.dto.AtribuirMotoboyRequest;
 import com.sonecadelivery.pedidos.application.dto.AtualizarStatusPedidoRequest;
+import com.sonecadelivery.pedidos.application.dto.AtualizarValorMotoboyRequest;
 import com.sonecadelivery.pedidos.application.dto.CriarPedidoRequest;
 import com.sonecadelivery.pedidos.application.dto.PedidoDTO;
 import com.sonecadelivery.pedidos.application.dto.RegistrarPagamentoPedidoRequest;
@@ -33,11 +34,12 @@ public class PedidoRestController {
     private final ExcluirPedidoUseCase excluirPedidoUseCase;
     private final RegistrarPagamentoPedidoUseCase registrarPagamentoPedidoUseCase;
     private final AtribuirMotoboyPedidoUseCase atribuirMotoboyPedidoUseCase;
+    private final AtualizarValorMotoboyPedidoUseCase atualizarValorMotoboyPedidoUseCase;
     private final IdempotencyService idempotencyService;
 
     /**
      * Cria um novo pedido.
-     * 
+     *
      * Suporta idempotência via header X-Idempotency-Key para evitar
      * criação de pedidos duplicados em caso de retry.
      */
@@ -135,6 +137,19 @@ public class PedidoRestController {
             @NonNull @PathVariable String id,
             @Valid @RequestBody AtribuirMotoboyRequest request) {
         PedidoDTO pedido = atribuirMotoboyPedidoUseCase.executar(id, request.getMotoboyId());
+        return ResponseEntity.ok(pedido);
+    }
+
+    /**
+     * Atualiza o valor a ser pago ao motoboy por esta entrega específica.
+     * Apenas para pedidos de delivery com motoboy atribuído.
+     * O valor padrão é R$ 5,00, mas pode ser alterado pelo operador/admin.
+     */
+    @PutMapping("/{id}/valor-motoboy")
+    public ResponseEntity<PedidoDTO> atualizarValorMotoboy(
+            @NonNull @PathVariable String id,
+            @Valid @RequestBody AtualizarValorMotoboyRequest request) {
+        PedidoDTO pedido = atualizarValorMotoboyPedidoUseCase.executar(id, request.getValor());
         return ResponseEntity.ok(pedido);
     }
 }

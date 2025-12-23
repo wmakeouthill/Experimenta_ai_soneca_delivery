@@ -163,6 +163,7 @@ public class ListarPedidosUseCase {
                 .motoboyId(entity.getMotoboyId())
                 .motoboyNome(entity.getMotoboyNome())
                 .taxaEntrega(entity.getTaxaEntrega())
+                .valorMotoboy(entity.getValorMotoboy() != null ? entity.getValorMotoboy() : new java.math.BigDecimal("5.00"))
                 .previsaoEntrega(entity.getPrevisaoEntrega())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
