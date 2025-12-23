@@ -64,6 +64,45 @@ public class DeliveryPublicoRestController {
                 return ResponseEntity.ok(response);
         }
 
+        // Injeção do serviço SSE (adicionado via construtor do
+        // @RequiredArgsConstructor)
+        private final com.sonecadelivery.orquestrador.service.StatusLojaSSEService statusLojaSSEService;
+
+        /**
+         * Retorna o status atual da loja para o delivery.
+         * Usado pelo frontend para verificar se pode aceitar pedidos.
+         * 
+         * Possíveis status:
+         * - ABERTA: Loja está funcionando normalmente
+         * - PAUSADA: Loja temporariamente indisponível (alta demanda, etc.)
+         * - FECHADA: Não há sessão de trabalho ativa (loja fechada)
+         */
+        @GetMapping("/status")
+        public ResponseEntity<StatusLojaResponse> verificarStatusLoja() {
+                log.debug("Verificando status da loja para delivery");
+                var status = statusLojaSSEService.getStatusAtual();
+                return ResponseEntity.ok(new StatusLojaResponse(
+                                StatusLoja.valueOf(status.status().name()),
+                                status.mensagem(),
+                                status.numeroSessao()));
+        }
+
+        /**
+         * Endpoint SSE (Server-Sent Events) para receber atualizações de status em
+         * tempo real.
+         * O cliente mantém uma conexão aberta e recebe notificações quando o status
+         * muda.
+         * 
+         * Uso no frontend:
+         * const eventSource = new EventSource('/api/public/delivery/status/stream');
+         * eventSource.addEventListener('status', (e) => { ... });
+         */
+        @GetMapping(value = "/status/stream", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+        public org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamStatusLoja() {
+                log.debug("Novo cliente SSE conectando para stream de status");
+                return statusLojaSSEService.registrar();
+        }
+
         /**
          * Cria um novo pedido de delivery/retirada.
          * 
@@ -374,5 +413,26 @@ public class DeliveryPublicoRestController {
                         String nomeMotoboyAtribuido,
                         String telefoneMotoboyAtribuido,
                         String previsaoEntrega) {
+        }
+
+        /**
+         * Status possíveis da loja para o delivery.
+         */
+        public enum StatusLoja {
+                /** Loja funcionando normalmente */
+                ABERTA,
+                /** Loja temporariamente indisponível (alta demanda, etc.) */
+                PAUSADA,
+                /** Não há sessão de trabalho ativa */
+                FECHADA
+        }
+
+        /**
+         * Resposta do endpoint de status da loja.
+         */
+        public record StatusLojaResponse(
+                        StatusLoja status,
+                        String mensagem,
+                        Integer numeroSessao) {
         }
 }

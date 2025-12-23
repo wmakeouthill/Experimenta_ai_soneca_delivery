@@ -1,6 +1,44 @@
 <div class="delivery-container"
     [class.auth-page]="etapaAtual() === 'boas-vindas' || etapaAtual() === 'login' || etapaAtual() === 'cadastro'">
 
+    <!-- ========== BLOQUEIO: LOJA FECHADA OU PAUSADA ========== -->
+    @if (statusLoja() !== 'ABERTA') {
+    <div class="bloqueio-screen">
+        <div class="bloqueio-content">
+            @if (verificandoStatusLoja()) {
+            <!-- Verificando status -->
+            <div class="bloqueio-loading">
+                <div class="loading-spinner"></div>
+                <p>Verificando disponibilidade...</p>
+            </div>
+            } @else if (statusLoja() === 'FECHADA') {
+            <!-- Loja fechada -->
+            <div class="bloqueio-icon">🏪</div>
+            <h1 class="bloqueio-titulo">Loja Fechada</h1>
+            <p class="bloqueio-mensagem">{{ mensagemStatusLoja() || 'Estamos fechados no momento. Volte em breve!' }}
+            </p>
+            <div class="bloqueio-info">
+                <span>🕐</span>
+                <span>Fique atento aos nossos horários de funcionamento</span>
+            </div>
+            } @else if (statusLoja() === 'PAUSADA') {
+            <!-- Loja pausada temporariamente -->
+            <div class="bloqueio-icon">⏸️</div>
+            <h1 class="bloqueio-titulo">Temporariamente Indisponível</h1>
+            <p class="bloqueio-mensagem">{{ mensagemStatusLoja() || 'Estamos com alta demanda no momento. Por favor,
+                tente novamente em alguns minutos.' }}</p>
+            <div class="bloqueio-info">
+                <span>⏳</span>
+                <span>Voltamos em breve!</span>
+            </div>
+            }
+            <button class="btn-primary btn-large" (click)="verificarStatusLoja()">
+                🔄 Verificar novamente
+            </button>
+        </div>
+    </div>
+    } @else {
+
     <!-- PWA Install Banner -->
     @if (mostrarBannerPwa()) {
     <div class="pwa-install-banner">
@@ -1023,4 +1061,6 @@
         (onRemoverConversa)="chatIA.removerDoHistorico($event)">
     </app-chat-ia-fullscreen-delivery>
     }
+
+    } <!-- Fim do @else statusLoja === ABERTA -->
 </div>

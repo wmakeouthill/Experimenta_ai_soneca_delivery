@@ -23,6 +23,7 @@ import { useChatIA } from './composables/use-chat-ia';
 import { ChatIAButtonDeliveryComponent } from './components/chat-ia-button.component';
 import { ChatIAFullscreenDeliveryComponent } from './components/chat-ia-fullscreen.component';
 import { AcaoChat } from '../../services/chat-ia.service';
+import { StatusLojaService, StatusLoja, StatusLojaResponse } from '../../services/status-loja.service';
 
 type Etapa = 'boas-vindas' | 'login' | 'cadastro' | 'cardapio' | 'checkout' | 'sucesso';
 type AbaDelivery = 'inicio' | 'cardapio' | 'carrinho' | 'perfil';
@@ -76,6 +77,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     private readonly deliveryService = inject(DeliveryService);
     private readonly adicionalService = inject(AdicionalService);
     private readonly cepService = inject(CepService);
+    private readonly statusLojaService = inject(StatusLojaService);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly platformId = inject(PLATFORM_ID);
     private readonly isBrowser = isPlatformBrowser(this.platformId);
@@ -106,6 +108,11 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     readonly erro = signal<string | null>(null);
     readonly etapaAtual = signal<Etapa>('boas-vindas');
     readonly enviando = signal(false);
+
+    // Status da loja (sessão de trabalho)
+    readonly statusLoja = signal<StatusLoja>(StatusLoja.FECHADA);
+    readonly mensagemStatusLoja = signal<string | null>(null);
+    readonly verificandoStatusLoja = signal(true);
 
     // Cliente autenticado
     readonly cliente = signal<ClienteAuth | null>(null);
@@ -340,6 +347,9 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     ngOnInit(): void {
         if (this.isBrowser) {
+            // Verificar status da loja PRIMEIRO
+            this.verificarStatusLoja();
+
             this.chatIA.inicializar(); // Inicializa o chat e histórico
 
             // PWA Install Prompt
@@ -373,9 +383,57 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             }
             this.carregarCardapio();
             this.inicializarGoogleAuth();
+
+            // Conectar ao stream de status da loja (SSE)
+            this.conectarStatusLojaSSE();
         } else {
             this.carregando.set(false);
+            this.verificandoStatusLoja.set(false);
         }
+    }
+
+    /**
+     * Verifica o status da loja (sessão de trabalho).
+     * Se fechada ou pausada, bloqueia o acesso ao delivery.
+     */
+    verificarStatusLoja(): void {
+        this.verificandoStatusLoja.set(true);
+        this.statusLojaService.verificarStatus().subscribe({
+            next: (response) => {
+                this.statusLoja.set(response.status);
+                this.mensagemStatusLoja.set(response.mensagem);
+                this.verificandoStatusLoja.set(false);
+            },
+            error: () => {
+                // Em caso de erro, assume fechada por segurança
+                this.statusLoja.set(StatusLoja.FECHADA);
+                this.mensagemStatusLoja.set('Não foi possível verificar o status da loja.');
+                this.verificandoStatusLoja.set(false);
+            }
+        });
+    }
+
+    /**
+     * Conecta ao stream SSE de status da loja para feedback em tempo real.
+     */
+    private conectarStatusLojaSSE(): void {
+        this.statusLojaService.conectarStream()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (response) => {
+                    // Só atualiza se mudou (embora o signal já lide com isso, é bom ser explícito)
+                    this.statusLoja.set(response.status);
+                    this.mensagemStatusLoja.set(response.mensagem);
+
+                    // Se o status for alterado, remove o loading se estiver ativo
+                    if (this.verificandoStatusLoja()) {
+                        this.verificandoStatusLoja.set(false);
+                    }
+                },
+                error: (e) => {
+                    console.error('Erro no stream de status da loja:', e);
+                }
+            });
     }
 
     ngAfterViewInit(): void {
