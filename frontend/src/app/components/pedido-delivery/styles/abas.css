@@ -65,6 +65,16 @@
     color: var(--text-primary);
 }
 
+.carrinho-item .item-info {
+    flex: 1;
+    min-width: 0;
+    padding-right: 0.5rem;
+}
+
+.item-controls {
+    flex-shrink: 0;
+}
+
 .item-adicionais,
 .item-obs {
     margin: 0.25rem 0 0;
@@ -74,9 +84,13 @@
 
 .item-controls {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.5rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    align-self: flex-start;
+    /* Alinha ao topo junto com o título */
+    margin-top: 0.25rem;
+    /* Leve ajuste para alinhar visualmente com o título */
 }
 
 .quantidade-mini {

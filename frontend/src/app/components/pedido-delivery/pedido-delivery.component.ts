@@ -998,6 +998,14 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         return item.adicionais.map(a => a.adicional.nome).join(', ');
     }
 
+    calcularTotalItem(item: ItemCarrinho): number {
+        let totalUnitario = item.produto.preco;
+        if (item.adicionais) {
+            totalUnitario += item.adicionais.reduce((acc, ad) => acc + (ad.adicional.preco * ad.quantidade), 0);
+        }
+        return totalUnitario * item.quantidade;
+    }
+
     adicionarAoCarrinho(): void {
         const produto = this.produtoSelecionado();
         if (!produto) return;

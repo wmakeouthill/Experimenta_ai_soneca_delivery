@@ -621,7 +621,7 @@
                         <span>{{ item.quantidade }}</span>
                         <button (click)="incrementarItemCarrinho(i)">+</button>
                     </div>
-                    <span class="item-preco">{{ (item.produto.preco * item.quantidade) | currency:'BRL' }}</span>
+                    <span class="item-preco">{{ calcularTotalItem(item) | currency:'BRL' }}</span>
                 </div>
             </div>
             }
@@ -919,7 +919,8 @@
                     <button (click)="incrementarQuantidade()">+</button>
                 </div>
                 <button class="btn-adicionar" (click)="adicionarAoCarrinho()">
-                    Adicionar {{ (produtoSelecionado()!.preco * quantidadeSelecionada()) | currency:'BRL' }}
+                    Adicionar {{ ((produtoSelecionado()!.preco + subtotalAdicionais()) * quantidadeSelecionada()) |
+                    currency:'BRL' }}
                 </button>
             </div>
         </div>
