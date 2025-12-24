@@ -78,11 +78,17 @@ server:
 
 logging:
   level:
+    root: ${LOG_LEVEL:INFO}
     "[com.sonecadelivery]": ${LOG_LEVEL:INFO}
     "[org.springframework.web]": INFO
+    "[org.springframework.web.servlet.DispatcherServlet]": INFO
+    "[org.springframework.web.context.request.async]": INFO
+    "[org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter]": INFO
+    "[org.apache.tomcat]": INFO
+    "[org.apache.catalina]": INFO
+    "[org.apache.coyote]": INFO
     "[org.hibernate.SQL]": ${SHOW_SQL:false}
     "[org.hibernate.type.descriptor.sql.BasicBinder]": ${SHOW_SQL:false}
-    "[org.springframework.web.servlet.DispatcherServlet]": INFO
 
 # Configuração de Impressão de Cupom Fiscal
 impressao:

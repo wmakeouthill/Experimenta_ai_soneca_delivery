@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -105,8 +106,38 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
     
+    /**
+     * Trata exceções de I/O relacionadas a conexões fechadas (broken pipe, connection reset, etc.).
+     * Essas exceções são esperadas quando clientes desconectam durante SSE ou streaming.
+     * Não devem ser logadas como erro, pois são comportamento normal.
+     * 
+     * Nota: SocketException é uma subclasse de IOException, então será capturada automaticamente.
+     */
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<Void> handleIOException(IOException ex) {
+        String errorMsg = ex.getMessage();
+        
+        // Verifica se é um erro esperado de conexão fechada
+        if (errorMsg != null && (errorMsg.contains("Broken pipe") || 
+                                 errorMsg.contains("Connection reset") ||
+                                 errorMsg.contains("closed") ||
+                                 errorMsg.contains("Socket closed") ||
+                                 errorMsg.contains("Connection aborted"))) {
+            // Comportamento esperado - não loga como erro
+            // Apenas retorna 200 OK vazio (cliente já desconectou)
+            return ResponseEntity.ok().build();
+        }
+        
+        // Outros erros de I/O inesperados - loga como warning
+        logger.warn("Erro de I/O: {}", errorMsg);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+    
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+        // IOException já é tratada pelo handler específico acima
+        // O Spring chama handlers mais específicos primeiro
+        
         // Log completo do erro para debug
         logger.error("Erro inesperado: ", ex);
         

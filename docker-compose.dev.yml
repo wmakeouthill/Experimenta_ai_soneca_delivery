@@ -59,7 +59,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret-minimo-256-bits-para-desenvolvimento-local}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-86400}
       - SHOW_SQL=${SHOW_SQL:-true}
-      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - SPRING_PROFILES_ACTIVE=dev
       # ========== Chat IA - OpenAI ==========
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
