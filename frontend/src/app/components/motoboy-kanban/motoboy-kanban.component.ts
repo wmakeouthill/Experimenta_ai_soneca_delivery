@@ -56,6 +56,14 @@ export class MotoboyKanbanComponent implements OnInit {
   constructor() {
     afterNextRender(() => {
       if (!isPlatformBrowser(this.platformId)) return;
+      
+      // Verifica autenticação antes de carregar dados
+      if (!this.motoboyAuthService.isAuthenticated()) {
+        console.warn('⚠️ Motoboy não autenticado. Redirecionando para login...');
+        window.location.href = '/cadastro-motoboy';
+        return;
+      }
+      
       this.carregarMotoboy();
       this.carregarPedidos();
     });
@@ -70,12 +78,19 @@ export class MotoboyKanbanComponent implements OnInit {
     if (motoboyLogado) {
       this.motoboy.set(motoboyLogado);
     } else {
-      // Se não há motoboy logado, tenta buscar do backend
+      // Se não há motoboy logado no sessionStorage, tenta buscar do backend
+      // Isso pode acontecer se o sessionStorage foi limpo mas o token ainda é válido
       this.http.get<MotoboyAuth>('/api/motoboy/me')
         .pipe(
           catchError((err) => {
             console.error('Erro ao carregar dados do motoboy:', err);
-            this.erro.set('Erro ao carregar dados do motoboy');
+            // Se der erro 401 ou 404, redireciona para login
+            if (err.status === 401 || err.status === 404) {
+              this.motoboyAuthService.logout();
+              window.location.href = '/cadastro-motoboy';
+            } else {
+              this.erro.set('Erro ao carregar dados do motoboy');
+            }
             return of(null);
           })
         )
@@ -83,6 +98,10 @@ export class MotoboyKanbanComponent implements OnInit {
           next: (motoboy) => {
             if (motoboy) {
               this.motoboy.set(motoboy);
+              // Salva no sessionStorage para próxima vez
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem('motoboy-auth-data', JSON.stringify(motoboy));
+              }
             }
           }
         });

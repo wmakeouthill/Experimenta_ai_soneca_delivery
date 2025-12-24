@@ -108,13 +108,47 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, OnDestro
         try {
             const response = await firstValueFrom(this.motoboyAuthService.loginGoogle(googleToken));
             
-            if (response) {
-                // Redireciona para o kanban do motoboy
-                this.router.navigate(['/motoboy/kanban']);
+            if (response && response.token && response.motoboy) {
+                // Verifica se a sessão foi salva corretamente
+                const tokenSalvo = this.motoboyAuthService.getToken();
+                const motoboySalvo = this.motoboyAuthService.motoboyLogado;
+                
+                if (!tokenSalvo || !motoboySalvo) {
+                    console.error('Sessão não foi salva corretamente após login');
+                    this.erro.set('Erro ao salvar sessão. Tente novamente.');
+                    this.carregando.set(false);
+                    this.cdr.detectChanges();
+                    return;
+                }
+                
+                console.log('✅ Login realizado com sucesso. Redirecionando...');
+                
+                // Aguarda um pouco para garantir que o sessionStorage foi persistido
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Verifica novamente se a sessão foi salva
+                if (!this.motoboyAuthService.isAuthenticated()) {
+                    console.error('Sessão não persistida após login. Tentando novamente...');
+                    // Tenta salvar manualmente
+                    if (response.token && response.motoboy) {
+                        if (typeof sessionStorage !== 'undefined') {
+                            sessionStorage.setItem('motoboy-auth-token', response.token);
+                            sessionStorage.setItem('motoboy-auth-data', JSON.stringify(response.motoboy));
+                        }
+                    }
+                }
+                
+                // Redireciona para o kanban do motoboy usando window.location para garantir persistência
+                window.location.href = '/motoboy/kanban';
+            } else {
+                console.error('Resposta de login inválida:', response);
+                this.erro.set('Resposta de login inválida. Tente novamente.');
+                this.carregando.set(false);
+                this.cdr.detectChanges();
             }
         } catch (e: any) {
             console.error('Erro ao fazer login com Google:', e);
-            const mensagem = e?.error?.message || 'Erro ao fazer login com Google. Tente novamente.';
+            const mensagem = e?.error?.message || e?.error?.error || 'Erro ao fazer login com Google. Tente novamente.';
             this.erro.set(mensagem);
             this.carregando.set(false);
             this.cdr.detectChanges();

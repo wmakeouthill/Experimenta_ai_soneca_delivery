@@ -57,9 +57,27 @@ export class MotoboyAuthService {
 
   /**
    * Verifica se há um motoboy autenticado.
+   * Em mobile, verifica se o sessionStorage está acessível.
    */
   isAuthenticated(): boolean {
-    return this.motoboyLogado !== null && this.getToken() !== null;
+    if (typeof sessionStorage === 'undefined') {
+      return false;
+    }
+
+    const token = this.getToken();
+    const motoboy = this.motoboyLogado;
+
+    const isAuth = token !== null && motoboy !== null && motoboy.id !== null && motoboy.id !== '';
+
+    if (!isAuth) {
+      console.debug('🔍 Motoboy não autenticado:', {
+        temToken: !!token,
+        temMotoboy: !!motoboy,
+        motoboyId: motoboy?.id
+      });
+    }
+
+    return isAuth;
   }
 
   /**
@@ -87,31 +105,66 @@ export class MotoboyAuthService {
 
   /**
    * Salva a sessão do motoboy no sessionStorage.
+   * Em mobile, garante que os dados sejam persistidos corretamente.
    */
   private salvarSessao(response: MotoboyLoginResponse): void {
     if (typeof sessionStorage === 'undefined') {
-      console.error('sessionStorage não está disponível');
+      console.error('❌ sessionStorage não está disponível');
       return;
     }
 
     if (!response.token) {
-      console.error('Token não recebido na resposta de login');
+      console.error('❌ Token não recebido na resposta de login');
       return;
     }
 
     if (!response.motoboy || !response.motoboy.id) {
-      console.error('Dados do motoboy não recebidos na resposta de login');
+      console.error('❌ Dados do motoboy não recebidos na resposta de login');
       return;
     }
 
-    sessionStorage.setItem(TOKEN_KEY, response.token);
-    sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
+    try {
+      // Salva token e dados do motoboy
+      sessionStorage.setItem(TOKEN_KEY, response.token);
+      sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
 
-    console.log('✅ Sessão do motoboy salva:', {
-      tokenLength: response.token.length,
-      motoboyId: response.motoboy.id,
-      motoboyNome: response.motoboy.nome
-    });
+      // Verifica se foi salvo corretamente (importante em mobile)
+      const tokenVerificado = sessionStorage.getItem(TOKEN_KEY);
+      const motoboyVerificado = sessionStorage.getItem(MOTOBOY_KEY);
+
+      if (!tokenVerificado || !motoboyVerificado) {
+        console.error('❌ Falha ao persistir sessão no sessionStorage');
+        // Tenta novamente
+        sessionStorage.setItem(TOKEN_KEY, response.token);
+        sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
+      }
+
+      // Verifica novamente após segunda tentativa
+      const tokenVerificado2 = sessionStorage.getItem(TOKEN_KEY);
+      const motoboyVerificado2 = sessionStorage.getItem(MOTOBOY_KEY);
+
+      if (tokenVerificado2 && motoboyVerificado2) {
+        console.log('✅ Sessão do motoboy salva com sucesso:', {
+          tokenLength: response.token.length,
+          motoboyId: response.motoboy.id,
+          motoboyNome: response.motoboy.nome,
+          tokenSalvo: tokenVerificado2.substring(0, 20) + '...',
+          motoboySalvo: JSON.parse(motoboyVerificado2).id
+        });
+      } else {
+        console.error('❌ Falha crítica ao salvar sessão. sessionStorage pode estar bloqueado.');
+        throw new Error('Falha ao salvar sessão no sessionStorage');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao salvar sessão:', error);
+      // Em caso de erro, tenta usar try-catch para evitar quebrar o fluxo
+      try {
+        sessionStorage.setItem(TOKEN_KEY, response.token);
+        sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
+      } catch (e) {
+        console.error('❌ Erro crítico ao salvar sessão:', e);
+      }
+    }
   }
 
   /**

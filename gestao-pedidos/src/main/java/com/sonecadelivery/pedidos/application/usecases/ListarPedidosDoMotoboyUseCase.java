@@ -39,27 +39,34 @@ public class ListarPedidosDoMotoboyUseCase {
      */
     @Transactional(readOnly = true)
     public List<PedidoDTO> executar(String motoboyId) {
+        long inicio = System.currentTimeMillis();
         log.info("Listando pedidos do motoboy: {}", motoboyId);
 
-        // Verificar se motoboy existe
-        motoboyRepository.buscarPorId(motoboyId)
+        // Verificar se motoboy existe e obter nome uma única vez
+        Motoboy motoboy = motoboyRepository.buscarPorId(motoboyId)
                 .orElseThrow(() -> new NotFoundException("Motoboy não encontrado"));
+        String motoboyNome = motoboy.getNomeExibicao();
 
         List<PedidoDTO> pedidos = new ArrayList<>();
 
         // Buscar pedidos normais (não-delivery) atribuídos ao motoboy
+        long inicioNormais = System.currentTimeMillis();
         List<PedidoEntity> pedidosNormais = pedidoJpaRepository.findByMotoboyIdOrderByCreatedAtDesc(motoboyId);
-        pedidos.addAll(converterPedidosNormais(pedidosNormais, motoboyId));
+        pedidos.addAll(converterPedidosNormais(pedidosNormais, motoboyNome));
+        log.debug("Pedidos normais processados em {}ms", System.currentTimeMillis() - inicioNormais);
 
         // Buscar pedidos delivery atribuídos ao motoboy
         // A query já filtra por status PRONTO ou SAIU_PARA_ENTREGA
+        long inicioDelivery = System.currentTimeMillis();
         List<PedidoDeliveryEntity> pedidosDelivery = pedidoDeliveryJpaRepository
                 .findByMotoboyIdOrderByCreatedAtDesc(motoboyId);
         
-        log.debug("Encontrados {} pedidos delivery para o motoboy {}", pedidosDelivery.size(), motoboyId);
+        log.debug("Encontrados {} pedidos delivery para o motoboy {} (query executada em {}ms)", 
+                pedidosDelivery.size(), motoboyId, System.currentTimeMillis() - inicioDelivery);
         
         // Inicializar relacionamentos lazy dentro da transação
-        // Isso evita LazyInitializationException ao acessar os relacionamentos
+        // Isso evita LazyInitializationException e problemas com múltiplos JOIN FETCH
+        long inicioInicializacao = System.currentTimeMillis();
         for (PedidoDeliveryEntity pedido : pedidosDelivery) {
             try {
                 // Força o carregamento dos relacionamentos lazy usando Hibernate.initialize()
@@ -74,25 +81,23 @@ public class ListarPedidosDoMotoboyUseCase {
                 log.warn("Erro ao inicializar relacionamentos do pedido {}: {}", pedido.getId(), e.getMessage());
             }
         }
+        log.debug("Relacionamentos inicializados em {}ms", System.currentTimeMillis() - inicioInicializacao);
         
-        pedidos.addAll(converterPedidosDelivery(pedidosDelivery, motoboyId));
+        pedidos.addAll(converterPedidosDelivery(pedidosDelivery, motoboyNome));
 
         // Ordenar por data de criação (mais recentes primeiro)
         pedidos.sort((p1, p2) -> p2.getCreatedAt().compareTo(p1.getCreatedAt()));
 
-        log.info("Encontrados {} pedidos para o motoboy {}", pedidos.size(), motoboyId);
+        long tempoTotal = System.currentTimeMillis() - inicio;
+        log.info("Encontrados {} pedidos para o motoboy {} (processado em {}ms)", 
+                pedidos.size(), motoboyId, tempoTotal);
         return pedidos;
     }
 
-    private List<PedidoDTO> converterPedidosNormais(List<PedidoEntity> entities, String motoboyId) {
+    private List<PedidoDTO> converterPedidosNormais(List<PedidoEntity> entities, String motoboyNome) {
         if (entities.isEmpty()) {
             return new ArrayList<>();
         }
-
-        // Buscar nome do motoboy apenas uma vez
-        String motoboyNome = motoboyRepository.buscarPorId(motoboyId)
-                .map(Motoboy::getNomeExibicao)
-                .orElse(null);
 
         // Converter Entity -> Domain -> DTO
         return entities.stream()
@@ -101,15 +106,10 @@ public class ListarPedidosDoMotoboyUseCase {
                 .collect(Collectors.toList());
     }
 
-    private List<PedidoDTO> converterPedidosDelivery(List<PedidoDeliveryEntity> entities, String motoboyId) {
+    private List<PedidoDTO> converterPedidosDelivery(List<PedidoDeliveryEntity> entities, String motoboyNome) {
         if (entities.isEmpty()) {
             return new ArrayList<>();
         }
-
-        // Buscar nome do motoboy apenas uma vez
-        String motoboyNome = motoboyRepository.buscarPorId(motoboyId)
-                .map(Motoboy::getNomeExibicao)
-                .orElse(null);
 
         // Converter Delivery Entity -> DTO (similar ao ListarPedidosUseCase)
         return entities.stream()
@@ -121,55 +121,67 @@ public class ListarPedidosDoMotoboyUseCase {
         try {
             // Mapear itens (similar ao ListarPedidosUseCase)
             List<com.sonecadelivery.pedidos.application.dto.ItemPedidoDTO> itensDTO = new ArrayList<>();
-            if (entity.getItens() != null && !entity.getItens().isEmpty()) {
-                for (var item : entity.getItens()) {
-                    try {
-                        List<com.sonecadelivery.pedidos.application.dto.ItemPedidoAdicionalDTO> adicionaisDTO = null;
-                        if (item.getAdicionais() != null && !item.getAdicionais().isEmpty()) {
-                            adicionaisDTO = new ArrayList<>();
-                            for (var ad : item.getAdicionais()) {
-                                try {
-                                    adicionaisDTO.add(com.sonecadelivery.pedidos.application.dto.ItemPedidoAdicionalDTO.builder()
-                                            .adicionalId(ad.getAdicionalId())
-                                            .adicionalNome(ad.getNomeAdicional())
-                                            .quantidade(ad.getQuantidade())
-                                            .precoUnitario(ad.getPrecoUnitario())
-                                            .subtotal(ad.getSubtotal())
-                                            .build());
-                                } catch (Exception e) {
-                                    log.warn("Erro ao mapear adicional do item {}: {}", item.getId(), e.getMessage());
+            try {
+                if (entity.getItens() != null && !entity.getItens().isEmpty()) {
+                    for (var item : entity.getItens()) {
+                        try {
+                            List<com.sonecadelivery.pedidos.application.dto.ItemPedidoAdicionalDTO> adicionaisDTO = null;
+                            try {
+                                if (item.getAdicionais() != null && !item.getAdicionais().isEmpty()) {
+                                    adicionaisDTO = new ArrayList<>();
+                                    for (var ad : item.getAdicionais()) {
+                                        try {
+                                            adicionaisDTO.add(com.sonecadelivery.pedidos.application.dto.ItemPedidoAdicionalDTO.builder()
+                                                    .adicionalId(ad.getAdicionalId())
+                                                    .adicionalNome(ad.getNomeAdicional())
+                                                    .quantidade(ad.getQuantidade())
+                                                    .precoUnitario(ad.getPrecoUnitario())
+                                                    .subtotal(ad.getSubtotal())
+                                                    .build());
+                                        } catch (Exception e) {
+                                            log.warn("Erro ao mapear adicional do item {}: {}", item.getId(), e.getMessage(), e);
+                                        }
+                                    }
                                 }
+                            } catch (Exception e) {
+                                log.warn("Erro ao acessar adicionais do item {}: {}", item.getId(), e.getMessage(), e);
                             }
+                            
+                            itensDTO.add(com.sonecadelivery.pedidos.application.dto.ItemPedidoDTO.builder()
+                                    .produtoId(item.getProdutoId())
+                                    .produtoNome(item.getNomeProduto())
+                                    .quantidade(item.getQuantidade())
+                                    .precoUnitario(item.getPrecoUnitario())
+                                    .subtotal(item.getSubtotal())
+                                    .observacoes(item.getObservacoes())
+                                    .adicionais(adicionaisDTO)
+                                    .build());
+                        } catch (Exception e) {
+                            log.warn("Erro ao mapear item do pedido {}: {}", entity.getId(), e.getMessage(), e);
                         }
-                        
-                        itensDTO.add(com.sonecadelivery.pedidos.application.dto.ItemPedidoDTO.builder()
-                                .produtoId(item.getProdutoId())
-                                .produtoNome(item.getNomeProduto())
-                                .quantidade(item.getQuantidade())
-                                .precoUnitario(item.getPrecoUnitario())
-                                .subtotal(item.getSubtotal())
-                                .observacoes(item.getObservacoes())
-                                .adicionais(adicionaisDTO)
-                                .build());
-                    } catch (Exception e) {
-                        log.warn("Erro ao mapear item do pedido {}: {}", entity.getId(), e.getMessage());
                     }
                 }
+            } catch (Exception e) {
+                log.error("Erro ao acessar itens do pedido {}: {}", entity.getId(), e.getMessage(), e);
             }
 
             // Mapear meios de pagamento (similar ao ListarPedidosUseCase)
             List<com.sonecadelivery.pedidos.application.dto.MeioPagamentoDTO> meiosPagamentoDTO = new ArrayList<>();
-            if (entity.getMeiosPagamento() != null && !entity.getMeiosPagamento().isEmpty()) {
-                for (var mp : entity.getMeiosPagamento()) {
-                    try {
-                        meiosPagamentoDTO.add(com.sonecadelivery.pedidos.application.dto.MeioPagamentoDTO.builder()
-                                .meioPagamento(mapMeioPagamento(mp.getTipoPagamento()))
-                                .valor(mp.getValor())
-                                .build());
-                    } catch (Exception e) {
-                        log.warn("Erro ao mapear meio de pagamento do pedido {}: {}", entity.getId(), e.getMessage());
+            try {
+                if (entity.getMeiosPagamento() != null && !entity.getMeiosPagamento().isEmpty()) {
+                    for (var mp : entity.getMeiosPagamento()) {
+                        try {
+                            meiosPagamentoDTO.add(com.sonecadelivery.pedidos.application.dto.MeioPagamentoDTO.builder()
+                                    .meioPagamento(mapMeioPagamento(mp.getTipoPagamento()))
+                                    .valor(mp.getValor())
+                                    .build());
+                        } catch (Exception e) {
+                            log.warn("Erro ao mapear meio de pagamento do pedido {}: {}", entity.getId(), e.getMessage(), e);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                log.error("Erro ao acessar meios de pagamento do pedido {}: {}", entity.getId(), e.getMessage(), e);
             }
 
             return PedidoDTO.builder()
@@ -193,8 +205,28 @@ public class ListarPedidosDoMotoboyUseCase {
                     .updatedAt(entity.getUpdatedAt())
                     .build();
         } catch (Exception e) {
-            log.error("Erro ao mapear PedidoDeliveryEntity para DTO. Pedido ID: {}", entity.getId(), e);
-            throw new RuntimeException("Erro ao converter pedido delivery para DTO: " + e.getMessage(), e);
+            log.error("Erro crítico ao mapear PedidoDeliveryEntity para DTO. Pedido ID: {}", entity.getId(), e);
+            // Retorna um DTO mínimo em caso de erro para não quebrar toda a lista
+            return PedidoDTO.builder()
+                    .id(entity.getId())
+                    .numeroPedido(entity.getNumeroPedido())
+                    .clienteId(entity.getClienteId())
+                    .clienteNome(entity.getNomeCliente() != null ? entity.getNomeCliente() : "Cliente")
+                    .status(mapDeliveryStatus(entity.getStatus()))
+                    .itens(new ArrayList<>())
+                    .valorTotal(entity.getValorTotal())
+                    .observacoes(entity.getObservacoes())
+                    .meiosPagamento(new ArrayList<>())
+                    .tipoPedido(entity.getTipoPedido() != null ? entity.getTipoPedido().name() : null)
+                    .enderecoEntrega(entity.getEnderecoEntrega())
+                    .motoboyId(entity.getMotoboyId())
+                    .motoboyNome(motoboyNome)
+                    .taxaEntrega(entity.getTaxaEntrega())
+                    .valorMotoboy(entity.getValorMotoboy() != null ? entity.getValorMotoboy() : new java.math.BigDecimal("5.00"))
+                    .previsaoEntrega(entity.getPrevisaoEntrega())
+                    .createdAt(entity.getCreatedAt())
+                    .updatedAt(entity.getUpdatedAt())
+                    .build();
         }
     }
 

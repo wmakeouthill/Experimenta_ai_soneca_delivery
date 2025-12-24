@@ -140,15 +140,29 @@ public class MotoboyContaRestController {
             log.warn("Motoboy não encontrado: {}", motoboyId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "Motoboy não encontrado"));
+        } catch (org.hibernate.LazyInitializationException e) {
+            log.error("Erro de LazyInitializationException ao listar pedidos do motoboy: {}", motoboyId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "error", "Erro ao carregar relacionamentos dos pedidos",
+                            "type", "LazyInitializationException",
+                            "message", "Relacionamentos não foram carregados corretamente"
+                    ));
+        } catch (jakarta.persistence.PersistenceException e) {
+            log.error("Erro de PersistenceException ao listar pedidos do motoboy: {}", motoboyId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "error", "Erro de persistência ao listar pedidos",
+                            "type", "PersistenceException",
+                            "message", e.getMessage() != null ? e.getMessage() : "Erro desconhecido de persistência"
+                    ));
         } catch (Exception e) {
             log.error("Erro ao listar pedidos do motoboy: {}", motoboyId, e);
             // Log do stack trace completo para debug
-            if (log.isDebugEnabled()) {
-                log.debug("Stack trace completo:", e);
-            }
+            log.error("Stack trace completo do erro:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
-                            "error", "Erro ao listar pedidos: " + e.getMessage(),
+                            "error", "Erro ao listar pedidos: " + (e.getMessage() != null ? e.getMessage() : "Erro desconhecido"),
                             "type", e.getClass().getSimpleName(),
                             "message", e.getMessage() != null ? e.getMessage() : "Erro desconhecido"
                     ));

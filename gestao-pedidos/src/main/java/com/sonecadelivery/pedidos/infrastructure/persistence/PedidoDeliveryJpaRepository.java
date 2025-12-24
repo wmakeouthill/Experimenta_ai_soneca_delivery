@@ -50,7 +50,8 @@ public interface PedidoDeliveryJpaRepository extends JpaRepository<PedidoDeliver
 
     /**
      * Lista pedidos de um motoboy específico com status PRONTO ou SAIU_PARA_ENTREGA.
-     * Os relacionamentos serão carregados via lazy loading dentro da transação.
+     * Carrega apenas os pedidos. Os relacionamentos serão carregados via lazy loading
+     * dentro da transação para evitar problemas com múltiplos JOIN FETCH aninhados.
      */
     @Query("SELECT p FROM PedidoDeliveryEntity p " +
            "WHERE p.motoboyId = :motoboyId " +
