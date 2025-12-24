@@ -52,7 +52,7 @@ public class OpenAIAdapter implements IAClientPort {
     @Value("${openai.model:" + MODELO_PADRAO + "}")
     private String modeloPrincipal;
     
-    @Value("${openai.models.fallback:gpt-4o-mini,gpt-3.5-turbo}")
+    @Value("${openai.models.fallback:gpt-4o-mini}")
     private String modelosFallbackStr;
     
     @Value("${openai.max-tokens:" + MAX_TOKENS_PADRAO + "}")

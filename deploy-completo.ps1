@@ -164,13 +164,14 @@ if ($deploy -eq "S" -or $deploy -eq "s" -or $deploy -eq "Y" -or $deploy -eq "y")
         --allow-unauthenticated `
         --memory 2Gi `
         --cpu 2 `
-        --timeout 300 `
+        --timeout 600 `
+        --cpu-boost `
         --max-instances 10 `
         --min-instances 0 `
         --port 8080 `
         --add-cloudsql-instances $CLOUD_SQL_CONNECTION `
-        --set-secrets="DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,OPENAI_API_KEY=openai-api-key:latest" `
-        --set-env-vars="^@^DB_URL=$DB_URL@DB_USERNAME=root@SERVER_PORT=8080@SPRING_PROFILES_ACTIVE=prod@SHOW_SQL=false@JWT_EXPIRATION=86400@LOG_LEVEL=INFO@OPENAI_MODEL=gpt-4o-mini@OPENAI_MAX_TOKENS=4000@OPENAI_MODELS_FALLBACK=gpt-4o-mini,gpt-3.5-turbo" `
+        --set-secrets="DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest,OPENAI_API_KEY=openai-api-key:latest" `
+        --set-env-vars="DB_HOST=/cloudsql/$CLOUD_SQL_CONNECTION,DB_PORT=3306,DB_NAME=$DB_NAME,DB_USERNAME=root,DB_URL=$DB_URL,SERVER_PORT=8080,PORT=8080,SPRING_PROFILES_ACTIVE=prod,SHOW_SQL=false,JWT_EXPIRATION=86400,LOG_LEVEL=INFO,OPENAI_MODEL=gpt-4o-mini,OPENAI_MAX_TOKENS=4000,OPENAI_MODELS_FALLBACK=gpt-4o-mini" `
         --project=$PROJECT_ID
     
     if ($LASTEXITCODE -eq 0) {

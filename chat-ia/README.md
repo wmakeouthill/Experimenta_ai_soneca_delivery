@@ -89,8 +89,8 @@ openai.api.key=sk-...
 # Modelo principal (padrão: gpt-5-mini)
 openai.model=gpt-5-mini
 
-# Modelos de fallback separados por vírgula
-openai.models.fallback=gpt-4o-mini,gpt-3.5-turbo
+# Modelo de fallback (apenas um modelo)
+openai.models.fallback=gpt-4o-mini
 
 # Máximo de tokens na resposta
 openai.max-tokens=4000

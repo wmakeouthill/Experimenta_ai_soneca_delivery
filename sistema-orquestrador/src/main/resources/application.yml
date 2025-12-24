@@ -45,7 +45,7 @@ google:
   client-id: ${GOOGLE_CLIENT_ID:}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:${SERVER_PORT:8080}} # Cloud Run define PORT automaticamente, fallback para SERVER_PORT ou 8080
   address: ${SERVER_ADDRESS:0.0.0.0} # Escuta em todas as interfaces (permite acesso via IP da rede)
   error:
     include-message: always
@@ -125,7 +125,7 @@ openai:
     key: ${OPENAI_API_KEY:}
   model: ${OPENAI_MODEL:gpt-4o-mini}
   models:
-    fallback: ${OPENAI_MODELS_FALLBACK:gpt-3.5-turbo}
+    fallback: ${OPENAI_MODELS_FALLBACK:gpt-4o-mini}
   max-tokens: ${OPENAI_MAX_TOKENS:2000}
 
 # System prompt customizável para o assistente Soneca
