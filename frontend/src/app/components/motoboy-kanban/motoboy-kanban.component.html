@@ -37,7 +37,14 @@
     </div>
   </header>
 
-  @if (erro()) {
+  @if (reconectando()) {
+    <div class="reconectando-mensagem">
+      <div class="spinner pequeno"></div>
+      <p>Reconectando...</p>
+    </div>
+  }
+
+  @if (erro() && !reconectando()) {
     <div class="erro-mensagem">
       <p>{{ erro() }}</p>
       <button class="btn-recarregar" (click)="carregarPedidos()">

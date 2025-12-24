@@ -5,11 +5,14 @@ import com.sonecadelivery.pedidos.application.dto.PedidoDTO;
 import com.sonecadelivery.pedidos.application.ports.MotoboyJwtServicePort;
 import com.sonecadelivery.pedidos.application.usecases.GerenciarMotoboysUseCase;
 import com.sonecadelivery.pedidos.application.usecases.ListarPedidosDoMotoboyUseCase;
+import com.sonecadelivery.pedidos.infrastructure.service.MotoboyPedidosSSEService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,7 @@ public class MotoboyContaRestController {
     private final GerenciarMotoboysUseCase gerenciarMotoboysUseCase;
     private final ListarPedidosDoMotoboyUseCase listarPedidosDoMotoboyUseCase;
     private final MotoboyJwtServicePort motoboyJwtService;
+    private final MotoboyPedidosSSEService motoboyPedidosSSEService;
 
     /**
      * Obtém dados do motoboy logado.
@@ -167,6 +171,83 @@ public class MotoboyContaRestController {
                             "message", e.getMessage() != null ? e.getMessage() : "Erro desconhecido"
                     ));
         }
+    }
+
+    /**
+     * Endpoint SSE para receber atualizações em tempo real dos pedidos do motoboy.
+     * GET /api/motoboy/pedidos/stream
+     * 
+     * Retorna um stream Server-Sent Events que envia atualizações sempre que
+     * houver mudanças nos pedidos atribuídos ao motoboy logado.
+     * 
+     * Eventos enviados:
+     * - "pedidos-update": Lista completa de pedidos atualizada
+     * - "ping": Heartbeat para manter conexão ativa
+     * - "error": Erro ao processar
+     * 
+     * @param authorization Header Authorization com token JWT
+     * @param motoboyId Header X-Motoboy-Id (opcional, pode vir do token)
+     * @return SseEmitter para o stream de eventos
+     */
+    @GetMapping(value = "/pedidos/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamPedidos(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestHeader(value = "X-Motoboy-Id", required = false) String motoboyId) {
+        
+        log.debug("Nova conexão SSE para pedidos do motoboy. Header X-Motoboy-Id: {}", motoboyId);
+        
+        // Validar token JWT
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            log.warn("Requisição SSE sem token JWT válido");
+            SseEmitter emitter = new SseEmitter(1000L);
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("error")
+                        .data(Map.of("error", "Token JWT é obrigatório")));
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+        
+        String token = authorization.substring(7);
+        if (!motoboyJwtService.validarToken(token)) {
+            log.warn("Token JWT inválido ou expirado para SSE");
+            SseEmitter emitter = new SseEmitter(1000L);
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("error")
+                        .data(Map.of("error", "Token JWT inválido ou expirado")));
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+        
+        // Extrair motoboyId do token e validar com o header
+        String motoboyIdDoToken = motoboyJwtService.extrairMotoboyId(token);
+        if (motoboyId == null || motoboyId.isBlank()) {
+            motoboyId = motoboyIdDoToken;
+            log.debug("MotoboyId obtido do token para SSE: {}", motoboyId);
+        } else if (!motoboyId.equals(motoboyIdDoToken)) {
+            log.warn("MotoboyId do header ({}) não corresponde ao do token ({}) para SSE", 
+                    motoboyId, motoboyIdDoToken);
+            SseEmitter emitter = new SseEmitter(1000L);
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("error")
+                        .data(Map.of("error", "MotoboyId do header não corresponde ao do token")));
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+
+        log.info("Conexão SSE estabelecida para motoboy: {}", motoboyId);
+        return motoboyPedidosSSEService.registrar(motoboyId);
     }
 }
 

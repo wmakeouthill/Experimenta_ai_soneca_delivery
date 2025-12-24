@@ -1,6 +1,7 @@
 package com.sonecadelivery.pedidos.infrastructure.web;
 
 import com.sonecadelivery.pedidos.infrastructure.idempotency.IdempotencyService;
+import com.sonecadelivery.pedidos.infrastructure.service.MotoboyPedidosSSEService;
 import com.sonecadelivery.pedidos.application.dto.AtribuirMotoboyRequest;
 import com.sonecadelivery.pedidos.application.dto.AtualizarStatusPedidoRequest;
 import com.sonecadelivery.pedidos.application.dto.AtualizarValorMotoboyRequest;
@@ -36,6 +37,7 @@ public class PedidoRestController {
     private final AtribuirMotoboyPedidoUseCase atribuirMotoboyPedidoUseCase;
     private final AtualizarValorMotoboyPedidoUseCase atualizarValorMotoboyPedidoUseCase;
     private final IdempotencyService idempotencyService;
+    private final MotoboyPedidosSSEService motoboyPedidosSSEService;
 
     /**
      * Cria um novo pedido.
@@ -100,6 +102,12 @@ public class PedidoRestController {
             @NonNull @PathVariable String id,
             @Valid @RequestBody AtualizarStatusPedidoRequest request) {
         PedidoDTO pedido = atualizarStatusPedidoUseCase.executar(id, request);
+        
+        // Notifica SSE se o pedido tiver motoboy atribuído
+        if (pedido.getMotoboyId() != null && !pedido.getMotoboyId().isBlank()) {
+            motoboyPedidosSSEService.forcarAtualizacao(pedido.getMotoboyId());
+        }
+        
         return ResponseEntity.ok(pedido);
     }
 
@@ -137,6 +145,12 @@ public class PedidoRestController {
             @NonNull @PathVariable String id,
             @Valid @RequestBody AtribuirMotoboyRequest request) {
         PedidoDTO pedido = atribuirMotoboyPedidoUseCase.executar(id, request.getMotoboyId());
+        
+        // Notifica SSE do motoboy atribuído
+        if (pedido.getMotoboyId() != null && !pedido.getMotoboyId().isBlank()) {
+            motoboyPedidosSSEService.forcarAtualizacao(pedido.getMotoboyId());
+        }
+        
         return ResponseEntity.ok(pedido);
     }
 
@@ -150,6 +164,12 @@ public class PedidoRestController {
             @NonNull @PathVariable String id,
             @Valid @RequestBody AtualizarValorMotoboyRequest request) {
         PedidoDTO pedido = atualizarValorMotoboyPedidoUseCase.executar(id, request.getValor());
+        
+        // Notifica SSE do motoboy
+        if (pedido.getMotoboyId() != null && !pedido.getMotoboyId().isBlank()) {
+            motoboyPedidosSSEService.forcarAtualizacao(pedido.getMotoboyId());
+        }
+        
         return ResponseEntity.ok(pedido);
     }
 }
