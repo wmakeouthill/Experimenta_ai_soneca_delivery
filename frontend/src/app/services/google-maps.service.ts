@@ -27,11 +27,30 @@ export class GoogleMapsService {
         }
 
         this.loadPromise = new Promise((resolve, reject) => {
-            // Verifica se já existe script (caso tenha sido injetado por outro meio)
-            if (document.querySelector('script[src*="maps.googleapis.com"]')) {
-                this.scriptLoaded = true;
-                resolve();
-                return;
+            // Verifica se já existe script
+            const existingScript = document.querySelector('script[src*="maps.googleapis.com"]') as HTMLScriptElement;
+            
+            if (existingScript) {
+                // Verifica se o script existente já tem a biblioteca directions
+                if (existingScript.src.includes('directions')) {
+                    // Verifica se google.maps já está disponível
+                    if (typeof google !== 'undefined' && google.maps) {
+                        this.scriptLoaded = true;
+                        resolve();
+                        return;
+                    } else {
+                        // Aguarda o script carregar
+                        existingScript.addEventListener('load', () => {
+                            this.scriptLoaded = true;
+                            resolve();
+                        });
+                        return;
+                    }
+                } else {
+                    // Remove o script antigo se não tiver directions e recarrega
+                    existingScript.remove();
+                    this.scriptLoaded = false;
+                }
             }
 
             const script = document.createElement('script');
@@ -39,10 +58,16 @@ export class GoogleMapsService {
             script.async = true;
             script.defer = true;
             script.onload = () => {
-                this.scriptLoaded = true;
-                resolve();
+                // Aguarda um pouco para garantir que a API está totalmente carregada
+                setTimeout(() => {
+                    this.scriptLoaded = true;
+                    resolve();
+                }, 100);
             };
-            script.onerror = (error) => reject(error);
+            script.onerror = (error) => {
+                console.error('Erro ao carregar Google Maps script:', error);
+                reject(error);
+            };
             document.head.appendChild(script);
         });
 
@@ -74,9 +99,32 @@ export class GoogleMapsService {
 
     /**
      * Retorna a API do Google Maps carregada.
+     * Aguarda até que google.maps esteja disponível.
      */
     getGoogleMaps(): Promise<any> {
-        return this.loadScript().then(() => google.maps);
+        return this.loadScript().then(() => {
+            return new Promise((resolve, reject) => {
+                // Verifica se google.maps já está disponível
+                if (typeof google !== 'undefined' && google.maps && google.maps.Map) {
+                    resolve(google.maps);
+                    return;
+                }
+
+                // Se não estiver, aguarda até estar disponível
+                let tentativas = 0;
+                const maxTentativas = 50; // 5 segundos máximo
+                const intervalo = setInterval(() => {
+                    tentativas++;
+                    if (typeof google !== 'undefined' && google.maps && google.maps.Map) {
+                        clearInterval(intervalo);
+                        resolve(google.maps);
+                    } else if (tentativas >= maxTentativas) {
+                        clearInterval(intervalo);
+                        reject(new Error('Google Maps API não carregou após timeout'));
+                    }
+                }, 100);
+            });
+        });
     }
 
     /**

@@ -5,16 +5,15 @@
   (onFechar)="fechar()">
   
   <div class="modal-mapa-conteudo">
-    @if (carregandoMapa()) {
-      <div class="mapa-carregando">
-        <div class="spinner"></div>
-        <p>Carregando mapa...</p>
-      </div>
-    } @else {
-      <div class="mapa-container">
-        <div #mapContainer class="mapa-embutido"></div>
-      </div>
-    }
+    <div class="mapa-container" [class.carregando]="carregandoMapa()">
+      @if (carregandoMapa()) {
+        <div class="mapa-carregando">
+          <div class="spinner"></div>
+          <p>Carregando mapa...</p>
+        </div>
+      }
+      <div #mapContainer class="mapa-embutido"></div>
+    </div>
 
     @if (enderecoEntrega()) {
       <div class="endereco-info">

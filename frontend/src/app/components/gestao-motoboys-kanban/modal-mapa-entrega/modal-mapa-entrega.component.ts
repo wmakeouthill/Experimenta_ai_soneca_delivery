@@ -34,6 +34,7 @@ export class ModalMapaEntregaComponent {
   private map: any = null;
   private marker: any = null;
   readonly carregandoMapa = signal<boolean>(false);
+  private mapaInicializado = false;
 
   constructor() {
     if (this.isBrowser) {
@@ -42,16 +43,15 @@ export class ModalMapaEntregaComponent {
         const estaAberto = this.aberto();
         const temCoordenadas = this.latitude() && this.longitude();
         
-        if (estaAberto && temCoordenadas) {
-          // Usa requestAnimationFrame + setTimeout para garantir que o DOM está renderizado
-          // O ViewChild será disponibilizado após o próximo ciclo de renderização
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              this.tentarInicializarMapa();
-            }, 100);
-          });
+        if (estaAberto && temCoordenadas && !this.mapaInicializado) {
+          // Aguarda um ciclo completo de renderização antes de tentar inicializar
+          // O ViewChild precisa estar disponível no DOM
+          setTimeout(() => {
+            this.tentarInicializarMapa();
+          }, 300);
         } else if (!estaAberto) {
           this.limparMapa();
+          this.mapaInicializado = false;
         }
       });
     }
@@ -107,6 +107,12 @@ export class ModalMapaEntregaComponent {
     try {
       const maps = await this.googleMapsService.getGoogleMaps();
       
+      // Verifica se maps.Map está disponível
+      if (!maps || !maps.Map) {
+        console.error('Google Maps API não está disponível:', { maps, temMap: !!maps?.Map });
+        throw new Error('Google Maps API não está disponível');
+      }
+      
       // Verifica novamente se o container ainda está disponível após carregar Maps
       const containerAtualizado = this.mapContainer?.nativeElement;
       if (!containerAtualizado) {
@@ -119,6 +125,7 @@ export class ModalMapaEntregaComponent {
       const destino = { lat: this.latitude()!, lng: this.longitude()! };
 
       console.log('Inicializando mapa com destino:', destino);
+      console.log('Maps disponível:', { temMap: !!maps.Map, temMarker: !!maps.Marker });
 
       // Limpa o container antes de criar o mapa
       containerAtualizado.innerHTML = '';
@@ -141,8 +148,11 @@ export class ModalMapaEntregaComponent {
         animation: maps.Animation.DROP
       });
 
+      this.mapaInicializado = true;
+
       // Tenta obter localização atual e mostrar rota
-      if (navigator.geolocation) {
+      // Verifica se a biblioteca directions está disponível
+      if (navigator.geolocation && maps.DirectionsService) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const origem = {
@@ -151,11 +161,18 @@ export class ModalMapaEntregaComponent {
             };
             this.exibirRota(origem, destino, maps);
           },
-          () => {
+          (error) => {
             // Se não conseguir obter localização, apenas mostra o destino
-            console.log('Não foi possível obter localização atual');
+            console.log('Não foi possível obter localização atual:', error);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
           }
         );
+      } else {
+        console.warn('Biblioteca Directions não disponível ou geolocalização não suportada');
       }
     } catch (error) {
       console.error('Erro ao inicializar mapa:', error);
@@ -168,6 +185,11 @@ export class ModalMapaEntregaComponent {
   }
 
   private exibirRota(origem: { lat: number; lng: number }, destino: { lat: number; lng: number }, maps: any): void {
+    if (!maps.DirectionsService || !maps.DirectionsRenderer) {
+      console.warn('Biblioteca Directions não está disponível');
+      return;
+    }
+
     const directionsService = new maps.DirectionsService();
     const directionsRenderer = new maps.DirectionsRenderer({
       map: this.map,
@@ -197,6 +219,11 @@ export class ModalMapaEntregaComponent {
           this.map?.fitBounds(bounds);
         } else {
           console.warn('Erro ao calcular rota:', status);
+          // Se houver erro, pelo menos mostra o destino centralizado
+          if (this.map) {
+            this.map.setCenter(destino);
+            this.map.setZoom(16);
+          }
         }
       }
     );
