@@ -1,17 +1,25 @@
 # Cloud Build configuration para Google Cloud Run com Cloud SQL e Secret Manager
 steps:
   # Build da imagem Docker usando Dockerfile.cloud-run
+  # IMPORTANTE: Variáveis do frontend são passadas via --build-arg
+  # Essas variáveis vêm do Secret Manager (GOOGLE_CLIENT_ID e GOOGLE_MAPS_API_KEY)
+  # ou de substituições (_GOOGLE_CLIENT_ID e _GOOGLE_MAPS_API_KEY)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '-f'
       - 'Dockerfile.cloud-run'
+      - '--build-arg'
+      - 'GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID'
+      - '--build-arg'
+      - 'GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY'
       - '-t'
       - 'gcr.io/$PROJECT_ID/experimentaai-delivery:$SHORT_SHA'
       - '-t'
       - 'gcr.io/$PROJECT_ID/experimentaai-delivery:latest'
       - '.'
     timeout: '1800s'
+    secretEnv: ['GOOGLE_CLIENT_ID', 'GOOGLE_MAPS_API_KEY']
 
   # Push da imagem para Container Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -69,6 +77,11 @@ availableSecrets:
       env: 'JWT_SECRET'
     - versionName: projects/$PROJECT_ID/secrets/openai-api-key/versions/latest
       env: 'OPENAI_API_KEY'
+    # Secrets do frontend (usados no BUILD TIME via --build-arg)
+    - versionName: projects/$PROJECT_ID/secrets/google-client-id/versions/latest
+      env: 'GOOGLE_CLIENT_ID'
+    - versionName: projects/$PROJECT_ID/secrets/google-maps-api-key/versions/latest
+      env: 'GOOGLE_MAPS_API_KEY'
 
 # Opções
 options:
@@ -82,9 +95,15 @@ images:
       - 'gcr.io/$PROJECT_ID/experimentaai-delivery:latest'
 
 # Variáveis de substituição (definir no Cloud Build)
-# Exemplo: gcloud builds submit --substitutions=_CLOUD_SQL_CONNECTION_NAME="proj:region:instance",_DB_NAME="experimentaai_delivery",_DB_USERNAME="soneca_delivery_user"
+# Exemplo: gcloud builds submit --substitutions=_CLOUD_SQL_CONNECTION_NAME="proj:region:instance",_DB_NAME="experimentaai_delivery",_DB_USERNAME="soneca_delivery_user",_GOOGLE_CLIENT_ID="xxx",_GOOGLE_MAPS_API_KEY="yyy"
+# 
+# NOTA: Se você usar Secret Manager, as variáveis _GOOGLE_CLIENT_ID e _GOOGLE_MAPS_API_KEY
+# serão obtidas automaticamente dos secrets. Se não usar, pode passar diretamente aqui.
 substitutions:
   _CLOUD_SQL_CONNECTION_NAME: ''  # Formato: PROJECT_ID:REGION:INSTANCE_NAME
   _DB_NAME: 'experimentaai_delivery'
   _DB_USERNAME: 'soneca_delivery_user'
+  # Variáveis do frontend (opcional - se não usar Secret Manager)
+  _GOOGLE_CLIENT_ID: ''  # Será obtido do Secret Manager se disponível
+  _GOOGLE_MAPS_API_KEY: ''  # Será obtido do Secret Manager se disponível
 

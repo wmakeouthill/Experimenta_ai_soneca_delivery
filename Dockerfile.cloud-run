@@ -4,6 +4,15 @@ FROM node:20-alpine AS frontend-build
 
 WORKDIR /app/frontend
 
+# Build arguments para variáveis de ambiente do frontend
+# Essas variáveis são injetadas no BUILD TIME e usadas pelo script set-env.js
+ARG GOOGLE_CLIENT_ID
+ARG GOOGLE_MAPS_API_KEY
+
+# Expor como ENV para o script set-env.js poder acessar
+ENV GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+ENV GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+
 # Copiar package files
 COPY frontend/package*.json ./
 
@@ -13,7 +22,7 @@ RUN npm ci
 # Copiar código fonte do frontend
 COPY frontend ./
 
-# Build do frontend
+# Build do frontend (o script set-env.js será executado via npm run config)
 RUN npm run build
 
 # Stage 2: Build do Maven (com frontend já buildado)
