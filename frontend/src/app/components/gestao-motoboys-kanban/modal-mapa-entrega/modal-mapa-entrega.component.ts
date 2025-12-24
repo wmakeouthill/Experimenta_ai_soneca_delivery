@@ -1,7 +1,8 @@
-import { Component, inject, input, output, effect, signal, PLATFORM_ID, ChangeDetectionStrategy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, input, output, effect, signal, computed, PLATFORM_ID, ChangeDetectionStrategy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { BaseModalComponent } from '../../../components/cardapio/modals/base-modal/base-modal.component';
 import { GoogleMapsService } from '../../../services/google-maps.service';
+import { StatusPedido } from '../../../services/pedido.service';
 
 /**
  * Modal para exibir mapa com localização de entrega e opção de abrir rota.
@@ -26,8 +27,15 @@ export class ModalMapaEntregaComponent {
   readonly longitude = input<number | null>(null);
   readonly enderecoEntrega = input<string>('');
   readonly numeroPedido = input<string>('');
+  readonly statusPedido = input<string>(''); // Status do pedido para controlar visibilidade do botão
 
   readonly onFechar = output<void>();
+  readonly onMarcarComoEntregue = output<void>();
+
+  // Computed para verificar se deve mostrar o botão "Marcar como Entregue"
+  readonly podeMarcarComoEntregue = computed(() => {
+    return this.statusPedido() === StatusPedido.SAIU_PARA_ENTREGA;
+  });
 
   @ViewChild('mapContainer', { static: false }) mapContainer?: ElementRef<HTMLDivElement>;
 
@@ -671,6 +679,10 @@ export class ModalMapaEntregaComponent {
 
   fechar(): void {
     this.onFechar.emit();
+  }
+
+  marcarComoEntregue(): void {
+    this.onMarcarComoEntregue.emit();
   }
 }
 

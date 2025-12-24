@@ -153,6 +153,28 @@
   background: #e5e7eb;
 }
 
+.btn-entregue {
+  padding: 0.75rem 1.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.btn-entregue:hover {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-entregue:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 768px) {
   .mapa-container {
     height: 400px;

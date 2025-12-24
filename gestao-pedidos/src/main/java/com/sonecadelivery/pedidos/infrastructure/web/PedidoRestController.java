@@ -100,8 +100,10 @@ public class PedidoRestController {
     @PutMapping("/{id}/status")
     public ResponseEntity<PedidoDTO> atualizarStatus(
             @NonNull @PathVariable String id,
-            @Valid @RequestBody AtualizarStatusPedidoRequest request) {
-        PedidoDTO pedido = atualizarStatusPedidoUseCase.executar(id, request);
+            @Valid @RequestBody AtualizarStatusPedidoRequest request,
+            @RequestHeader(value = "X-Motoboy-Id", required = false) String motoboyIdRequisicao) {
+        // Passa motoboyId opcional para validação de segurança
+        PedidoDTO pedido = atualizarStatusPedidoUseCase.executar(id, request, motoboyIdRequisicao);
         
         // Notifica SSE se o pedido tiver motoboy atribuído
         if (pedido.getMotoboyId() != null && !pedido.getMotoboyId().isBlank()) {

@@ -24,6 +24,14 @@
     }
 
     <div class="acoes-mapa">
+      @if (podeMarcarComoEntregue()) {
+        <button
+          type="button"
+          class="btn-entregue"
+          (click)="marcarComoEntregue()">
+          ✓ Marcar como Entregue
+        </button>
+      }
       <button
         type="button"
         class="btn-iniciar-viagem"

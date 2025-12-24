@@ -8,7 +8,7 @@ import { MotoboyRastreamentoService } from '../../services/motoboy-rastreamento.
 import { GoogleMapsService } from '../../services/google-maps.service';
 import { ModalMapaEntregaComponent } from '../gestao-motoboys-kanban/modal-mapa-entrega/modal-mapa-entrega.component';
 import { catchError, of, timer, switchMap, retry, timeout, delay, throwError, EMPTY, Subject, merge } from 'rxjs';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
 interface PedidosPorStatus {
   pronto: Pedido[];
@@ -785,7 +785,16 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   }
 
   atualizarStatusPedido(pedidoId: string, novoStatus: StatusPedido): void {
-    this.pedidoService.atualizarStatus(pedidoId, novoStatus)
+    // Obtém motoboyId para validação de segurança no backend
+    const motoboyId = this.motoboyAuthService.motoboyLogado?.id;
+    
+    // Chama o service com headers customizados se for motoboy
+    let headers = new HttpHeaders();
+    if (motoboyId) {
+      headers = headers.set('X-Motoboy-Id', motoboyId);
+    }
+    
+    this.http.put<Pedido>(`/api/pedidos/${pedidoId}/status`, { status: novoStatus }, { headers })
       .pipe(
         timeout(10000),
         retry({
@@ -822,6 +831,12 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   marcarComoSaiuParaEntrega(pedido: Pedido): void {
     if (pedido.status === StatusPedido.PRONTO) {
       this.atualizarStatusPedido(pedido.id, StatusPedido.SAIU_PARA_ENTREGA);
+    }
+  }
+
+  marcarComoEntregue(pedido: Pedido): void {
+    if (pedido.status === StatusPedido.SAIU_PARA_ENTREGA) {
+      this.atualizarStatusPedido(pedido.id, StatusPedido.FINALIZADO);
     }
   }
 
@@ -885,6 +900,15 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   fecharModalMapa(): void {
     this.modalMapaAberto.set(false);
     this.pedidoSelecionado.set(null);
+  }
+
+  marcarComoEntregueNoModal(): void {
+    const pedido = this.pedidoSelecionado();
+    if (pedido) {
+      this.marcarComoEntregue(pedido);
+      // Fecha o modal após marcar como entregue
+      this.fecharModalMapa();
+    }
   }
 
   // ========== PWA ==========

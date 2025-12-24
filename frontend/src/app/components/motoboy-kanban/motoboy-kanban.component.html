@@ -122,6 +122,14 @@
                 <div class="pedido-tempo">
                   <span class="tempo-label">Em trânsito</span>
                 </div>
+                <div class="pedido-acoes">
+                  <button 
+                    class="btn-acao btn-entregue"
+                    (click)="$event.stopPropagation(); marcarComoEntregue(pedido)"
+                    title="Marcar pedido como entregue">
+                    ✓ Marcar como Entregue
+                  </button>
+                </div>
               </div>
             }
             @if (pedidosPorStatus().saiuParaEntrega.length === 0) {
@@ -201,6 +209,8 @@
   [longitude]="pedidoSelecionado()?.longitude ?? null"
   [enderecoEntrega]="pedidoSelecionado()?.enderecoEntrega ?? ''"
   [numeroPedido]="pedidoSelecionado()?.numeroPedido ?? ''"
-  (onFechar)="fecharModalMapa()">
+  [statusPedido]="pedidoSelecionado()?.status ?? ''"
+  (onFechar)="fecharModalMapa()"
+  (onMarcarComoEntregue)="marcarComoEntregueNoModal()">
 </app-modal-mapa-entrega>
 

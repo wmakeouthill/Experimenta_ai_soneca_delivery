@@ -420,6 +420,21 @@
   transform: translateY(0);
 }
 
+.btn-entregue {
+  background: #10b981;
+  color: white;
+}
+
+.btn-entregue:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-entregue:active {
+  transform: translateY(0);
+}
+
 .sem-pedidos-coluna {
   text-align: center;
   padding: 40px 20px;
