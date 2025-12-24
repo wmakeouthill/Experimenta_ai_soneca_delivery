@@ -48,7 +48,7 @@ export class ModalMapaEntregaComponent {
       effect(() => {
         const estaAberto = this.aberto();
         const temCoordenadas = this.latitude() && this.longitude();
-        
+
         if (estaAberto && temCoordenadas && !this.mapaInicializado) {
           // Aguarda um ciclo completo de renderização antes de tentar inicializar
           // O ViewChild precisa estar disponível no DOM
@@ -73,7 +73,7 @@ export class ModalMapaEntregaComponent {
    */
   private tentarInicializarMapa(tentativa: number = 0): void {
     const maxTentativas = 5;
-    
+
     if (this.mapContainer?.nativeElement && this.latitude() && this.longitude()) {
       this.inicializarMapa();
     } else if (tentativa < maxTentativas) {
@@ -116,13 +116,13 @@ export class ModalMapaEntregaComponent {
 
     try {
       const maps = await this.googleMapsService.getGoogleMaps();
-      
+
       // Verifica se maps.Map está disponível
       if (!maps || !maps.Map) {
         console.error('Google Maps API não está disponível:', { maps, temMap: !!maps?.Map });
         throw new Error('Google Maps API não está disponível');
       }
-      
+
       // Verifica novamente se o container ainda está disponível após carregar Maps
       const containerAtualizado = this.mapContainer?.nativeElement;
       if (!containerAtualizado) {
@@ -183,7 +183,7 @@ export class ModalMapaEntregaComponent {
             };
             const precisao = position.coords.accuracy;
             console.log('Localização obtida:', origem, 'Precisão:', precisao, 'metros');
-            
+
             // Se a precisão for muito ruim (> 1000m), tenta novamente
             if (precisao > 1000) {
               console.warn('Precisão muito baixa, tentando novamente com GPS...');
@@ -259,7 +259,7 @@ export class ModalMapaEntregaComponent {
         if (status === 'OK') {
           console.log('Rota calculada com sucesso!');
           this.directionsRenderer.setDirections(result);
-          
+
           // Ajusta o zoom para mostrar toda a rota
           const bounds = new maps.LatLngBounds();
           result.routes[0].legs.forEach((leg: any) => {
@@ -267,7 +267,7 @@ export class ModalMapaEntregaComponent {
             bounds.extend(leg.end_location);
           });
           this.map?.fitBounds(bounds);
-          
+
           // Adiciona marcador na origem (localização atual)
           if (this.markerAtual) {
             this.markerAtual.setMap(null);
@@ -302,7 +302,7 @@ export class ModalMapaEntregaComponent {
    */
   private tentarObterLocalizacaoPrecisa(destino: { lat: number; lng: number }, maps: any, tentativa: number = 0): void {
     const maxTentativas = 3;
-    
+
     if (tentativa >= maxTentativas) {
       console.warn('Não foi possível obter localização precisa após múltiplas tentativas');
       // Mostra apenas o destino
@@ -317,7 +317,7 @@ export class ModalMapaEntregaComponent {
         };
         const precisao = position.coords.accuracy;
         console.log(`Tentativa ${tentativa + 1}: Localização obtida com precisão de ${precisao}m`);
-        
+
         if (precisao <= 100) {
           // Precisão aceitável (<= 100m)
           this.exibirRota(origem, destino, maps);
@@ -419,7 +419,7 @@ export class ModalMapaEntregaComponent {
           };
           ultimaPosicao = origem;
           calcularRotaInicial(origem);
-          
+
           // Cria marcador da localização atual
           if (this.markerAtual) {
             this.markerAtual.setPosition(origem);
@@ -456,12 +456,12 @@ export class ModalMapaEntregaComponent {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
-          
+
           // Calcula rota inicial se ainda não foi calculada
           if (!primeiraPosicaoObtida) {
             calcularRotaInicial(origem);
           }
-          
+
           // Atualiza o marcador da localização atual
           if (this.markerAtual) {
             this.markerAtual.setPosition(origem);
@@ -483,13 +483,13 @@ export class ModalMapaEntregaComponent {
 
           // Centraliza o mapa na localização atual (modo navegação)
           this.map.setCenter(origem);
-          
+
           // Calcula o heading (direção) baseado no movimento
           if (ultimaPosicao) {
             const heading = this.calcularHeading(ultimaPosicao, origem);
             this.map.setHeading(heading); // Rotaciona o mapa na direção do movimento
           }
-          
+
           // Recalcula a rota periodicamente ou se mudou muito de posição
           const agora = Date.now();
           const tempoDesdeUltimaAtualizacao = agora - ultimaAtualizacaoRota;
@@ -529,10 +529,10 @@ export class ModalMapaEntregaComponent {
     const Δφ = (ponto2.lat - ponto1.lat) * Math.PI / 180;
     const Δλ = (ponto2.lng - ponto1.lng) * Math.PI / 180;
 
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
   }
@@ -576,9 +576,9 @@ export class ModalMapaEntregaComponent {
     }
 
     const directionsService = new maps.DirectionsService();
-    
+
     console.log('Recalculando rota de', origem, 'para', destino);
-    
+
     directionsService.route(
       {
         origin: origem,
@@ -620,7 +620,7 @@ export class ModalMapaEntregaComponent {
       navigator.geolocation.clearWatch(this.watchPositionId);
       this.watchPositionId = null;
     }
-    
+
     // Limpa os marcadores e renderizador
     if (this.marker) {
       this.marker.setMap(null);
