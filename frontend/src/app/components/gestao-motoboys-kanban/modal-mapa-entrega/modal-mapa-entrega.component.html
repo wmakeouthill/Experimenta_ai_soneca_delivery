@@ -26,6 +26,18 @@
     <div class="acoes-mapa">
       <button
         type="button"
+        class="btn-iniciar-viagem"
+        [class.viagem-ativa]="viagemIniciada()"
+        (click)="iniciarViagem()"
+        [disabled]="!latitude() || !longitude()">
+        @if (viagemIniciada()) {
+          🛑 Parar Viagem
+        } @else {
+          🚀 Iniciar Viagem
+        }
+      </button>
+      <button
+        type="button"
         class="btn-abrir-maps"
         (click)="abrirNoGoogleMaps()"
         [disabled]="!latitude() || !longitude()">

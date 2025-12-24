@@ -18,23 +18,30 @@ export class GoogleMapsService {
      * Carrega o script da API do Google Maps dinamicamente.
      */
     loadScript(): Promise<void> {
-        // Sempre verifica se precisa recarregar (pode ter mudado a biblioteca)
-        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]') as HTMLScriptElement;
+        // Remove TODOS os scripts antigos do Google Maps para evitar conflitos
+        const existingScripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+        existingScripts.forEach(script => {
+            const src = (script as HTMLScriptElement).src;
+            // Remove scripts antigos ou com callback (versões antigas)
+            if (src.includes('callback=') || !src.includes('libraries=places')) {
+                script.remove();
+                this.scriptLoaded = false;
+                this.loadPromise = null;
+            }
+        });
+
+        // Verifica se já existe script com places carregado
+        const existingScriptWithPlaces = document.querySelector('script[src*="maps.googleapis.com"][src*="libraries=places"]:not([src*="callback"])') as HTMLScriptElement;
         
-        if (existingScript && !existingScript.src.includes('directions')) {
-            // Remove script antigo sem directions
-            existingScript.remove();
-            this.scriptLoaded = false;
-            this.loadPromise = null;
-        } else if (existingScript && existingScript.src.includes('directions')) {
-            // Script já existe com directions, verifica se está carregado
-            if (this.scriptLoaded && typeof google !== 'undefined' && google.maps) {
+        if (existingScriptWithPlaces) {
+            // Script já existe com places, verifica se está carregado
+            if (this.scriptLoaded && typeof google !== 'undefined' && google.maps && google.maps.DirectionsService) {
                 return Promise.resolve();
             }
             if (this.loadPromise) return this.loadPromise;
         }
 
-        if (this.scriptLoaded && typeof google !== 'undefined' && google.maps) {
+        if (this.scriptLoaded && typeof google !== 'undefined' && google.maps && google.maps.DirectionsService) {
             return Promise.resolve();
         }
         if (this.loadPromise) return this.loadPromise;
@@ -45,10 +52,10 @@ export class GoogleMapsService {
         }
 
         this.loadPromise = new Promise((resolve, reject) => {
-            // Verifica se já existe script com directions
-            const existingScriptWithDirections = document.querySelector('script[src*="maps.googleapis.com"][src*="directions"]') as HTMLScriptElement;
+            // Verifica se já existe script com places carregado
+            const existingScriptWithPlaces = document.querySelector('script[src*="maps.googleapis.com"][src*="libraries=places"]') as HTMLScriptElement;
             
-            if (existingScriptWithDirections) {
+            if (existingScriptWithPlaces) {
                 // Verifica se google.maps já está disponível
                 if (typeof google !== 'undefined' && google.maps) {
                     this.scriptLoaded = true;
@@ -56,7 +63,7 @@ export class GoogleMapsService {
                     return;
                 } else {
                     // Aguarda o script carregar
-                    existingScriptWithDirections.addEventListener('load', () => {
+                    existingScriptWithPlaces.addEventListener('load', () => {
                         this.scriptLoaded = true;
                         resolve();
                     });
@@ -65,14 +72,36 @@ export class GoogleMapsService {
             }
 
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places,directions&loading=async`;
+            // ✅ CORRIGIDO: A biblioteca 'directions' não existe - DirectionsService/DirectionsRenderer já estão na biblioteca principal
+            // Places API (New) usa apenas 'places' - DirectionsService já está incluído na biblioteca principal
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places`;
             script.async = true;
             script.defer = true;
             script.onload = () => {
-                // Aguarda um pouco para garantir que a API está totalmente carregada
-                setTimeout(() => {
-                    this.scriptLoaded = true;
-                    resolve();
+                // Aguarda um pouco para garantir que todas as bibliotecas estão disponíveis
+                // Verifica especificamente se DirectionsService está disponível
+                let tentativas = 0;
+                const maxTentativas = 50; // 5 segundos
+                const checkDirections = setInterval(() => {
+                    tentativas++;
+                    if (typeof google !== 'undefined' && 
+                        google.maps && 
+                        google.maps.DirectionsService && 
+                        google.maps.DirectionsRenderer) {
+                        clearInterval(checkDirections);
+                        console.log('Biblioteca Directions carregada com sucesso');
+                        this.scriptLoaded = true;
+                        resolve();
+                    } else if (tentativas >= maxTentativas) {
+                        clearInterval(checkDirections);
+                        console.warn('Biblioteca Directions não encontrada após timeout, mas continuando...');
+                        if (typeof google !== 'undefined' && google.maps) {
+                            this.scriptLoaded = true;
+                            resolve();
+                        } else {
+                            reject(new Error('Google Maps não carregou após timeout'));
+                        }
+                    }
                 }, 100);
             };
             script.onerror = (error) => {

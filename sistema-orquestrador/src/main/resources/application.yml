@@ -46,6 +46,7 @@ google:
 
 server:
   port: ${SERVER_PORT:8080}
+  address: ${SERVER_ADDRESS:0.0.0.0} # Escuta em todas as interfaces (permite acesso via IP da rede)
   error:
     include-message: always
     include-binding-errors: always
