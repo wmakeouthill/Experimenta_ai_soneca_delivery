@@ -1,0 +1,72 @@
+<app-base-modal
+  [aberto]="aberto()"
+  [titulo]="'📍 Rastreamento - Pedido #' + (rastreamento()?.numeroPedido || '')"
+  [tamanho]="'grande'"
+  (onFechar)="fechar()">
+  
+  <div class="modal-rastreamento-conteudo">
+    @if (rastreamento()?.localizacaoMotoboy?.valida) {
+      <div class="status-rastreamento">
+        <div class="status-item">
+          <span class="status-icon">🛵</span>
+          <div class="status-info">
+            <strong>Motoboy a caminho</strong>
+            <small>{{ rastreamento()?.motoboyNome || 'Entregador' }}</small>
+          </div>
+        </div>
+        <div class="status-item">
+          <span class="status-icon">⏱️</span>
+          <div class="status-info">
+            <strong>Última atualização</strong>
+            <small>{{ calcularTempoDesde(rastreamento()?.localizacaoMotoboy?.timestamp) }}</small>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="status-rastreamento">
+        <div class="status-item">
+          <span class="status-icon">⏳</span>
+          <div class="status-info">
+            <strong>Aguardando localização</strong>
+            <small>O motoboy ainda não iniciou a entrega</small>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="mapa-container" [class.carregando]="carregandoMapa()">
+      @if (carregandoMapa()) {
+        <div class="mapa-carregando">
+          <div class="spinner"></div>
+          <p>Carregando mapa...</p>
+        </div>
+      }
+      <div #mapContainer class="mapa-embutido"></div>
+    </div>
+
+    @if (rastreamento()?.enderecoEntrega) {
+      <div class="endereco-info">
+        <p class="endereco-texto">
+          <strong>📍 Endereço de entrega:</strong> {{ rastreamento()?.enderecoEntrega }}
+        </p>
+      </div>
+    }
+
+    <div class="acoes-mapa">
+      <button
+        type="button"
+        class="btn-abrir-maps"
+        (click)="abrirNoGoogleMaps()"
+        [disabled]="!rastreamento()?.latitudeDestino || !rastreamento()?.longitudeDestino">
+        🗺️ Abrir no Google Maps
+      </button>
+      <button
+        type="button"
+        class="btn-fechar"
+        (click)="fechar()">
+        Fechar
+      </button>
+    </div>
+  </div>
+</app-base-modal>
+

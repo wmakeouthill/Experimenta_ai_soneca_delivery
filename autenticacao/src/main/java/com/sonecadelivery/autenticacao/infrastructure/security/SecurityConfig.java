@@ -39,6 +39,8 @@ public class SecurityConfig {
     private static final String PUBLIC_CLIENTE_AUTH_PATTERN = "/api/publico/cliente/auth/**";
     private static final String CLIENTE_CONTA_PATTERN = "/api/cliente/conta/**";
     private static final String CLIENTE_PEDIDOS_HISTORICO_PATTERN = "/api/cliente/pedidos-historico/**";
+    private static final String CLIENTE_PEDIDOS_RASTREAMENTO_PATTERN = "/api/cliente/pedidos/*/rastreamento";
+    private static final String CLIENTE_PEDIDOS_RASTREAMENTO_STREAM_PATTERN = "/api/cliente/pedidos/*/rastreamento/**";
     private static final String PUBLIC_MOTOBOY_AUTH_PATTERN = "/api/publico/motoboy/auth/**";
     private static final String MOTOBOY_CONTA_PATTERN = "/api/motoboy/**";
 
@@ -86,6 +88,9 @@ public class SecurityConfig {
                         .requestMatchers(CLIENTE_CONTA_PATTERN).permitAll()
                         // Endpoint de histórico de pedidos do cliente - usa header X-Cliente-Id
                         .requestMatchers(CLIENTE_PEDIDOS_HISTORICO_PATTERN).permitAll()
+                        // Endpoint de rastreamento de pedidos do cliente - usa header X-Cliente-Id
+                        .requestMatchers(CLIENTE_PEDIDOS_RASTREAMENTO_PATTERN).permitAll()
+                        .requestMatchers(CLIENTE_PEDIDOS_RASTREAMENTO_STREAM_PATTERN).permitAll()
 
                         // Endpoints do Chat IA - Público para clientes no auto-atendimento
                         // Usa header X-Cliente-Id para identificação opcional do cliente

@@ -1478,6 +1478,23 @@
                     <span class="timeline-label">Saiu para entrega</span>
                     @if (sucessoPedido.passoAtual() === 4) {
                     <span class="timeline-sublabel">Seu pedido está a caminho!</span>
+                    @if (sucessoPedido.tipoPedido() === 'DELIVERY') {
+                        <button 
+                            class="btn-rastrear"
+                            (click)="abrirRastreamento()"
+                            [disabled]="rastreamento.carregando()">
+                            @if (rastreamento.carregando()) {
+                                <span class="spinner-small"></span> Carregando...
+                            } @else {
+                                📍 Rastrear pedido
+                            }
+                        </button>
+                        @if (rastreamento.temLocalizacaoMotoboy()) {
+                            <div class="info-rastreamento">
+                                <small>Última atualização: {{ rastreamento.calcularTempoDesde(rastreamento.localizacaoMotoboy()?.timestamp) }}</small>
+                            </div>
+                        }
+                    }
                     }
                 </div>
             </div>
@@ -1573,3 +1590,10 @@
 
 } <!-- Fim do @else statusLoja === ABERTA -->
 </div>
+
+<!-- Modal de Rastreamento -->
+<app-modal-rastreamento
+    [aberto]="modalRastreamentoAberto()"
+    [rastreamento]="rastreamento.rastreamento()"
+    (onFechar)="fecharModalRastreamento()">
+</app-modal-rastreamento>

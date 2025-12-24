@@ -18,11 +18,12 @@ import { CepService } from '../../services/cep.service';
 import { MenuPerfilComponent } from '../menu-perfil/menu-perfil.component';
 import { FooterNavComponent } from './components/footer-nav/footer-nav.component';
 import { DraggableScrollDirective } from '../pedido-cliente-mesa/directives/draggable-scroll.directive';
-import { useFavoritos, useInicio, useMeusPedidos, useSucessoPedido, useAvaliacao } from './composables';
+import { useFavoritos, useInicio, useMeusPedidos, useSucessoPedido, useAvaliacao, useRastreamentoPedido } from './composables';
 import { useChatIA } from './composables/use-chat-ia';
 import { GoogleMapsService } from '../../services/google-maps.service';
 import { ChatIAButtonDeliveryComponent } from './components/chat-ia-button.component';
 import { ChatIAFullscreenDeliveryComponent } from './components/chat-ia-fullscreen.component';
+import { ModalRastreamentoComponent } from './components/modal-rastreamento/modal-rastreamento.component';
 import { AcaoChat } from '../../services/chat-ia.service';
 import { StatusLojaService, StatusLoja, StatusLojaResponse } from '../../services/status-loja.service';
 
@@ -65,7 +66,7 @@ interface FormCadastro {
 @Component({
     selector: 'app-pedido-delivery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MenuPerfilComponent, FooterNavComponent, ChatIAButtonDeliveryComponent, ChatIAFullscreenDeliveryComponent, DraggableScrollDirective],
+    imports: [CommonModule, FormsModule, MenuPerfilComponent, FooterNavComponent, ChatIAButtonDeliveryComponent, ChatIAFullscreenDeliveryComponent, ModalRastreamentoComponent, DraggableScrollDirective],
     templateUrl: './pedido-delivery.component.html',
     styleUrls: [
         './styles/base.css',
@@ -310,6 +311,10 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         () => this.meusPedidos.pedidoSelecionado(),
         (pedidoId: string) => this.meusPedidos.marcarComoAvaliado(pedidoId)
     );
+    
+    // Rastreamento de pedido
+    readonly rastreamento = useRastreamentoPedido(() => this.sucessoPedido.pedidoId());
+    readonly modalRastreamentoAberto = signal<boolean>(false);
 
     // ========== COMPUTED ==========
 
@@ -1021,6 +1026,32 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /**
+     * Abre modal de rastreamento do pedido.
+     * Carrega dados iniciais e inicia polling.
+     */
+    abrirRastreamento(): void {
+        const pedidoId = this.sucessoPedido.pedidoId();
+        if (!pedidoId) {
+            return;
+        }
+        
+        // Carrega dados iniciais
+        this.rastreamento.carregar();
+        
+        // Inicia polling se ainda não estiver ativo
+        if (!this.rastreamento.ativo()) {
+            this.rastreamento.iniciar();
+        }
+        
+        // Abre modal de rastreamento
+        this.modalRastreamentoAberto.set(true);
+    }
+    
+    fecharModalRastreamento(): void {
+        this.modalRastreamentoAberto.set(false);
+    }
+    
     /**
      * Acompanha um pedido específico pelo ID.
      * Útil para quando o usuário clica em um pedido específico em "Meus Pedidos".
