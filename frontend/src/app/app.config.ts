@@ -11,6 +11,7 @@ import { silent500ConfigInterceptor } from './interceptors/silent-500-config.int
 import { clienteAuthInterceptor } from './interceptors/cliente-auth.interceptor';
 import { motoboyAuthInterceptor } from './interceptors/motoboy-auth.interceptor';
 import { clienteAuthErrorInterceptor } from './interceptors/cliente-auth-error.interceptor';
+import { motoboyAuthErrorInterceptor } from './interceptors/motoboy-auth-error.interceptor';
 import { PwaInstallService } from './services/pwa-install.service';
 import { environment } from '../environments/environment';
 
@@ -35,13 +36,14 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       withInterceptors([
-        clienteAuthInterceptor,    // Adiciona token JWT e X-Cliente-Id para clientes
-        clienteAuthErrorInterceptor, // Limpa sessão se o cliente não existir mais
-        motoboyAuthInterceptor,    // Adiciona token JWT e X-Motoboy-Id para motoboys
-        authInterceptor,           // Adiciona token JWT nas requisições (funcionários)
-        authErrorInterceptor,      // Trata erros 401/403 e redireciona para login
-        silent404Interceptor,      // Trata 404 silenciosamente para sessões
-        silent500ConfigInterceptor // Trata 500 silenciosamente para config
+        clienteAuthInterceptor,         // Adiciona token JWT e X-Cliente-Id para clientes
+        clienteAuthErrorInterceptor,    // Limpa sessão se o cliente não existir mais
+        motoboyAuthInterceptor,         // Adiciona token JWT e X-Motoboy-Id para motoboys
+        motoboyAuthErrorInterceptor,    // Limpa sessão se o motoboy não existir mais
+        authInterceptor,                // Adiciona token JWT nas requisições (funcionários)
+        authErrorInterceptor,           // Trata erros 401/403 e redireciona para login
+        silent404Interceptor,           // Trata 404 silenciosamente para sessões
+        silent500ConfigInterceptor      // Trata 500 silenciosamente para config
       ])
     ),
     {

@@ -28,15 +28,18 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
             try {
                 const motoboy = JSON.parse(motoboyStr);
                 motoboyId = motoboy?.id || null;
-            } catch {
-                // Ignora erro de parse
+            } catch (e) {
+                console.error('Erro ao parsear dados do motoboy:', e);
             }
         }
     }
 
-    // Se não tiver token ou motoboyId, deixa passar (vai falhar no backend)
+    // Se não tiver token ou motoboyId, loga e deixa passar (vai falhar no backend)
     if (!token || !motoboyId) {
-        console.warn('Motoboy não autenticado para:', req.url);
+        console.warn('Motoboy não autenticado para:', req.url, {
+            temToken: !!token,
+            temMotoboyId: !!motoboyId
+        });
         return next(req);
     }
 
@@ -47,6 +50,14 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
             'X-Motoboy-Id': motoboyId
         }
     });
+
+    // Log apenas em desenvolvimento
+    if (process.env['NODE_ENV'] !== 'production') {
+        console.debug('Headers adicionados para motoboy:', {
+            url: req.url,
+            motoboyId: motoboyId.substring(0, 8) + '...'
+        });
+    }
 
     return next(clonedReq);
 };

@@ -50,6 +50,8 @@ public interface PedidoDeliveryJpaRepository extends JpaRepository<PedidoDeliver
 
     /**
      * Lista pedidos de um motoboy específico.
+     * Carrega apenas os pedidos. Os relacionamentos (itens, adicionais, meiosPagamento)
+     * serão carregados via lazy loading dentro da transação.
      */
     List<PedidoDeliveryEntity> findByMotoboyIdOrderByCreatedAtDesc(String motoboyId);
 

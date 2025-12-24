@@ -5,7 +5,7 @@ import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 // Rotas públicas que não devem redirecionar para login em caso de erro 401/403
-const ROTAS_PUBLICAS = ['/mesa/', '/pedido-mesa/', '/delivery/', '/api/public/', '/api/publico/', '/api/cliente/'];
+const ROTAS_PUBLICAS = ['/mesa/', '/pedido-mesa/', '/delivery/', '/cadastro-motoboy', '/motoboy/', '/api/public/', '/api/publico/', '/api/cliente/', '/api/motoboy/'];
 
 /**
  * Interceptor para tratar erros de autenticação (401, 403).
@@ -22,8 +22,11 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
       const isRotaPublica = typeof window !== 'undefined' &&
         ROTAS_PUBLICAS.some(rota => window.location.pathname.includes(rota));
 
-      // Verificar se a requisição é para endpoint público ou de cliente
-      const isEndpointPublicoOuCliente = req.url.includes('/api/public/') || req.url.includes('/api/publico/') || req.url.includes('/api/cliente/');
+      // Verificar se a requisição é para endpoint público, de cliente ou de motoboy
+      const isEndpointPublicoOuCliente = req.url.includes('/api/public/') || 
+                                         req.url.includes('/api/publico/') || 
+                                         req.url.includes('/api/cliente/') ||
+                                         req.url.includes('/api/motoboy/');
 
       // Tratar apenas erros de autenticação/autorização em rotas protegidas
       if ((error.status === 401 || error.status === 403) && !isRotaPublica && !isEndpointPublicoOuCliente) {
