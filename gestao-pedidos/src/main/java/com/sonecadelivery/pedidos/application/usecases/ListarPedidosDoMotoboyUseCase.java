@@ -33,6 +33,7 @@ public class ListarPedidosDoMotoboyUseCase {
     private final PedidoDeliveryJpaRepository pedidoDeliveryJpaRepository;
     private final MotoboyRepositoryPort motoboyRepository;
     private final PedidoMapper pedidoMapper;
+    private final com.sonecadelivery.pedidos.application.ports.ClienteGatewayPort clienteGateway;
 
     /**
      * Lista todos os pedidos do motoboy (apenas PRONTO e SAIU_PARA_ENTREGA).
@@ -99,10 +100,45 @@ public class ListarPedidosDoMotoboyUseCase {
             return new ArrayList<>();
         }
 
+        // Coleta IDs únicos de clientes para buscar coordenadas
+        java.util.Set<String> clienteIds = entities.stream()
+                .filter(e -> e.getClienteId() != null)
+                .map(com.sonecadelivery.pedidos.infrastructure.persistence.PedidoEntity::getClienteId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        // Busca coordenadas dos clientes de forma otimizada
+        java.util.Map<String, com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO> clientesPorId = new java.util.HashMap<>();
+        if (!clienteIds.isEmpty()) {
+            log.debug("Buscando coordenadas para {} clientes", clienteIds.size());
+            for (String clienteId : clienteIds) {
+                clienteGateway.buscarPorId(clienteId)
+                        .ifPresent(cliente -> {
+                            clientesPorId.put(clienteId, cliente);
+                            log.debug("Cliente {} - Latitude: {}, Longitude: {}", 
+                                    clienteId, cliente.getLatitude(), cliente.getLongitude());
+                        });
+            }
+        }
+
+        final java.util.Map<String, com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO> clientesFinais = clientesPorId;
+
         // Converter Entity -> Domain -> DTO
         return entities.stream()
                 .map(pedidoMapper::paraDomain)
-                .map(pedido -> PedidoDTO.de(pedido, motoboyNome))
+                .map(pedido -> {
+                    PedidoDTO dto = PedidoDTO.de(pedido, motoboyNome);
+                    
+                    // Adiciona coordenadas do cliente se disponíveis
+                    if (pedido.getClienteId() != null) {
+                        com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO cliente = clientesFinais.get(pedido.getClienteId());
+                        if (cliente != null) {
+                            dto.setLatitude(cliente.getLatitude());
+                            dto.setLongitude(cliente.getLongitude());
+                        }
+                    }
+                    
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -111,9 +147,51 @@ public class ListarPedidosDoMotoboyUseCase {
             return new ArrayList<>();
         }
 
+        // Coleta IDs únicos de clientes para buscar coordenadas de forma otimizada
+        java.util.Set<String> clienteIds = entities.stream()
+                .filter(e -> e.getClienteId() != null)
+                .map(PedidoDeliveryEntity::getClienteId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        // Busca coordenadas dos clientes de forma otimizada
+        java.util.Map<String, com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO> clientesPorId = new java.util.HashMap<>();
+        if (!clienteIds.isEmpty()) {
+            log.debug("Buscando coordenadas para {} clientes", clienteIds.size());
+            for (String clienteId : clienteIds) {
+                clienteGateway.buscarPorId(clienteId)
+                        .ifPresent(cliente -> {
+                            clientesPorId.put(clienteId, cliente);
+                            log.debug("Cliente {} - Latitude: {}, Longitude: {}", 
+                                    clienteId, cliente.getLatitude(), cliente.getLongitude());
+                        });
+            }
+        }
+
+        final java.util.Map<String, com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO> clientesFinais = clientesPorId;
+
         // Converter Delivery Entity -> DTO (similar ao ListarPedidosUseCase)
         return entities.stream()
-                .map(entity -> mapDeliveryToDTO(entity, motoboyNome))
+                .map(entity -> {
+                    PedidoDTO dto = mapDeliveryToDTO(entity, motoboyNome);
+                    
+                    // Adiciona coordenadas do cliente se disponíveis
+                    if (entity.getClienteId() != null) {
+                        com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO cliente = clientesFinais.get(entity.getClienteId());
+                        if (cliente != null) {
+                            dto.setLatitude(cliente.getLatitude());
+                            dto.setLongitude(cliente.getLongitude());
+                            log.debug("Pedido {} - Coordenadas adicionadas: lat={}, lng={}", 
+                                    entity.getId(), cliente.getLatitude(), cliente.getLongitude());
+                        } else {
+                            log.debug("Pedido {} - Cliente {} não encontrado no gateway", 
+                                    entity.getId(), entity.getClienteId());
+                        }
+                    } else {
+                        log.debug("Pedido {} - Sem clienteId", entity.getId());
+                    }
+                    
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 

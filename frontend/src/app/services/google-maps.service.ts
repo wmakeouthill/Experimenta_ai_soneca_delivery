@@ -35,7 +35,7 @@ export class GoogleMapsService {
             }
 
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places,directions`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places,directions&loading=async`;
             script.async = true;
             script.defer = true;
             script.onload = () => {

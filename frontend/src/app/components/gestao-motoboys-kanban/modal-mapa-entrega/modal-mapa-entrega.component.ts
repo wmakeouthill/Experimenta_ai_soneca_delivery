@@ -1,4 +1,4 @@
-import { Component, inject, input, output, effect, signal, PLATFORM_ID, ChangeDetectionStrategy, ViewChild, ElementRef, afterNextRender, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, input, output, effect, signal, PLATFORM_ID, ChangeDetectionStrategy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { BaseModalComponent } from '../../../components/cardapio/modals/base-modal/base-modal.component';
 import { GoogleMapsService } from '../../../services/google-maps.service';
@@ -37,31 +37,18 @@ export class ModalMapaEntregaComponent {
 
   constructor() {
     if (this.isBrowser) {
+      // Effect para monitorar quando o modal abre/fecha e coordenadas mudam
       effect(() => {
         const estaAberto = this.aberto();
         const temCoordenadas = this.latitude() && this.longitude();
         
         if (estaAberto && temCoordenadas) {
-          // Aguarda o próximo ciclo de renderização para garantir que o ViewChild está disponível
-          afterNextRender(() => {
-            // Usa requestAnimationFrame para garantir que o DOM está totalmente renderizado
-            requestAnimationFrame(() => {
-              setTimeout(() => {
-                if (this.mapContainer?.nativeElement) {
-                  this.inicializarMapa();
-                } else {
-                  console.warn('MapContainer não encontrado, tentando novamente...');
-                  // Tenta novamente após um delay maior
-                  setTimeout(() => {
-                    if (this.mapContainer?.nativeElement) {
-                      this.inicializarMapa();
-                    } else {
-                      console.error('MapContainer ainda não disponível após múltiplas tentativas');
-                    }
-                  }, 300);
-                }
-              }, 100);
-            });
+          // Usa requestAnimationFrame + setTimeout para garantir que o DOM está renderizado
+          // O ViewChild será disponibilizado após o próximo ciclo de renderização
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              this.tentarInicializarMapa();
+            }, 100);
           });
         } else if (!estaAberto) {
           this.limparMapa();
@@ -70,10 +57,37 @@ export class ModalMapaEntregaComponent {
     }
   }
 
+  /**
+   * Tenta inicializar o mapa, verificando se o ViewChild está disponível.
+   * Se não estiver, tenta novamente após um delay.
+   */
+  private tentarInicializarMapa(tentativa: number = 0): void {
+    const maxTentativas = 5;
+    
+    if (this.mapContainer?.nativeElement && this.latitude() && this.longitude()) {
+      this.inicializarMapa();
+    } else if (tentativa < maxTentativas) {
+      // Tenta novamente após um delay
+      setTimeout(() => {
+        this.tentarInicializarMapa(tentativa + 1);
+      }, 150);
+    } else {
+      console.error('MapContainer não disponível após múltiplas tentativas');
+      this.carregandoMapa.set(false);
+    }
+  }
+
   private async inicializarMapa(): Promise<void> {
-    if (!this.mapContainer?.nativeElement || !this.latitude() || !this.longitude()) {
-      console.warn('Não é possível inicializar mapa:', {
-        temContainer: !!this.mapContainer?.nativeElement,
+    // Verifica se o container está disponível ANTES de tudo
+    const container = this.mapContainer?.nativeElement;
+    if (!container) {
+      console.warn('MapContainer ainda não disponível, tentando novamente...');
+      this.tentarInicializarMapa(1);
+      return;
+    }
+
+    if (!this.latitude() || !this.longitude()) {
+      console.warn('Coordenadas não disponíveis:', {
         latitude: this.latitude(),
         longitude: this.longitude()
       });
@@ -88,20 +102,29 @@ export class ModalMapaEntregaComponent {
     }
 
     this.carregandoMapa.set(true);
+    this.cdr.markForCheck();
 
     try {
       const maps = await this.googleMapsService.getGoogleMaps();
       
+      // Verifica novamente se o container ainda está disponível após carregar Maps
+      const containerAtualizado = this.mapContainer?.nativeElement;
+      if (!containerAtualizado) {
+        console.error('MapContainer não disponível após carregar Google Maps');
+        this.carregandoMapa.set(false);
+        this.cdr.markForCheck();
+        return;
+      }
+
       const destino = { lat: this.latitude()!, lng: this.longitude()! };
 
       console.log('Inicializando mapa com destino:', destino);
 
       // Limpa o container antes de criar o mapa
-      const container = this.mapContainer.nativeElement;
-      container.innerHTML = '';
+      containerAtualizado.innerHTML = '';
 
       // Cria o mapa centralizado no destino
-      this.map = new maps.Map(container, {
+      this.map = new maps.Map(containerAtualizado, {
         center: destino,
         zoom: 16,
         mapTypeControl: true,
