@@ -109,36 +109,52 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, OnDestro
             const response = await firstValueFrom(this.motoboyAuthService.loginGoogle(googleToken));
             
             if (response && response.token && response.motoboy) {
-                // Verifica se a sessão foi salva corretamente
-                const tokenSalvo = this.motoboyAuthService.getToken();
-                const motoboySalvo = this.motoboyAuthService.motoboyLogado;
+                // Aguarda um pouco para garantir que o sessionStorage foi persistido
+                // O método salvarSessao já foi chamado pelo tap() no pipe
+                await new Promise(resolve => setTimeout(resolve, 300));
                 
+                // Verifica se a sessão foi salva corretamente
+                let tokenSalvo = this.motoboyAuthService.getToken();
+                let motoboySalvo = this.motoboyAuthService.motoboyLogado;
+                
+                // Se ainda não foi salvo, tenta salvar manualmente
                 if (!tokenSalvo || !motoboySalvo) {
-                    console.error('Sessão não foi salva corretamente após login');
+                    console.warn('⚠️ Sessão não foi salva automaticamente. Tentando salvar manualmente...');
+                    if (typeof sessionStorage !== 'undefined') {
+                        try {
+                            sessionStorage.setItem('motoboy-auth-token', response.token);
+                            sessionStorage.setItem('motoboy-auth-data', JSON.stringify(response.motoboy));
+                            
+                            // Verifica novamente
+                            tokenSalvo = this.motoboyAuthService.getToken();
+                            motoboySalvo = this.motoboyAuthService.motoboyLogado;
+                        } catch (e) {
+                            console.error('❌ Erro ao salvar sessão manualmente:', e);
+                        }
+                    }
+                }
+                
+                // Verifica novamente após tentativa manual
+                if (!tokenSalvo || !motoboySalvo) {
+                    console.error('❌ Sessão não foi salva corretamente após login');
                     this.erro.set('Erro ao salvar sessão. Tente novamente.');
                     this.carregando.set(false);
                     this.cdr.detectChanges();
                     return;
                 }
                 
-                console.log('✅ Login realizado com sucesso. Redirecionando...');
+                console.log('✅ Login realizado com sucesso. Sessão salva. Redirecionando...', {
+                    tokenLength: tokenSalvo.length,
+                    motoboyId: motoboySalvo.id
+                });
                 
-                // Aguarda um pouco para garantir que o sessionStorage foi persistido
+                // Aguarda mais um pouco para garantir que o sessionStorage foi totalmente persistido
+                // Especialmente importante em mobile
                 await new Promise(resolve => setTimeout(resolve, 200));
                 
-                // Verifica novamente se a sessão foi salva
-                if (!this.motoboyAuthService.isAuthenticated()) {
-                    console.error('Sessão não persistida após login. Tentando novamente...');
-                    // Tenta salvar manualmente
-                    if (response.token && response.motoboy) {
-                        if (typeof sessionStorage !== 'undefined') {
-                            sessionStorage.setItem('motoboy-auth-token', response.token);
-                            sessionStorage.setItem('motoboy-auth-data', JSON.stringify(response.motoboy));
-                        }
-                    }
-                }
-                
                 // Redireciona para o kanban do motoboy usando window.location para garantir persistência
+                // window.location.href força um reload completo, garantindo que o Angular reinicialize
+                // e leia o sessionStorage corretamente
                 window.location.href = '/motoboy/kanban';
             } else {
                 console.error('Resposta de login inválida:', response);

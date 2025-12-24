@@ -25,8 +25,13 @@ public class MotoboyJwtServiceAdapter implements MotoboyJwtServicePort {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration:86400000}") // 24 horas em milissegundos
-    private long expiration;
+    /**
+     * Tempo de expiração do token em milissegundos.
+     * O application.yml define em segundos (86400 = 24 horas),
+     * então convertemos para milissegundos multiplicando por 1000.
+     */
+    @Value("${jwt.expiration:86400}") // 86400 segundos = 24 horas (padrão do application.yml)
+    private long expirationSeconds;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
@@ -42,7 +47,9 @@ public class MotoboyJwtServiceAdapter implements MotoboyJwtServicePort {
         claims.put("tipo", "MOTOBOY");
 
         Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + expiration);
+        // Converte segundos para milissegundos
+        long expirationMillis = expirationSeconds * 1000;
+        Date expirationDate = new Date(now.getTime() + expirationMillis);
 
         String token = Jwts.builder()
                 .claims(claims)

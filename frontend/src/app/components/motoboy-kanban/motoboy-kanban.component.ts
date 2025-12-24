@@ -78,21 +78,54 @@ export class MotoboyKanbanComponent implements OnInit {
       if (!isPlatformBrowser(this.platformId)) return;
       
       // Verifica autenticação antes de carregar dados
-      // Aguarda um pouco para garantir que o sessionStorage foi carregado
+      // Aguarda um pouco para garantir que o sessionStorage foi carregado após o redirect
+      // Em mobile, pode levar mais tempo para o sessionStorage estar disponível
       setTimeout(() => {
-        if (!this.motoboyAuthService.isAuthenticated()) {
-          console.warn('⚠️ Motoboy não autenticado. Redirecionando para login...', {
-            temToken: !!this.motoboyAuthService.getToken(),
-            temMotoboy: !!this.motoboyAuthService.motoboyLogado
-          });
-          window.location.href = '/cadastro-motoboy';
-          return;
-        }
-        
-        this.carregarMotoboy();
-        this.carregarPedidos();
-      }, 100);
+        this.verificarEAutenticar();
+      }, 300);
     });
+  }
+
+  /**
+   * Verifica autenticação e carrega dados do motoboy.
+   * Tenta múltiplas vezes se necessário (útil após redirect).
+   */
+  private verificarEAutenticar(tentativa: number = 0): void {
+    const maxTentativas = 5;
+    const delayEntreTentativas = 200;
+
+    if (!this.motoboyAuthService.isAuthenticated()) {
+      if (tentativa < maxTentativas) {
+        console.debug(`⏳ Tentativa ${tentativa + 1}/${maxTentativas} - Aguardando autenticação...`, {
+          temToken: !!this.motoboyAuthService.getToken(),
+          temMotoboy: !!this.motoboyAuthService.motoboyLogado,
+          sessionStorageDisponivel: typeof sessionStorage !== 'undefined'
+        });
+        
+        // Tenta novamente após um delay
+        setTimeout(() => {
+          this.verificarEAutenticar(tentativa + 1);
+        }, delayEntreTentativas);
+        return;
+      }
+
+      // Após todas as tentativas, redireciona para login
+      console.warn('⚠️ Motoboy não autenticado após múltiplas tentativas. Redirecionando para login...', {
+        temToken: !!this.motoboyAuthService.getToken(),
+        temMotoboy: !!this.motoboyAuthService.motoboyLogado
+      });
+      window.location.href = '/cadastro-motoboy';
+      return;
+    }
+
+    // Autenticado - carrega dados
+    console.log('✅ Motoboy autenticado. Carregando dados...', {
+      motoboyId: this.motoboyAuthService.motoboyLogado?.id,
+      tentativa: tentativa + 1
+    });
+    
+    this.carregarMotoboy();
+    this.carregarPedidos();
   }
 
   ngOnInit(): void {
@@ -135,19 +168,65 @@ export class MotoboyKanbanComponent implements OnInit {
   }
 
   carregarPedidos(): void {
+    // Verifica autenticação antes de fazer a requisição
+    if (!this.motoboyAuthService.isAuthenticated()) {
+      console.warn('⚠️ Motoboy não autenticado ao tentar carregar pedidos. Redirecionando...');
+      this.motoboyAuthService.logout();
+      window.location.href = '/cadastro-motoboy';
+      return;
+    }
+
+    const token = this.motoboyAuthService.getToken();
+    const motoboyId = this.motoboyAuthService.motoboyLogado?.id;
+    
+    if (!token || !motoboyId) {
+      console.error('❌ Token ou MotoboyId não encontrado', {
+        temToken: !!token,
+        temMotoboyId: !!motoboyId
+      });
+      this.erro.set('Erro ao identificar motoboy. Tente fazer login novamente.');
+      this.estaCarregando.set(false);
+      
+      // Tenta novamente após um delay
+      setTimeout(() => {
+        if (this.motoboyAuthService.isAuthenticated()) {
+          this.carregarPedidos();
+        }
+      }, 500);
+      return;
+    }
+
+    console.log('📦 Carregando pedidos do motoboy...', {
+      motoboyId: motoboyId.substring(0, 8) + '...',
+      tokenLength: token.length
+    });
+
     this.estaCarregando.set(true);
     this.erro.set(null);
 
     this.http.get<Pedido[]>('/api/motoboy/pedidos')
       .pipe(
         catchError((err) => {
-          console.error('Erro ao carregar pedidos:', err);
-          this.erro.set('Erro ao carregar pedidos');
+          console.error('❌ Erro ao carregar pedidos:', err);
+          
+          // Se for erro 401, tenta verificar autenticação novamente
+          if (err.status === 401) {
+            if (!this.motoboyAuthService.isAuthenticated()) {
+              console.warn('⚠️ Token inválido. Redirecionando para login...');
+              this.motoboyAuthService.logout();
+              window.location.href = '/cadastro-motoboy';
+              return of([]);
+            }
+          }
+          
+          this.erro.set('Erro ao carregar pedidos. Tente novamente.');
+          this.estaCarregando.set(false);
           return of([]);
         })
       )
       .subscribe({
         next: (pedidos) => {
+          console.log('✅ Pedidos carregados com sucesso:', pedidos.length);
           this.pedidos.set(pedidos);
           this.estaCarregando.set(false);
           this.iniciarPolling();

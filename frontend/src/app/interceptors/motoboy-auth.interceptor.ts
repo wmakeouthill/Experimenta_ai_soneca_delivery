@@ -17,31 +17,42 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
     }
 
     // Tenta obter dados do sessionStorage
+    // Em mobile ou após redirect, pode levar um pouco para o sessionStorage estar disponível
     let token: string | null = null;
     let motoboyId: string | null = null;
 
     if (typeof sessionStorage !== 'undefined') {
-        token = sessionStorage.getItem(TOKEN_KEY);
-        const motoboyStr = sessionStorage.getItem(MOTOBOY_KEY);
+        try {
+            token = sessionStorage.getItem(TOKEN_KEY);
+            const motoboyStr = sessionStorage.getItem(MOTOBOY_KEY);
 
-        if (motoboyStr) {
-            try {
-                const motoboy = JSON.parse(motoboyStr);
-                motoboyId = motoboy?.id || null;
-            } catch (e) {
-                console.error('Erro ao parsear dados do motoboy:', e);
+            if (motoboyStr) {
+                try {
+                    const motoboy = JSON.parse(motoboyStr);
+                    motoboyId = motoboy?.id || null;
+                } catch (e) {
+                    console.error('❌ Erro ao parsear dados do motoboy:', e);
+                }
             }
+        } catch (e) {
+            console.warn('⚠️ Erro ao acessar sessionStorage:', e);
         }
     }
 
-    // Se não tiver token ou motoboyId, loga e deixa passar (vai falhar no backend)
+    // Se não tiver token ou motoboyId, tenta novamente após um pequeno delay
+    // Isso ajuda em casos onde o sessionStorage ainda não foi totalmente carregado após redirect
     if (!token || !motoboyId) {
         console.warn('⚠️ Motoboy não autenticado para:', req.url, {
             temToken: !!token,
             temMotoboyId: !!motoboyId,
             tokenLength: token?.length || 0,
-            motoboyIdLength: motoboyId?.length || 0
+            motoboyIdLength: motoboyId?.length || 0,
+            sessionStorageDisponivel: typeof sessionStorage !== 'undefined'
         });
+        
+        // Se sessionStorage está disponível mas não encontrou os dados,
+        // pode ser que ainda não foram salvos após o login
+        // Nesse caso, deixa passar e o backend vai retornar 401
         return next(req);
     }
 
