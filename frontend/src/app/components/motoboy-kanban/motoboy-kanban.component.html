@@ -37,23 +37,16 @@
     </div>
   </header>
 
-  <!-- Banner de Instalação PWA -->
-  @if (mostrarBannerPwa() && !isStandalone()) {
-    <div class="pwa-banner">
-      <div class="pwa-banner-content">
-        <div class="pwa-banner-icon">📱</div>
-        <div class="pwa-banner-text">
-          <strong>Instale o app</strong>
-          <span>Tenha acesso rápido e funcione mesmo offline</span>
-        </div>
-        <div class="pwa-banner-actions">
-          <button class="btn-instalar-pwa" (click)="instalarPwa()" aria-label="Instalar app">
-            Instalar
-          </button>
-          <button class="btn-fechar-pwa" (click)="fecharBannerPwa()" aria-label="Fechar">
-            ✕
-          </button>
-        </div>
+  <!-- PWA Install Banner (mesmo CTA da tela /delivery) -->
+  @if (mostrarBannerPwa()) {
+    <div class="pwa-install-banner">
+      <div class="pwa-install-texto">
+        <strong>Instale o app</strong>
+        <span>Atalho na tela inicial, experiência fullscreen e mais rápida.</span>
+      </div>
+      <div class="pwa-install-botoes">
+        <button class="pwa-btn-secundario" (click)="fecharBannerPwa()">Agora não</button>
+        <button class="pwa-btn-primario" (click)="instalarPwa()">Instalar</button>
       </div>
     </div>
   }
