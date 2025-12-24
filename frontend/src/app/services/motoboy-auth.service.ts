@@ -90,11 +90,28 @@ export class MotoboyAuthService {
    */
   private salvarSessao(response: MotoboyLoginResponse): void {
     if (typeof sessionStorage === 'undefined') {
+      console.error('sessionStorage não está disponível');
+      return;
+    }
+
+    if (!response.token) {
+      console.error('Token não recebido na resposta de login');
+      return;
+    }
+
+    if (!response.motoboy || !response.motoboy.id) {
+      console.error('Dados do motoboy não recebidos na resposta de login');
       return;
     }
 
     sessionStorage.setItem(TOKEN_KEY, response.token);
     sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
+
+    console.log('✅ Sessão do motoboy salva:', {
+      tokenLength: response.token.length,
+      motoboyId: response.motoboy.id,
+      motoboyNome: response.motoboy.nome
+    });
   }
 
   /**

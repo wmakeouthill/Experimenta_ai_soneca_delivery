@@ -36,9 +36,11 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
 
     // Se não tiver token ou motoboyId, loga e deixa passar (vai falhar no backend)
     if (!token || !motoboyId) {
-        console.warn('Motoboy não autenticado para:', req.url, {
+        console.warn('⚠️ Motoboy não autenticado para:', req.url, {
             temToken: !!token,
-            temMotoboyId: !!motoboyId
+            temMotoboyId: !!motoboyId,
+            tokenLength: token?.length || 0,
+            motoboyIdLength: motoboyId?.length || 0
         });
         return next(req);
     }
@@ -51,13 +53,14 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
         }
     });
 
-    // Log apenas em desenvolvimento
-    if (process.env['NODE_ENV'] !== 'production') {
-        console.debug('Headers adicionados para motoboy:', {
-            url: req.url,
-            motoboyId: motoboyId.substring(0, 8) + '...'
-        });
-    }
+    // Log detalhado em desenvolvimento
+    console.debug('✅ Headers adicionados para motoboy:', {
+        url: req.url,
+        motoboyId: motoboyId.substring(0, 8) + '...',
+        tokenLength: token.length,
+        temAuthorization: true,
+        temMotoboyId: true
+    });
 
     return next(clonedReq);
 };

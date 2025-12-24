@@ -49,11 +49,14 @@ public interface PedidoDeliveryJpaRepository extends JpaRepository<PedidoDeliver
     List<PedidoDeliveryEntity> findPedidosAtivos();
 
     /**
-     * Lista pedidos de um motoboy específico.
-     * Carrega apenas os pedidos. Os relacionamentos (itens, adicionais, meiosPagamento)
-     * serão carregados via lazy loading dentro da transação.
+     * Lista pedidos de um motoboy específico com status PRONTO ou SAIU_PARA_ENTREGA.
+     * Os relacionamentos serão carregados via lazy loading dentro da transação.
      */
-    List<PedidoDeliveryEntity> findByMotoboyIdOrderByCreatedAtDesc(String motoboyId);
+    @Query("SELECT p FROM PedidoDeliveryEntity p " +
+           "WHERE p.motoboyId = :motoboyId " +
+           "AND p.status IN ('PRONTO', 'SAIU_PARA_ENTREGA') " +
+           "ORDER BY p.createdAt DESC")
+    List<PedidoDeliveryEntity> findByMotoboyIdOrderByCreatedAtDesc(@Param("motoboyId") String motoboyId);
 
     /**
      * Lista pedidos criados em um período.

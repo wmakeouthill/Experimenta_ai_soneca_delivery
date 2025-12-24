@@ -52,10 +52,13 @@ public class ListarPedidosDoMotoboyUseCase {
         pedidos.addAll(converterPedidosNormais(pedidosNormais, motoboyId));
 
         // Buscar pedidos delivery atribuídos ao motoboy
+        // A query já filtra por status PRONTO ou SAIU_PARA_ENTREGA
         List<PedidoDeliveryEntity> pedidosDelivery = pedidoDeliveryJpaRepository
                 .findByMotoboyIdOrderByCreatedAtDesc(motoboyId);
         
-        // Inicializar relacionamentos lazy dentro da transação usando Hibernate.initialize()
+        log.debug("Encontrados {} pedidos delivery para o motoboy {}", pedidosDelivery.size(), motoboyId);
+        
+        // Inicializar relacionamentos lazy dentro da transação
         // Isso evita LazyInitializationException ao acessar os relacionamentos
         for (PedidoDeliveryEntity pedido : pedidosDelivery) {
             try {
@@ -67,18 +70,12 @@ public class ListarPedidosDoMotoboyUseCase {
                     }
                 }
                 Hibernate.initialize(pedido.getMeiosPagamento());
-                log.debug("Relacionamentos inicializados para pedido {}", pedido.getId());
             } catch (Exception e) {
                 log.warn("Erro ao inicializar relacionamentos do pedido {}: {}", pedido.getId(), e.getMessage());
             }
         }
         
         pedidos.addAll(converterPedidosDelivery(pedidosDelivery, motoboyId));
-
-        // Filtrar apenas pedidos com status PRONTO ou SAIU_PARA_ENTREGA
-        pedidos = pedidos.stream()
-                .filter(p -> p.getStatus() == StatusPedido.PRONTO || p.getStatus() == StatusPedido.SAIU_PARA_ENTREGA)
-                .collect(Collectors.toList());
 
         // Ordenar por data de criação (mais recentes primeiro)
         pedidos.sort((p1, p2) -> p2.getCreatedAt().compareTo(p1.getCreatedAt()));

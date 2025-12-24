@@ -9,6 +9,7 @@ import { SessaoTrabalhoService } from './services/sessao-trabalho.service';
 import { ImpressaoService } from './services/impressao.service';
 import { NotificationService } from './services/notification.service';
 import { ToastComponent } from './components/shared/toast/toast.component';
+import { MotoboyAuthService } from './services/motoboy-auth.service';
 
 @Component({
   selector: 'app-root',
@@ -27,10 +28,11 @@ export class AppComponent implements OnInit {
   private readonly sessaoService = inject(SessaoTrabalhoService);
   private readonly impressaoService = inject(ImpressaoService);
   private readonly notificationService = inject(NotificationService);
+  private readonly motoboyAuthService = inject(MotoboyAuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   // Rotas públicas que não devem iniciar serviços autenticados
-  private readonly rotasPublicas = ['/mesa/', '/pedido-mesa/', '/delivery', '/politica-privacidade', '/termos-uso'];
+  private readonly rotasPublicas = ['/mesa/', '/pedido-mesa/', '/delivery', '/politica-privacidade', '/termos-uso', '/cadastro-motoboy', '/motoboy/'];
 
   // Rotas onde a notificação de novo pedido deve ser suprimida
   // (ex: cliente delivery cria o pedido na própria tela, não precisa notificar)
@@ -67,7 +69,14 @@ export class AppComponent implements OnInit {
   }
 
   private iniciarServicosGlobais() {
-    // Verifica se há sessão ativa para iniciar o polling
+    // Não inicia serviços de sessão de trabalho se for motoboy
+    // Motoboys têm seu próprio sistema de pedidos via /api/motoboy/pedidos
+    if (this.motoboyAuthService.isAuthenticated()) {
+      console.log('Usuário é motoboy. Serviços de sessão de trabalho não serão iniciados.');
+      return;
+    }
+
+    // Verifica se há sessão ativa para iniciar o polling (apenas para admin/operador)
     this.sessaoService.buscarAtiva().subscribe({
       next: (sessao) => {
         if (sessao) {
