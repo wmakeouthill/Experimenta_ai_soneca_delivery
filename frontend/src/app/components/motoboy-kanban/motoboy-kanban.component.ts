@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, afterNextRender, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, afterNextRender, DestroyRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -26,6 +26,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   private readonly pedidoService = inject(PedidoService);
   private readonly motoboyAuthService = inject(MotoboyAuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly StatusPedido = StatusPedido;
 
@@ -44,6 +45,9 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   private sseReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   private sseAbortController: AbortController | null = null;
   private readonly atualizacaoForcada$ = new Subject<void>(); // Para forçar atualização manual
+  
+  // Cache no sessionStorage para manter dados ao atualizar página
+  private readonly CACHE_KEY = 'motoboy-pedidos-cache';
 
   // Computed: Pedidos agrupados por status (otimizado - uma única passagem)
   readonly pedidosPorStatus = computed(() => {
@@ -68,24 +72,23 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     
     for (const pedido of todosPedidos) {
       // Apenas pedidos de delivery com status relevante
-      // Compara tanto com enum quanto com string (caso venha como string do backend)
-      const isDelivery = pedido.tipoPedido === TipoPedido.DELIVERY || 
-                         pedido.tipoPedido === 'DELIVERY';
+      // Compara com enum (que é string enum, então funciona com strings do backend)
+      const tipoPedidoStr = String(pedido.tipoPedido);
+      const isDelivery = tipoPedidoStr === TipoPedido.DELIVERY;
       
       if (!isDelivery) {
         console.debug('⏭️ Pedido ignorado (não é DELIVERY):', {
           id: pedido.id,
-          tipoPedido: pedido.tipoPedido
+          tipoPedido: pedido.tipoPedido,
+          tipoPedidoStr: tipoPedidoStr
         });
         continue;
       }
       
-      // Compara status (suporta tanto enum quanto string)
-      const status = pedido.status;
-      const isSaiuParaEntrega = status === StatusPedido.SAIU_PARA_ENTREGA || 
-                                status === 'SAIU_PARA_ENTREGA';
-      const isPronto = status === StatusPedido.PRONTO || 
-                       status === 'PRONTO';
+      // Compara status (converte para string para garantir compatibilidade)
+      const statusStr = String(pedido.status);
+      const isSaiuParaEntrega = statusStr === StatusPedido.SAIU_PARA_ENTREGA;
+      const isPronto = statusStr === StatusPedido.PRONTO;
       
       if (isSaiuParaEntrega) {
         saiuParaEntrega.push(pedido);
@@ -94,8 +97,8 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       } else {
         console.debug('⏭️ Pedido ignorado (status não relevante):', {
           id: pedido.id,
-          status: status,
-          statusType: typeof status
+          status: pedido.status,
+          statusStr: statusStr
         });
       }
     }
@@ -129,6 +132,9 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     afterNextRender(() => {
       if (!isPlatformBrowser(this.platformId)) return;
       
+      // Restaura cache do sessionStorage se existir
+      this.restaurarCache();
+      
       // Verifica autenticação antes de carregar dados
       // Aguarda um pouco para garantir que o sessionStorage foi carregado após o redirect
       // Em mobile ou após refresh, pode levar mais tempo para o sessionStorage estar disponível
@@ -139,6 +145,53 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
         }, 500); // Aumentado para 500ms para dar mais tempo após refresh
       });
     });
+  }
+
+  /**
+   * Restaura cache de pedidos do sessionStorage ao inicializar.
+   */
+  private restaurarCache(): void {
+    if (typeof sessionStorage === 'undefined') return;
+    
+    try {
+      const cacheStr = sessionStorage.getItem(this.CACHE_KEY);
+      if (cacheStr) {
+        const cache = JSON.parse(cacheStr);
+        const pedidosCache: Pedido[] = cache.pedidos || [];
+        const timestamp = cache.timestamp || 0;
+        const agora = Date.now();
+        
+        // Cache válido por 5 minutos
+        if (pedidosCache.length > 0 && (agora - timestamp) < 5 * 60 * 1000) {
+          console.debug('📋 Restaurando cache de pedidos:', pedidosCache.length, 'pedidos');
+          this.ultimaRespostaValida = pedidosCache;
+          this.pedidos.set([...pedidosCache]); // Nova referência para signals
+        } else {
+          console.debug('⏭️ Cache expirado ou vazio. Ignorando.');
+          sessionStorage.removeItem(this.CACHE_KEY);
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro ao restaurar cache:', error);
+      sessionStorage.removeItem(this.CACHE_KEY);
+    }
+  }
+
+  /**
+   * Salva cache de pedidos no sessionStorage.
+   */
+  private salvarCache(): void {
+    if (typeof sessionStorage === 'undefined') return;
+    
+    try {
+      const cache = {
+        pedidos: this.ultimaRespostaValida,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem(this.CACHE_KEY, JSON.stringify(cache));
+    } catch (error) {
+      console.warn('⚠️ Erro ao salvar cache:', error);
+    }
   }
 
   /**
@@ -278,7 +331,24 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
           
           console.debug('✅ Pedidos carregados com sucesso:', {
             total: novosPedidos.length,
-            pedidos: novosPedidos.map(p => ({ id: p.id, status: p.status }))
+            pedidos: novosPedidos.map(p => ({ 
+              id: p.id, 
+              status: p.status, 
+              tipoPedido: p.tipoPedido,
+              statusType: typeof p.status,
+              tipoPedidoType: typeof p.tipoPedido
+            }))
+          });
+          
+          // Força detecção de mudanças (útil em modo OnPush)
+          // O signal já deve disparar, mas garantimos aqui
+          this.cdr.markForCheck();
+          
+          console.debug('📊 Signal pedidos atualizado. Total:', this.pedidos().length);
+          console.debug('📊 Computed totalEntregas:', this.totalEntregas());
+          console.debug('📊 Computed pedidosPorStatus:', {
+            saiuParaEntrega: this.pedidosPorStatus().saiuParaEntrega.length,
+            pronto: this.pedidosPorStatus().pronto.length
           });
           
           // Inicia SSE e polling apenas uma vez, após carregamento inicial bem-sucedido
@@ -620,6 +690,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       this.pedidos.set(novosPedidos);
       this.erro.set(null);
       this.reconectando.set(false);
+      this.salvarCache(); // Salva no sessionStorage
       return;
     }
     
@@ -637,6 +708,9 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       this.pedidos.set(novosPedidos);
       this.erro.set(null);
       this.reconectando.set(false);
+      
+      // Atualiza cache
+      this.salvarCache();
     }
   }
 
@@ -681,6 +755,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
             });
             // Atualiza cache com nova referência
             this.ultimaRespostaValida = [...this.pedidos()];
+            this.salvarCache(); // Salva no sessionStorage
             this.erro.set(null);
             
             // Força atualização imediata para sincronizar
