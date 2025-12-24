@@ -5,6 +5,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PedidoService, StatusPedido, Pedido, TipoPedido } from '../../services/pedido.service';
 import { MotoboyService, Motoboy } from '../../services/motoboy.service';
 import { SessaoTrabalhoService, SessaoTrabalho } from '../../services/sessao-trabalho.service';
+import { GoogleMapsService } from '../../services/google-maps.service';
+import { ModalMapaEntregaComponent } from './modal-mapa-entrega/modal-mapa-entrega.component';
 import { catchError, of, timer, switchMap } from 'rxjs';
 
 interface PedidosPorStatus {
@@ -22,7 +24,7 @@ interface MotoboyKanbanColumn {
 @Component({
   selector: 'app-gestao-motoboys-kanban',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ModalMapaEntregaComponent],
   templateUrl: './gestao-motoboys-kanban.component.html',
   styleUrl: './gestao-motoboys-kanban.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -32,6 +34,7 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
   private readonly pedidoService = inject(PedidoService);
   private readonly motoboyService = inject(MotoboyService);
   private readonly sessaoService = inject(SessaoTrabalhoService);
+  private readonly googleMapsService = inject(GoogleMapsService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly StatusPedido = StatusPedido;
@@ -47,6 +50,8 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
   readonly erro = signal<string | null>(null);
   readonly editandoValor = signal<string | null>(null); // ID do pedido sendo editado
   readonly valorEditando = signal<number>(5.0);
+  readonly modalMapaAberto = signal(false);
+  readonly pedidoSelecionado = signal<Pedido | null>(null);
 
   // Computed: Colunas do kanban agrupadas por motoboy
   readonly colunasKanban = computed(() => {
@@ -249,6 +254,39 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
       style: 'currency',
       currency: 'BRL'
     }).format(valor);
+  }
+
+  /**
+   * Abre o modal com mapa embutido mostrando o destino e opção de rota.
+   */
+  abrirRotaParaEntrega(pedido: Pedido): void {
+    console.log('Abrir rota chamado para pedido:', pedido.numeroPedido, 'Coordenadas:', pedido.latitude, pedido.longitude);
+    
+    if (!pedido.latitude || !pedido.longitude) {
+      this.erro.set(`Pedido #${pedido.numeroPedido}: Endereço de entrega não possui coordenadas. Não é possível abrir a rota.`);
+      console.warn('Pedido sem coordenadas:', pedido);
+      return;
+    }
+
+    this.pedidoSelecionado.set(pedido);
+    this.modalMapaAberto.set(true);
+    this.erro.set(null); // Limpa erros anteriores
+    console.log('Modal aberto para pedido:', pedido.numeroPedido);
+  }
+
+  /**
+   * Manipula o evento de teclado para abrir rota, prevenindo comportamento padrão.
+   */
+  abrirRotaComTeclado(event: KeyboardEvent, pedido: Pedido): void {
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      this.abrirRotaParaEntrega(pedido);
+    }
+  }
+
+  fecharModalMapa(): void {
+    this.modalMapaAberto.set(false);
+    this.pedidoSelecionado.set(null);
   }
 }
 

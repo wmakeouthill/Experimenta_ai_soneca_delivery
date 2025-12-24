@@ -35,7 +35,7 @@ export class GoogleMapsService {
             }
 
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places,directions`;
             script.async = true;
             script.defer = true;
             script.onload = () => {
@@ -77,5 +77,47 @@ export class GoogleMapsService {
      */
     getGoogleMaps(): Promise<any> {
         return this.loadScript().then(() => google.maps);
+    }
+
+    /**
+     * Abre o Google Maps com uma rota otimizada entre dois pontos.
+     * @param origemLat Latitude do ponto de origem
+     * @param origemLng Longitude do ponto de origem
+     * @param destinoLat Latitude do ponto de destino
+     * @param destinoLng Longitude do ponto de destino
+     */
+    abrirRotaNoMaps(origemLat: number, origemLng: number, destinoLat: number, destinoLng: number): void {
+        // URL do Google Maps com direções
+        // Usa o modo de direções (directions) que calcula a rota mais rápida
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${origemLat},${origemLng}&destination=${destinoLat},${destinoLng}&travelmode=driving`;
+        window.open(url, '_blank');
+    }
+
+    /**
+     * Abre o Google Maps com uma rota otimizada usando a localização atual do usuário.
+     * Solicita permissão de geolocalização do navegador.
+     * @param destinoLat Latitude do ponto de destino
+     * @param destinoLng Longitude do ponto de destino
+     */
+    abrirRotaComLocalizacaoAtual(destinoLat: number, destinoLng: number): void {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const origemLat = position.coords.latitude;
+                    const origemLng = position.coords.longitude;
+                    this.abrirRotaNoMaps(origemLat, origemLng, destinoLat, destinoLng);
+                },
+                (error) => {
+                    console.error('Erro ao obter localização:', error);
+                    // Se não conseguir obter localização, abre apenas o destino
+                    const url = `https://www.google.com/maps/search/?api=1&query=${destinoLat},${destinoLng}`;
+                    window.open(url, '_blank');
+                }
+            );
+        } else {
+            // Navegador não suporta geolocalização, abre apenas o destino
+            const url = `https://www.google.com/maps/search/?api=1&query=${destinoLat},${destinoLng}`;
+            window.open(url, '_blank');
+        }
     }
 }

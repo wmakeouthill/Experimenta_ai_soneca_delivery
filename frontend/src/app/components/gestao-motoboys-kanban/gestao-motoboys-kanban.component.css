@@ -386,6 +386,31 @@
   gap: 8px;
 }
 
+.pedido-card.card-clicavel {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.pedido-card.card-clicavel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pedido-card.card-clicavel::after {
+  content: '🗺️';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.pedido-card.card-clicavel:hover::after {
+  opacity: 1;
+}
+
 .pedido-card {
   background: #f9fafb;
   border-radius: 8px;

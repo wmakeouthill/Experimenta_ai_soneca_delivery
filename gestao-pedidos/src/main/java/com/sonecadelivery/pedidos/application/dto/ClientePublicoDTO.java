@@ -15,4 +15,6 @@ public class ClientePublicoDTO {
     private String id;
     private String nome;
     private String telefone;
+    private Double latitude; // Latitude do endereço de entrega
+    private Double longitude; // Longitude do endereço de entrega
 }

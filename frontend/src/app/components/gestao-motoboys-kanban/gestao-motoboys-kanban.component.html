@@ -108,7 +108,14 @@
                 </div>
                 <div class="pedidos-lista">
                   @for (pedido of coluna.pedidosPorStatus.pronto; track pedido.id) {
-                    <div class="pedido-card pronto">
+                    <div
+                      class="pedido-card pronto"
+                      [class.card-clicavel]="pedido.latitude && pedido.longitude"
+                      [attr.role]="pedido.latitude && pedido.longitude ? 'button' : null"
+                      [attr.tabindex]="pedido.latitude && pedido.longitude ? 0 : null"
+                      (click)="abrirRotaParaEntrega(pedido)"
+                      (keydown)="abrirRotaComTeclado($event, pedido)"
+                      [title]="pedido.latitude && pedido.longitude ? 'Clique ou pressione Enter para abrir rota no Google Maps' : 'Endereço sem coordenadas - não é possível abrir rota'">
                       <div class="pedido-header">
                         <div class="pedido-numero-wrapper">
                           <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
@@ -143,20 +150,20 @@
                             <div class="acoes-edicao">
                               <button
                                 class="btn-salvar-valor"
-                                (click)="salvarValorMotoboy(pedido)"
+                                (click)="$event.stopPropagation(); salvarValorMotoboy(pedido)"
                                 title="Salvar">
                                 ✓
                               </button>
                               <button
                                 class="btn-cancelar-valor"
-                                (click)="cancelarEdicaoValor()"
+                                (click)="$event.stopPropagation(); cancelarEdicaoValor()"
                                 title="Cancelar">
                                 ✕
                               </button>
                             </div>
                           </div>
                         } @else {
-                          <button type="button" class="valor-motoboy-display" (click)="iniciarEdicaoValor(pedido)" title="Clique para editar">
+                          <button type="button" class="valor-motoboy-display" (click)="$event.stopPropagation(); iniciarEdicaoValor(pedido)" title="Clique para editar">
                             <span class="valor-motoboy-label">Valor entrega:</span>
                             <span class="valor-motoboy-valor">{{ formatarValor(obterValorMotoboy(pedido)) }}</span>
                             <span class="icone-editar">✏️</span>
@@ -167,7 +174,7 @@
                       <div class="pedido-acoes">
                         <button
                           class="btn-acao btn-saiu-entrega"
-                          (click)="marcarComoSaiuParaEntrega(pedido)"
+                          (click)="$event.stopPropagation(); marcarComoSaiuParaEntrega(pedido)"
                           title="Marcar como saiu para entrega">
                           🚚 Saiu para Entrega
                         </button>
@@ -187,7 +194,14 @@
                 </div>
                 <div class="pedidos-lista">
                   @for (pedido of coluna.pedidosPorStatus.saiuParaEntrega; track pedido.id) {
-                    <div class="pedido-card em-entrega">
+                    <div
+                      class="pedido-card em-entrega"
+                      [class.card-clicavel]="pedido.latitude && pedido.longitude"
+                      [attr.role]="pedido.latitude && pedido.longitude ? 'button' : null"
+                      [attr.tabindex]="pedido.latitude && pedido.longitude ? 0 : null"
+                      (click)="abrirRotaParaEntrega(pedido)"
+                      (keydown)="abrirRotaComTeclado($event, pedido)"
+                      [title]="pedido.latitude && pedido.longitude ? 'Clique ou pressione Enter para abrir rota no Google Maps' : 'Endereço sem coordenadas - não é possível abrir rota'">
                       <div class="pedido-header">
                         <div class="pedido-numero-wrapper">
                           <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
@@ -222,20 +236,20 @@
                             <div class="acoes-edicao">
                               <button
                                 class="btn-salvar-valor"
-                                (click)="salvarValorMotoboy(pedido)"
+                                (click)="$event.stopPropagation(); salvarValorMotoboy(pedido)"
                                 title="Salvar">
                                 ✓
                               </button>
                               <button
                                 class="btn-cancelar-valor"
-                                (click)="cancelarEdicaoValor()"
+                                (click)="$event.stopPropagation(); cancelarEdicaoValor()"
                                 title="Cancelar">
                                 ✕
                               </button>
                             </div>
                           </div>
                         } @else {
-                          <button type="button" class="valor-motoboy-display" (click)="iniciarEdicaoValor(pedido)" title="Clique para editar">
+                          <button type="button" class="valor-motoboy-display" (click)="$event.stopPropagation(); iniciarEdicaoValor(pedido)" title="Clique para editar">
                             <span class="valor-motoboy-label">Valor entrega:</span>
                             <span class="valor-motoboy-valor">{{ formatarValor(obterValorMotoboy(pedido)) }}</span>
                             <span class="icone-editar">✏️</span>
@@ -260,4 +274,14 @@
     </div>
   }
 </div>
+
+<!-- Modal de Mapa -->
+<app-modal-mapa-entrega
+  [aberto]="modalMapaAberto()"
+  [latitude]="pedidoSelecionado()?.latitude ?? null"
+  [longitude]="pedidoSelecionado()?.longitude ?? null"
+  [enderecoEntrega]="pedidoSelecionado()?.enderecoEntrega ?? ''"
+  [numeroPedido]="pedidoSelecionado()?.numeroPedido ?? ''"
+  (onFechar)="fecharModalMapa()">
+</app-modal-mapa-entrega>
 

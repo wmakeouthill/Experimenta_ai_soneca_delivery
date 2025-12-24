@@ -61,6 +61,8 @@ public class ClienteGatewayAdapter implements ClienteGatewayPort {
         return new ClientePublicoDTO(
                 cliente.getId(),
                 cliente.getNome(),
-                cliente.getTelefone());
+                cliente.getTelefone(),
+                cliente.getLatitude(),
+                cliente.getLongitude());
     }
 }

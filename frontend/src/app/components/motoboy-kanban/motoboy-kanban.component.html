@@ -75,7 +75,14 @@
           </div>
           <div class="pedidos-lista">
             @for (pedido of pedidosPorStatus().saiuParaEntrega; track pedido.id) {
-              <div class="pedido-card em-entrega">
+              <div 
+                class="pedido-card em-entrega"
+                [class.card-clicavel]="pedido.latitude && pedido.longitude"
+                [attr.role]="pedido.latitude && pedido.longitude ? 'button' : null"
+                [attr.tabindex]="pedido.latitude && pedido.longitude ? 0 : null"
+                (click)="abrirRotaParaEntrega(pedido)"
+                (keydown)="abrirRotaComTeclado($event, pedido)"
+                [title]="pedido.latitude && pedido.longitude ? 'Clique ou pressione Enter para abrir rota no Google Maps' : 'Endereço sem coordenadas - não é possível abrir rota'">
                 <div class="pedido-header">
                   <div class="pedido-numero-wrapper">
                     <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
@@ -121,7 +128,14 @@
           </div>
           <div class="pedidos-lista">
             @for (pedido of pedidosPorStatus().pronto; track pedido.id) {
-              <div class="pedido-card pronto">
+              <div 
+                class="pedido-card pronto"
+                [class.card-clicavel]="pedido.latitude && pedido.longitude"
+                [attr.role]="pedido.latitude && pedido.longitude ? 'button' : null"
+                [attr.tabindex]="pedido.latitude && pedido.longitude ? 0 : null"
+                (click)="abrirRotaParaEntrega(pedido)"
+                (keydown)="abrirRotaComTeclado($event, pedido)"
+                [title]="pedido.latitude && pedido.longitude ? 'Clique ou pressione Enter para abrir rota no Google Maps' : 'Endereço sem coordenadas - não é possível abrir rota'">
                 <div class="pedido-header">
                   <div class="pedido-numero-wrapper">
                     <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
@@ -147,7 +161,7 @@
                 <div class="pedido-acoes">
                   <button 
                     class="btn-acao btn-saiu-entrega"
-                    (click)="marcarComoSaiuParaEntrega(pedido)"
+                    (click)="$event.stopPropagation(); marcarComoSaiuParaEntrega(pedido)"
                     title="Marcar como saiu para entrega">
                     🚚 Saiu para Entrega
                   </button>
@@ -165,4 +179,14 @@
     </div>
   }
 </div>
+
+<!-- Modal de Mapa -->
+<app-modal-mapa-entrega
+  [aberto]="modalMapaAberto()"
+  [latitude]="pedidoSelecionado()?.latitude ?? null"
+  [longitude]="pedidoSelecionado()?.longitude ?? null"
+  [enderecoEntrega]="pedidoSelecionado()?.enderecoEntrega ?? ''"
+  [numeroPedido]="pedidoSelecionado()?.numeroPedido ?? ''"
+  (onFechar)="fecharModalMapa()">
+</app-modal-mapa-entrega>
 

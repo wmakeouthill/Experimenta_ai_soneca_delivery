@@ -1,0 +1,44 @@
+<app-base-modal
+  [aberto]="aberto()"
+  [titulo]="'📍 Rota de Entrega - Pedido #' + numeroPedido()"
+  [tamanho]="'grande'"
+  (onFechar)="fechar()">
+  
+  <div class="modal-mapa-conteudo">
+    @if (carregandoMapa()) {
+      <div class="mapa-carregando">
+        <div class="spinner"></div>
+        <p>Carregando mapa...</p>
+      </div>
+    } @else {
+      <div class="mapa-container">
+        <div #mapContainer class="mapa-embutido"></div>
+      </div>
+    }
+
+    @if (enderecoEntrega()) {
+      <div class="endereco-info">
+        <p class="endereco-texto">
+          <strong>📍 Endereço:</strong> {{ enderecoEntrega() }}
+        </p>
+      </div>
+    }
+
+    <div class="acoes-mapa">
+      <button
+        type="button"
+        class="btn-abrir-maps"
+        (click)="abrirNoGoogleMaps()"
+        [disabled]="!latitude() || !longitude()">
+        🗺️ Abrir no Google Maps
+      </button>
+      <button
+        type="button"
+        class="btn-fechar"
+        (click)="fechar()">
+        Fechar
+      </button>
+    </div>
+  </div>
+</app-base-modal>
+

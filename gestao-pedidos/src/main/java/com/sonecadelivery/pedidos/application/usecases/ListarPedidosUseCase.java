@@ -30,6 +30,7 @@ public class ListarPedidosUseCase {
     private final PedidoRepositoryPort pedidoRepository;
     private final PedidoDeliveryJpaRepository pedidoDeliveryRepository;
     private final MotoboyRepositoryPort motoboyRepository;
+    private final com.sonecadelivery.pedidos.application.ports.ClienteGatewayPort clienteGateway;
 
     public List<PedidoDTO> executar() {
         List<Pedido> pedidos = pedidoRepository.buscarTodos();
@@ -86,8 +87,8 @@ public class ListarPedidosUseCase {
     }
 
     /**
-     * Converte lista de pedidos para DTOs, buscando nomes de motoboys de forma
-     * otimizada.
+     * Converte lista de pedidos para DTOs, buscando nomes de motoboys e coordenadas de clientes
+     * de forma otimizada.
      */
     private List<PedidoDTO> converterComNomesMotoboy(List<Pedido> pedidos) {
         // Coleta IDs únicos de motoboys
@@ -103,14 +104,42 @@ public class ListarPedidosUseCase {
                     .collect(Collectors.toMap(Motoboy::getId, Motoboy::getNome));
         }
 
-        // Converte pedidos para DTOs com nome do motoboy
+        // Coleta IDs únicos de clientes para buscar coordenadas
+        Set<String> clienteIds = pedidos.stream()
+                .filter(p -> p.getClienteId() != null && p.getTipoPedido() != null 
+                        && p.getTipoPedido().name().equals("DELIVERY"))
+                .map(Pedido::getClienteId)
+                .collect(Collectors.toSet());
+
+        // Busca coordenadas dos clientes de forma otimizada
+        Map<String, com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO> clientesPorId = new java.util.HashMap<>();
+        if (!clienteIds.isEmpty()) {
+            for (String clienteId : clienteIds) {
+                clienteGateway.buscarPorId(clienteId)
+                        .ifPresent(cliente -> clientesPorId.put(clienteId, cliente));
+            }
+        }
+
+        // Converte pedidos para DTOs com nome do motoboy e coordenadas
         final Map<String, String> nomesFinais = nomesPorId;
+        final Map<String, com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO> clientesFinais = clientesPorId;
         return pedidos.stream()
                 .map(pedido -> {
                     String motoboyNome = pedido.getMotoboyId() != null
                             ? nomesFinais.get(pedido.getMotoboyId())
                             : null;
-                    return PedidoDTO.de(pedido, motoboyNome);
+                    PedidoDTO dto = PedidoDTO.de(pedido, motoboyNome);
+                    
+                    // Adiciona coordenadas do cliente se disponíveis
+                    if (pedido.getClienteId() != null) {
+                        com.sonecadelivery.pedidos.application.dto.ClientePublicoDTO cliente = clientesFinais.get(pedido.getClienteId());
+                        if (cliente != null) {
+                            dto.setLatitude(cliente.getLatitude());
+                            dto.setLongitude(cliente.getLongitude());
+                        }
+                    }
+                    
+                    return dto;
                 })
                 .toList();
     }
@@ -122,7 +151,7 @@ public class ListarPedidosUseCase {
     }
 
     private PedidoDTO mapDeliveryToDTO(PedidoDeliveryEntity entity) {
-        return PedidoDTO.builder()
+        PedidoDTO.PedidoDTOBuilder builder = PedidoDTO.builder()
                 .id(entity.getId())
                 .numeroPedido(entity.getNumeroPedido())
                 .clienteId(entity.getClienteId())
@@ -166,8 +195,18 @@ public class ListarPedidosUseCase {
                 .valorMotoboy(entity.getValorMotoboy() != null ? entity.getValorMotoboy() : new java.math.BigDecimal("5.00"))
                 .previsaoEntrega(entity.getPrevisaoEntrega())
                 .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+                .updatedAt(entity.getUpdatedAt());
+        
+        // Busca coordenadas do cliente se disponível
+        if (entity.getClienteId() != null) {
+            clienteGateway.buscarPorId(entity.getClienteId())
+                    .ifPresent(cliente -> {
+                        builder.latitude(cliente.getLatitude());
+                        builder.longitude(cliente.getLongitude());
+                    });
+        }
+        
+        return builder.build();
     }
 
     private StatusPedido mapDeliveryStatus(PedidoDeliveryEntity.StatusPedidoDelivery status) {

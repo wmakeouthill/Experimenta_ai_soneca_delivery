@@ -79,6 +79,8 @@ export interface Pedido {
   taxaEntrega?: number;
   valorMotoboy?: number; // Valor pago ao motoboy por esta entrega (padrão R$ 5,00)
   previsaoEntrega?: string;
+  latitude?: number; // Latitude do endereço de entrega do cliente
+  longitude?: number; // Longitude do endereço de entrega do cliente
 }
 
 export enum MeioPagamento {

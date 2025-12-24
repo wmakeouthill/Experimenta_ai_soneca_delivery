@@ -43,6 +43,8 @@ public class PedidoDTO {
         private BigDecimal taxaEntrega;
         private BigDecimal valorMotoboy; // Valor pago ao motoboy por esta entrega (padrão R$ 5,00)
         private LocalDateTime previsaoEntrega;
+        private Double latitude; // Latitude do endereço de entrega do cliente
+        private Double longitude; // Longitude do endereço de entrega do cliente
 
         public static PedidoDTO de(Pedido pedido) {
                 return PedidoDTO.builder()
