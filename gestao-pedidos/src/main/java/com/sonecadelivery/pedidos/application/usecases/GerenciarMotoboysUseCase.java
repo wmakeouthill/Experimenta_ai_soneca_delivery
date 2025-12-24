@@ -83,9 +83,9 @@ public class GerenciarMotoboysUseCase {
         Motoboy motoboy = motoboyRepository.buscarPorId(id)
                 .orElseThrow(() -> new NotFoundException("Motoboy não encontrado"));
 
-        // Atualiza nome se informado
-        if (request.getNome() != null && !request.getNome().trim().isEmpty()) {
-            motoboy.atualizarNome(request.getNome());
+        // Atualiza apelido se informado (editável apenas pelo admin)
+        if (request.getApelido() != null) {
+            motoboy.atualizarApelido(request.getApelido());
         }
 
         // Atualiza telefone se informado
@@ -158,15 +158,6 @@ public class GerenciarMotoboysUseCase {
     }
 
     private MotoboyDTO toDTO(Motoboy motoboy) {
-        return MotoboyDTO.builder()
-                .id(motoboy.getId())
-                .nome(motoboy.getNome())
-                .telefone(motoboy.getTelefone())
-                .veiculo(motoboy.getVeiculo())
-                .placa(motoboy.getPlaca())
-                .ativo(motoboy.isAtivo())
-                .createdAt(motoboy.getCreatedAt())
-                .updatedAt(motoboy.getUpdatedAt())
-                .build();
+        return MotoboyDTO.de(motoboy);
     }
 }

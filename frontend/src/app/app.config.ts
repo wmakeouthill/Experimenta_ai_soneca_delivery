@@ -9,6 +9,7 @@ import { authErrorInterceptor } from './interceptors/auth-error.interceptor';
 import { silent404Interceptor } from './interceptors/silent-404.interceptor';
 import { silent500ConfigInterceptor } from './interceptors/silent-500-config.interceptor';
 import { clienteAuthInterceptor } from './interceptors/cliente-auth.interceptor';
+import { motoboyAuthInterceptor } from './interceptors/motoboy-auth.interceptor';
 import { clienteAuthErrorInterceptor } from './interceptors/cliente-auth-error.interceptor';
 import { PwaInstallService } from './services/pwa-install.service';
 import { environment } from '../environments/environment';
@@ -36,6 +37,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([
         clienteAuthInterceptor,    // Adiciona token JWT e X-Cliente-Id para clientes
         clienteAuthErrorInterceptor, // Limpa sessão se o cliente não existir mais
+        motoboyAuthInterceptor,    // Adiciona token JWT e X-Motoboy-Id para motoboys
         authInterceptor,           // Adiciona token JWT nas requisições (funcionários)
         authErrorInterceptor,      // Trata erros 401/403 e redireciona para login
         silent404Interceptor,      // Trata 404 silenciosamente para sessões

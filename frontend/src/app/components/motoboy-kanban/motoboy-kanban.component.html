@@ -1,0 +1,161 @@
+<div class="kanban-container">
+  <header class="kanban-header">
+    <div class="header-content">
+      <h1 class="kanban-titulo">
+        <img src="/assets/experimenta_ai_banner_circular.png" alt="Experimenta aí" class="kanban-logo" />
+        Minhas Entregas
+      </h1>
+
+      <div class="header-info">
+        @if (motoboy()) {
+          <div class="motoboy-info-header">
+            @if (motoboy()!.fotoUrl) {
+              <img [src]="motoboy()!.fotoUrl" [alt]="motoboy()!.nome" class="motoboy-foto-header" />
+            } @else {
+              <div class="motoboy-avatar-header">🛵</div>
+            }
+            <div class="motoboy-detalhes-header">
+              <span class="motoboy-nome-header">{{ motoboy()!.apelido || motoboy()!.nome }}</span>
+              @if (motoboy()!.apelido && motoboy()!.apelido !== motoboy()!.nome) {
+                <span class="motoboy-nome-completo">{{ motoboy()!.nome }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="total-entregas">
+          <span class="total-label">Total de Entregas:</span>
+          <span class="total-value">{{ totalEntregas() }}</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-sair" (click)="logout()" aria-label="Sair">
+          Sair
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (erro()) {
+    <div class="erro-mensagem">
+      <p>{{ erro() }}</p>
+      <button class="btn-recarregar" (click)="carregarPedidos()">
+        Tentar novamente
+      </button>
+    </div>
+  }
+
+  @if (estaCarregando() && pedidos().length === 0) {
+    <div class="estado-carregando">
+      <div class="spinner"></div>
+      <p>Carregando entregas...</p>
+    </div>
+  }
+
+  @if (totalEntregas() === 0 && !estaCarregando()) {
+    <div class="sem-entregas">
+      <p>Você não tem entregas no momento.</p>
+    </div>
+  } @else if (totalEntregas() > 0) {
+    <div class="kanban-board">
+      <!-- Coluna: PRONTO -->
+      <div class="kanban-coluna">
+        <div class="status-section">
+          <div class="status-header">
+            <h4 class="status-titulo">✅ Pronto</h4>
+            <span class="status-count">{{ pedidosPorStatus().pronto.length }}</span>
+          </div>
+          <div class="pedidos-lista">
+            @for (pedido of pedidosPorStatus().pronto; track pedido.id) {
+              <div class="pedido-card pronto">
+                <div class="pedido-header">
+                  <div class="pedido-numero-wrapper">
+                    <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                  </div>
+                  <div class="pedido-cliente-wrapper">
+                    <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                  </div>
+                </div>
+                @if (pedido.enderecoEntrega) {
+                  <div class="pedido-endereco">
+                    📍 {{ pedido.enderecoEntrega }}
+                  </div>
+                }
+                <div class="pedido-valor-pedido">
+                  Pedido: {{ formatarValor(pedido.valorTotal) }}
+                </div>
+                @if (pedido.valorMotoboy) {
+                  <div class="pedido-valor-entrega">
+                    <span class="valor-motoboy-label">Valor entrega:</span>
+                    <span class="valor-motoboy-valor">{{ formatarValor(pedido.valorMotoboy) }}</span>
+                  </div>
+                }
+                <div class="pedido-acoes">
+                  <button 
+                    class="btn-acao btn-saiu-entrega"
+                    (click)="marcarComoSaiuParaEntrega(pedido)"
+                    title="Marcar como saiu para entrega">
+                    🚚 Saiu para Entrega
+                  </button>
+                </div>
+              </div>
+            }
+            @if (pedidosPorStatus().pronto.length === 0) {
+              <div class="sem-pedidos-coluna">
+                <p>Nenhum pedido pronto</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Coluna: SAIU_PARA_ENTREGA -->
+      <div class="kanban-coluna">
+        <div class="status-section">
+          <div class="status-header">
+            <h4 class="status-titulo">🚚 Em Trânsito</h4>
+            <span class="status-count">{{ pedidosPorStatus().saiuParaEntrega.length }}</span>
+          </div>
+          <div class="pedidos-lista">
+            @for (pedido of pedidosPorStatus().saiuParaEntrega; track pedido.id) {
+              <div class="pedido-card em-entrega">
+                <div class="pedido-header">
+                  <div class="pedido-numero-wrapper">
+                    <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                  </div>
+                  <div class="pedido-cliente-wrapper">
+                    <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                  </div>
+                </div>
+                @if (pedido.enderecoEntrega) {
+                  <div class="pedido-endereco">
+                    📍 {{ pedido.enderecoEntrega }}
+                  </div>
+                }
+                <div class="pedido-valor-pedido">
+                  Pedido: {{ formatarValor(pedido.valorTotal) }}
+                </div>
+                @if (pedido.valorMotoboy) {
+                  <div class="pedido-valor-entrega">
+                    <span class="valor-motoboy-label">Valor entrega:</span>
+                    <span class="valor-motoboy-valor">{{ formatarValor(pedido.valorMotoboy) }}</span>
+                  </div>
+                }
+                <div class="pedido-tempo">
+                  <span class="tempo-label">Em trânsito</span>
+                </div>
+              </div>
+            }
+            @if (pedidosPorStatus().saiuParaEntrega.length === 0) {
+              <div class="sem-pedidos-coluna">
+                <p>Nenhum pedido em trânsito</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

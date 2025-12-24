@@ -6,6 +6,9 @@
                 <p class="header-subtitle">Gerencie os entregadores do seu estabelecimento</p>
             </div>
             <div class="header-actions">
+                <button class="btn-link-cadastro" (click)="copiarLinkCadastro()" title="Copiar link de cadastro para motoboys">
+                    📋 Link de Cadastro
+                </button>
                 <button class="btn-novo" (click)="abrirModalNovo()">
                     <span class="btn-icon">+</span>
                     Novo Motoboy
@@ -14,6 +17,18 @@
                     ← Voltar
                 </button>
             </div>
+        </div>
+        <div class="link-cadastro-info">
+            <p class="link-cadastro-text">
+                <strong>Link para motoboys se cadastrarem:</strong>
+                <code class="link-cadastro-url">{{ linkCadastroMotoboy() }}</code>
+                <button class="btn-copiar-link" (click)="copiarLinkCadastro()" title="Copiar link">
+                    📋 Copiar
+                </button>
+            </p>
+            @if (linkCopiado()) {
+                <div class="link-copiado-msg">✅ Link copiado para a área de transferência!</div>
+            }
         </div>
     </header>
 
@@ -66,11 +81,28 @@
                     <div class="motoboy-card" [class.inativo]="!motoboy.ativo">
                         <div class="card-header">
                             <div class="motoboy-avatar">
-                                🏍️
+                                @if (motoboy.fotoUrl) {
+                                    <img [src]="motoboy.fotoUrl" [alt]="motoboy.nome" class="motoboy-foto" />
+                                } @else {
+                                    🏍️
+                                }
                             </div>
                             <div class="motoboy-info">
-                                <h3 class="motoboy-nome">{{ motoboy.nome }}</h3>
-                                <span class="motoboy-telefone">📞 {{ formatarTelefone(motoboy.telefone) }}</span>
+                                <div class="motoboy-nome-wrapper">
+                                    <h3 class="motoboy-nome">{{ nomeExibicao(motoboy) }}</h3>
+                                    @if (temContaGoogle(motoboy)) {
+                                        <span class="google-badge" title="Cadastrado via Google">🔐 Google</span>
+                                    }
+                                </div>
+                                @if (motoboy.apelido && motoboy.apelido !== motoboy.nome) {
+                                    <span class="motoboy-nome-completo">{{ motoboy.nome }}</span>
+                                }
+                                @if (motoboy.email) {
+                                    <span class="motoboy-email">📧 {{ motoboy.email }}</span>
+                                }
+                                @if (motoboy.telefone) {
+                                    <span class="motoboy-telefone">📞 {{ formatarTelefone(motoboy.telefone) }}</span>
+                                }
                             </div>
                             <span class="status-badge" [class.ativo]="motoboy.ativo" [class.inativo]="!motoboy.ativo">
                                 {{ motoboy.ativo ? 'Ativo' : 'Inativo' }}
@@ -144,20 +176,55 @@
                 </header>
 
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="nome">Nome *</label>
-                        <input
-                            type="text"
-                            id="nome"
-                            [ngModel]="formNome()"
-                            (ngModelChange)="formNome.set($event)"
-                            placeholder="Nome completo do motoboy"
-                            class="form-input"
-                            maxlength="100">
-                    </div>
+                    @if (modoEdicao() && motoboyEditando()) {
+                        <!-- Exibir informações do Google (read-only) -->
+                        @if (temContaGoogle(motoboyEditando()!)) {
+                            <div class="google-info-section">
+                                <div class="info-readonly">
+                                    @if (motoboyEditando()!.fotoUrl) {
+                                        <img [src]="motoboyEditando()!.fotoUrl" [alt]="motoboyEditando()!.nome" class="motoboy-foto-modal" />
+                                    }
+                                    <div class="info-readonly-text">
+                                        <label>Nome Completo (Google)</label>
+                                        <div class="info-readonly-value">{{ motoboyEditando()!.nome }}</div>
+                                        @if (motoboyEditando()!.email) {
+                                            <div class="info-readonly-email">📧 {{ motoboyEditando()!.email }}</div>
+                                        }
+                                        <div class="info-readonly-hint">🔐 Cadastrado via Google OAuth</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="form-group">
+                            <label for="apelido">Apelido (Nome de Exibição)</label>
+                            <input
+                                type="text"
+                                id="apelido"
+                                [ngModel]="formApelido()"
+                                (ngModelChange)="formApelido.set($event)"
+                                placeholder="Nome que será exibido no sistema (deixe vazio para usar o nome completo)"
+                                class="form-input"
+                                maxlength="200">
+                            <small class="form-hint">Se preenchido, será exibido no lugar do nome completo</small>
+                        </div>
+                    } @else {
+                        <!-- Modo criação: campos normais -->
+                        <div class="form-group">
+                            <label for="nome">Nome *</label>
+                            <input
+                                type="text"
+                                id="nome"
+                                [ngModel]="formNome()"
+                                (ngModelChange)="formNome.set($event)"
+                                placeholder="Nome completo do motoboy"
+                                class="form-input"
+                                maxlength="100">
+                        </div>
+                    }
 
                     <div class="form-group">
-                        <label for="telefone">Telefone *</label>
+                        <label for="telefone">Telefone {{ modoEdicao() ? '' : '*' }}</label>
                         <input
                             type="tel"
                             id="telefone"
@@ -166,6 +233,9 @@
                             placeholder="(00) 00000-0000"
                             class="form-input"
                             maxlength="15">
+                        @if (modoEdicao()) {
+                            <small class="form-hint">Opcional - Pode deixar vazio para motoboys cadastrados via Google</small>
+                        }
                     </div>
 
                     <div class="form-row">

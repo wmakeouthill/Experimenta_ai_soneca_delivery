@@ -156,6 +156,9 @@
     <!-- Migration: Adiciona coluna valor_motoboy nas tabelas pedidos e pedidos_delivery -->
     <include file="changes/048-add-valor-motoboy-pedidos.sql" relativeToChangelogFile="true" />
 
+    <!-- Migration: Adiciona campos de autenticação Google OAuth na tabela motoboys -->
+    <include file="changes/049-add-google-auth-motoboys.sql" relativeToChangelogFile="true" />
+
     <!-- 
     NOTA: O usuário administrador inicial é criado automaticamente via CommandLineRunner
     (UsuarioInicialConfig) na primeira execução da aplicação.

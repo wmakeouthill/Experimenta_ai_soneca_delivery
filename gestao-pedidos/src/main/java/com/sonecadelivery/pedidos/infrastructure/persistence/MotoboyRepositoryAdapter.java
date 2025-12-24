@@ -52,6 +52,18 @@ public class MotoboyRepositoryAdapter implements MotoboyRepositoryPort {
     }
 
     @Override
+    public Optional<Motoboy> buscarPorGoogleId(String googleId) {
+        return jpaRepository.findByGoogleId(googleId)
+                .map(MotoboyMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Motoboy> buscarPorEmail(String email) {
+        return jpaRepository.findByEmail(email)
+                .map(MotoboyMapper::toDomain);
+    }
+
+    @Override
     public List<Motoboy> listarTodos() {
         return jpaRepository.findAllByOrderByNomeAsc()
                 .stream()

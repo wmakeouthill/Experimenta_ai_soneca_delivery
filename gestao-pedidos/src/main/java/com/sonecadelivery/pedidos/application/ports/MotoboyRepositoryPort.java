@@ -32,6 +32,16 @@ public interface MotoboyRepositoryPort {
     Optional<Motoboy> buscarPorTelefone(String telefone);
 
     /**
+     * Busca motoboy por Google ID.
+     */
+    Optional<Motoboy> buscarPorGoogleId(String googleId);
+
+    /**
+     * Busca motoboy por email.
+     */
+    Optional<Motoboy> buscarPorEmail(String email);
+
+    /**
      * Lista todos os motoboys ordenados por nome.
      */
     List<Motoboy> listarTodos();

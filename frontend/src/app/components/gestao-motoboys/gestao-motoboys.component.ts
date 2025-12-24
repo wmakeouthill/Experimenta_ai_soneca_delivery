@@ -31,6 +31,7 @@ export class GestaoMotoboysComponent implements OnInit {
 
     // Form fields
     readonly formNome = signal('');
+    readonly formApelido = signal('');
     readonly formTelefone = signal('');
     readonly formVeiculo = signal('');
     readonly formPlaca = signal('');
@@ -40,6 +41,9 @@ export class GestaoMotoboysComponent implements OnInit {
     readonly mostrarConfirmacao = signal(false);
     readonly motoboyExcluindo = signal<Motoboy | null>(null);
     readonly excluindo = signal(false);
+
+    // Link de cadastro
+    readonly linkCopiado = signal(false);
 
     // Computed
     readonly motoboysFiltrados = computed(() => {
@@ -89,7 +93,8 @@ export class GestaoMotoboysComponent implements OnInit {
         this.modoEdicao.set(true);
         this.motoboyEditando.set(motoboy);
         this.formNome.set(motoboy.nome);
-        this.formTelefone.set(motoboy.telefone);
+        this.formApelido.set(motoboy.apelido || '');
+        this.formTelefone.set(motoboy.telefone || '');
         this.formVeiculo.set(motoboy.veiculo || '');
         this.formPlaca.set(motoboy.placa || '');
         this.formAtivo.set(motoboy.ativo);
@@ -104,6 +109,7 @@ export class GestaoMotoboysComponent implements OnInit {
 
     limparFormulario(): void {
         this.formNome.set('');
+        this.formApelido.set('');
         this.formTelefone.set('');
         this.formVeiculo.set('');
         this.formPlaca.set('');
@@ -119,8 +125,8 @@ export class GestaoMotoboysComponent implements OnInit {
         if (this.modoEdicao() && this.motoboyEditando()) {
             // Atualizar
             const request: AtualizarMotoboyRequest = {
-                nome: this.formNome().trim(),
-                telefone: this.formTelefone().trim(),
+                apelido: this.formApelido().trim() || undefined,
+                telefone: this.formTelefone().trim() || undefined,
                 veiculo: this.formVeiculo().trim() || undefined,
                 placa: this.formPlaca().trim().toUpperCase() || undefined,
                 ativo: this.formAtivo()
@@ -163,14 +169,18 @@ export class GestaoMotoboysComponent implements OnInit {
     }
 
     validarFormulario(): boolean {
-        if (!this.formNome().trim()) {
-            this.erro.set('Nome é obrigatório.');
-            return false;
+        // Para criação, nome e telefone são obrigatórios
+        if (!this.modoEdicao()) {
+            if (!this.formNome().trim()) {
+                this.erro.set('Nome é obrigatório.');
+                return false;
+            }
+            if (!this.formTelefone().trim()) {
+                this.erro.set('Telefone é obrigatório.');
+                return false;
+            }
         }
-        if (!this.formTelefone().trim()) {
-            this.erro.set('Telefone é obrigatório.');
-            return false;
-        }
+        // Para edição, telefone não é mais obrigatório (pode ser null se cadastrou via Google)
         return true;
     }
 
@@ -221,7 +231,11 @@ export class GestaoMotoboysComponent implements OnInit {
     }
 
     // Formatação
-    formatarTelefone(telefone: string): string {
+    formatarTelefone(telefone?: string): string {
+        if (!telefone) {
+            return 'Não informado';
+        }
+        
         const numeros = telefone.replaceAll(/\D/g, '');
         if (numeros.length === 11) {
             return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
@@ -235,5 +249,48 @@ export class GestaoMotoboysComponent implements OnInit {
     formatarData(dataStr: string): string {
         const data = new Date(dataStr);
         return data.toLocaleDateString('pt-BR');
+    }
+
+    formatarTelefoneOptional(telefone?: string): string {
+        if (!telefone) return 'Não informado';
+        return this.formatarTelefone(telefone);
+    }
+
+    /**
+     * Retorna o nome de exibição do motoboy (apelido se existir, senão nome completo)
+     */
+    nomeExibicao(motoboy: Motoboy): string {
+        return motoboy.apelido || motoboy.nome;
+    }
+
+    /**
+     * Verifica se o motoboy tem conta Google (cadastrado via OAuth)
+     */
+    temContaGoogle(motoboy: Motoboy): boolean {
+        return !!motoboy.googleId;
+    }
+
+    /**
+     * Retorna o link de cadastro de motoboy
+     */
+    linkCadastroMotoboy(): string {
+        if (typeof window === 'undefined') return '';
+        const baseUrl = window.location.origin;
+        return `${baseUrl}/cadastro-motoboy`;
+    }
+
+    /**
+     * Copia o link de cadastro para a área de transferência
+     */
+    async copiarLinkCadastro(): Promise<void> {
+        const link = this.linkCadastroMotoboy();
+        try {
+            await navigator.clipboard.writeText(link);
+            this.linkCopiado.set(true);
+            setTimeout(() => this.linkCopiado.set(false), 3000);
+        } catch (err) {
+            console.error('Erro ao copiar link:', err);
+            this.erro.set('Erro ao copiar link. Tente copiar manualmente.');
+        }
     }
 }

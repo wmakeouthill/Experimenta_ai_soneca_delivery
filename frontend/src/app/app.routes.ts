@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, adminGuard, operadorGuard, roleGuard } from './guards/auth.guard';
+import { motoboyAuthGuard } from './guards/motoboy-auth.guard';
 
 export const routes: Routes = [
   {
@@ -17,6 +18,15 @@ export const routes: Routes = [
   {
     path: 'delivery',
     loadComponent: () => import('./components/pedido-delivery/pedido-delivery.component').then(m => m.PedidoDeliveryComponent)
+  },
+  {
+    path: 'cadastro-motoboy',
+    loadComponent: () => import('./components/cadastro-motoboy/cadastro-motoboy.component').then(m => m.CadastroMotoboyComponent)
+  },
+  {
+    path: 'motoboy/kanban',
+    loadComponent: () => import('./components/motoboy-kanban/motoboy-kanban.component').then(m => m.MotoboyKanbanComponent),
+    canActivate: [motoboyAuthGuard]
   },
   {
     path: '',

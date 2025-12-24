@@ -23,10 +23,13 @@ public class MotoboyEntity {
     private String id;
 
     @Column(nullable = false, length = 200)
-    private String nome;
+    private String nome; // Nome completo do Google (read-only)
 
-    @Column(nullable = false, length = 20, unique = true)
-    private String telefone;
+    @Column(length = 200)
+    private String apelido; // Nome exibido, editável pelo admin
+
+    @Column(length = 20)
+    private String telefone; // Não obrigatório (pode ser nulo no cadastro via Google)
 
     @Column(length = 100)
     private String veiculo;
@@ -37,6 +40,19 @@ public class MotoboyEntity {
     @Column(nullable = false)
     @Builder.Default
     private Boolean ativo = true;
+
+    // ========== Campos de Autenticação Google ==========
+    @Column(name = "google_id", length = 255, unique = true)
+    private String googleId;
+
+    @Column(length = 255, unique = true)
+    private String email;
+
+    @Column(name = "foto_url", length = 500)
+    private String fotoUrl;
+
+    @Column(name = "ultimo_login")
+    private LocalDateTime ultimoLogin;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

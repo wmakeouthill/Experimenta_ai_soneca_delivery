@@ -4,11 +4,17 @@ import { Observable } from 'rxjs';
 
 export interface Motoboy {
     id: string;
-    nome: string;
-    telefone: string;
+    nome: string; // Nome completo do Google (read-only)
+    apelido?: string; // Nome exibido, editável pelo admin
+    telefone?: string; // Agora nullable (pode não ter se cadastrou via Google)
     veiculo?: string;
     placa?: string;
     ativo: boolean;
+    // Campos de autenticação Google
+    googleId?: string;
+    email?: string;
+    fotoUrl?: string;
+    ultimoLogin?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -21,11 +27,12 @@ export interface CriarMotoboyRequest {
 }
 
 export interface AtualizarMotoboyRequest {
-    nome?: string;
+    apelido?: string; // Nome exibido editável pelo admin
     telefone?: string;
     veiculo?: string;
     placa?: string;
     ativo?: boolean;
+    // Nota: nome, email, fotoUrl, googleId não podem ser editados (vêm do Google)
 }
 
 @Injectable({

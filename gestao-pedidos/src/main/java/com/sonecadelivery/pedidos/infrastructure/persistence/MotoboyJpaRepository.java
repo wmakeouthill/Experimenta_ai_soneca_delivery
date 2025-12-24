@@ -47,4 +47,14 @@ public interface MotoboyJpaRepository extends JpaRepository<MotoboyEntity, Strin
      * Verifica se existe outro motoboy com o telefone informado (para atualização).
      */
     boolean existsByTelefoneAndIdNot(String telefone, String id);
+
+    /**
+     * Busca motoboy por Google ID.
+     */
+    Optional<MotoboyEntity> findByGoogleId(String googleId);
+
+    /**
+     * Busca motoboy por email.
+     */
+    Optional<MotoboyEntity> findByEmail(String email);
 }

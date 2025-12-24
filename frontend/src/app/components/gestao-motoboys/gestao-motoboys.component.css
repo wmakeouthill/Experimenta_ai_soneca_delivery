@@ -82,6 +82,26 @@
     background: var(--primary-hover);
 }
 
+.btn-link-cadastro {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #0369A1;
+    background: #E0F2FE;
+    border: 1px solid #BAE6FD;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-link-cadastro:hover {
+    background: #BAE6FD;
+    border-color: #7DD3FC;
+}
+
 .btn-voltar {
     display: flex;
     align-items: center;
@@ -96,6 +116,65 @@
     cursor: pointer;
     transition: all 0.2s;
     text-decoration: none;
+}
+
+.link-cadastro-info {
+    max-width: 1200px;
+    margin: 1rem auto 0;
+    padding: 1rem 1.5rem;
+    background: #F0F9FF;
+    border-top: 1px solid #BAE6FD;
+}
+
+.link-cadastro-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.link-cadastro-url {
+    flex: 1;
+    min-width: 200px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #BAE6FD;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #0369A1;
+    word-break: break-all;
+}
+
+.btn-copiar-link {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #0369A1;
+    background: white;
+    border: 1px solid #BAE6FD;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-copiar-link:hover {
+    background: #BAE6FD;
+}
+
+.link-copiado-msg {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #D1FAE5;
+    color: #059669;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    animation: fadeIn 0.2s ease-out;
 }
 
 .btn-voltar:hover {
@@ -265,22 +344,67 @@
     background: linear-gradient(135deg, #FF6B35 0%, #FFB088 100%);
     border-radius: 50%;
     font-size: 1.5rem;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.motoboy-foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .motoboy-info {
     flex: 1;
+    min-width: 0;
+}
+
+.motoboy-nome-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
 }
 
 .motoboy-nome {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 4px;
+    margin: 0;
+}
+
+.google-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    background: #E0F2FE;
+    color: #0369A1;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.motoboy-nome-completo {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 4px;
+}
+
+.motoboy-email {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    word-break: break-word;
 }
 
 .motoboy-telefone {
     font-size: 0.875rem;
     color: var(--text-secondary);
+    display: block;
 }
 
 .status-badge {
@@ -490,6 +614,72 @@
 
 .form-group {
     margin-bottom: 1rem;
+}
+
+.google-info-section {
+    background: #F0F9FF;
+    border: 1px solid #BAE6FD;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-readonly {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.motoboy-foto-modal {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #BAE6FD;
+}
+
+.info-readonly-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.info-readonly-text label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0369A1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.info-readonly-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.info-readonly-email {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.info-readonly-hint {
+    font-size: 0.75rem;
+    color: #0369A1;
+    margin-top: 8px;
+}
+
+.form-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
 }
 
 .form-group label {

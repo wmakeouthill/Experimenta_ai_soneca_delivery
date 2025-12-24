@@ -224,7 +224,11 @@ export class GestaoMotoboysKanbanComponent implements OnInit, OnDestroy {
     return pedido.valorMotoboy || this.VALOR_POR_ENTREGA;
   }
 
-  formatarTelefone(telefone: string): string {
+  formatarTelefone(telefone?: string): string {
+    if (!telefone) {
+      return 'Não informado';
+    }
+    
     // Remove caracteres não numéricos
     const numeros = telefone.replace(/\D/g, '');
 

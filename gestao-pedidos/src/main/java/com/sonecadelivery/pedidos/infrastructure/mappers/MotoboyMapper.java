@@ -22,15 +22,46 @@ public final class MotoboyMapper {
             return null;
         }
 
-        return Motoboy.restaurarDoBanco(
+        Motoboy motoboy;
+
+        // Se tem Google ID, criar via Google OAuth
+        if (entity.getGoogleId() != null) {
+            motoboy = Motoboy.criarViaGoogle(
+                    entity.getNome(),
+                    entity.getEmail(),
+                    entity.getGoogleId(),
+                    entity.getFotoUrl());
+        } else {
+            // Criação normal (pode não ter telefone se foi criado manualmente sem validação)
+            motoboy = Motoboy.criar(
+                    entity.getNome(),
+                    entity.getTelefone() != null ? entity.getTelefone() : "",
+                    entity.getVeiculo(),
+                    entity.getPlaca());
+        }
+
+        // Restaurar ID e timestamps
+        motoboy.restaurarDoBanco(
                 entity.getId(),
-                entity.getNome(),
+                entity.getCreatedAt(),
+                entity.getUpdatedAt());
+
+        // Restaurar dados básicos
+        motoboy.restaurarDadosBasicosDoBanco(
+                entity.getApelido(),
                 entity.getTelefone(),
                 entity.getVeiculo(),
                 entity.getPlaca(),
-                entity.getAtivo(),
-                entity.getCreatedAt(),
-                entity.getUpdatedAt());
+                entity.getAtivo() != null ? entity.getAtivo() : true);
+
+        // Restaurar autenticação
+        motoboy.restaurarAutenticacaoDoBanco(
+                entity.getGoogleId(),
+                entity.getEmail(),
+                entity.getFotoUrl(),
+                entity.getUltimoLogin());
+
+        return motoboy;
     }
 
     /**
@@ -44,10 +75,15 @@ public final class MotoboyMapper {
         return MotoboyEntity.builder()
                 .id(motoboy.getId())
                 .nome(motoboy.getNome())
+                .apelido(motoboy.getApelido())
                 .telefone(motoboy.getTelefone())
                 .veiculo(motoboy.getVeiculo())
                 .placa(motoboy.getPlaca())
                 .ativo(motoboy.isAtivo())
+                .googleId(motoboy.getGoogleId())
+                .email(motoboy.getEmail())
+                .fotoUrl(motoboy.getFotoUrl())
+                .ultimoLogin(motoboy.getUltimoLogin())
                 .createdAt(motoboy.getCreatedAt() != null ? motoboy.getCreatedAt() : LocalDateTime.now())
                 .updatedAt(motoboy.getUpdatedAt() != null ? motoboy.getUpdatedAt() : LocalDateTime.now())
                 .build();

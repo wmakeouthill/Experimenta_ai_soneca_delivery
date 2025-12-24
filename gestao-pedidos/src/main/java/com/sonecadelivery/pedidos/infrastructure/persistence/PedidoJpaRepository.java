@@ -41,4 +41,9 @@ public interface PedidoJpaRepository extends JpaRepository<PedidoEntity, String>
                         "AND p.status <> 'CANCELADO' " +
                         "ORDER BY p.numero_pedido ASC, p.data_pedido ASC", nativeQuery = true)
         List<PedidoEntity> findByDataInicioSessao(@Param("dataInicio") java.sql.Date dataInicio);
+
+        /**
+         * Busca pedidos atribuídos a um motoboy específico.
+         */
+        List<PedidoEntity> findByMotoboyIdOrderByCreatedAtDesc(String motoboyId);
 }

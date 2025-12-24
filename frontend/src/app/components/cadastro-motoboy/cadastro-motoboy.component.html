@@ -1,0 +1,49 @@
+<div class="motoboy-cadastro-container">
+    <!-- Erro Global -->
+    @if (erro()) {
+    <div class="error-toast">
+        <span>⚠️ {{ erro() }}</span>
+        <button (click)="erro.set(null)">✕</button>
+    </div>
+    }
+
+    <!-- Tela de Cadastro/Login -->
+    <div class="auth-screen">
+        <div class="auth-header">
+            <img src="/assets/experimenta_ai_banner_circular.png" alt="Logo" class="logo-grande">
+            <h1>Cadastro de Motoboy</h1>
+            <p class="subtitulo">Faça seu cadastro para começar a receber entregas</p>
+        </div>
+
+        <div class="auth-content">
+            @if (carregando()) {
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Processando cadastro...</p>
+            </div>
+            } @else {
+            <div class="auth-info">
+                <p>Para se cadastrar como motoboy, você precisa fazer login com sua conta Google.</p>
+                <p class="info-detalhes">Após o cadastro, você poderá:</p>
+                <ul class="info-lista">
+                    <li>Visualizar suas entregas no kanban</li>
+                    <li>Receber notificações de novos pedidos</li>
+                    <li>Acompanhar o status das entregas</li>
+                </ul>
+            </div>
+
+            <div class="divider">
+                <span>Entre com sua conta Google</span>
+            </div>
+
+            <div #googleButton class="google-button-container"></div>
+            }
+
+            <div class="auth-footer">
+                <p>Ao continuar, você concorda com nossos <a href="/termos-uso">Termos de Uso</a> e <a
+                        href="/politica-privacidade">Política de Privacidade</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
