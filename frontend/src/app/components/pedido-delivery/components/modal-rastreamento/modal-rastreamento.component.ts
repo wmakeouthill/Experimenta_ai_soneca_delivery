@@ -212,21 +212,12 @@ export class ModalRastreamentoComponent {
 
       // Cria ou atualiza marcador do motoboy com animação
       if (!this.markerMotoboy) {
-        // Cria ícone customizado de motoboy
+        // Ícone de moto padrão do Google Maps (KML shapes)
         const iconMotoboy = {
-          path: maps.SymbolPath.CIRCLE,
-          scale: 12,
-          fillColor: '#4285F4',
-          fillOpacity: 1,
-          strokeColor: '#FFFFFF',
-          strokeWeight: 3,
-          rotation: dados.localizacaoMotoboy.heading || 0
+          url: 'https://maps.google.com/mapfiles/kml/shapes/motorcycling.png',
+          scaledSize: new maps.Size(48, 48),
+          anchor: new maps.Point(24, 24)
         };
-
-        // Atualiza rotação do ícone se tiver heading
-        if (dados.localizacaoMotoboy.heading !== undefined && dados.localizacaoMotoboy.heading !== null) {
-          iconMotoboy.rotation = dados.localizacaoMotoboy.heading;
-        }
 
         this.markerMotoboy = new maps.Marker({
           position: motoboyPos,
