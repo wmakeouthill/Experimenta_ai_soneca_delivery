@@ -5,8 +5,11 @@ import { useProdutos } from './composables/use-produtos';
 import { ProdutoModalComponent } from './modals/produto-modal/produto-modal.component';
 import { CategoriaModalComponent } from './modals/categoria-modal/categoria-modal.component';
 import { AdicionalModalComponent } from './modals/adicional-modal/adicional-modal.component';
+import { MenuContextoCategoriaComponent } from './components/menu-contexto-categoria/menu-contexto-categoria.component';
 import { ProdutoService } from '../../services/produto.service';
 import { AdicionalService, Adicional } from '../../services/adicional.service';
+import { CategoriaService, Categoria } from '../../services/categoria.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-cardapio',
@@ -16,7 +19,8 @@ import { AdicionalService, Adicional } from '../../services/adicional.service';
     RouterModule,
     ProdutoModalComponent,
     CategoriaModalComponent,
-    AdicionalModalComponent
+    AdicionalModalComponent,
+    MenuContextoCategoriaComponent
   ],
   templateUrl: './cardapio.component.html',
   styleUrl: './cardapio.component.css'
@@ -26,6 +30,8 @@ export class CardapioComponent implements OnInit {
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly produtoService = inject(ProdutoService);
   private readonly adicionalService = inject(AdicionalService);
+  private readonly categoriaService = inject(CategoriaService);
+  readonly authService = inject(AuthService);
 
   // Composable com toda a lógica de produtos
   readonly produtosComposable = useProdutos();
@@ -46,6 +52,12 @@ export class CardapioComponent implements OnInit {
   readonly mostrarModalAdicional = signal(false);
   readonly produtoEditando = signal<any>(null);
   readonly adicionalEditando = signal<Adicional | null>(null);
+  readonly categoriaEditando = signal<Categoria | null>(null);
+
+  // Menu de contexto
+  readonly menuContextoAberto = signal(false);
+  readonly menuContextoPosicao = signal<{ x: number; y: number } | null>(null);
+  readonly categoriaMenuContexto = signal<Categoria | null>(null);
 
   // Abas: 'produtos' ou 'adicionais'
   readonly abaAtiva = signal<'produtos' | 'adicionais'>('produtos');
@@ -131,12 +143,60 @@ export class CardapioComponent implements OnInit {
     this.produtoEditando.set(null);
   }
 
-  abrirModalCategoria(): void {
+  abrirModalCategoria(categoria?: Categoria): void {
+    this.categoriaEditando.set(categoria || null);
     this.mostrarModalCategoria.set(true);
   }
 
   fecharModalCategoria(): void {
     this.mostrarModalCategoria.set(false);
+    this.categoriaEditando.set(null);
+  }
+
+  editarCategoria(categoria: Categoria): void {
+    this.abrirModalCategoria(categoria);
+  }
+
+  excluirCategoria(id: string): void {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    if (!confirm('Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    this.categoriaService.excluir(id).subscribe({
+      next: () => {
+        this.produtosComposable.carregarCategorias();
+        this.produtosComposable.carregarProdutos();
+      },
+      error: (error) => {
+        console.error('Erro ao excluir categoria:', error);
+        if (this.isBrowser) {
+          alert('Erro ao excluir categoria. Tente novamente.');
+        }
+      }
+    });
+  }
+
+  abrirMenuContextoCategoria(event: MouseEvent, categoria: Categoria): void {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.categoriaMenuContexto.set(categoria);
+    this.menuContextoPosicao.set({ x: event.clientX, y: event.clientY });
+    this.menuContextoAberto.set(true);
+  }
+
+  fecharMenuContexto(): void {
+    this.menuContextoAberto.set(false);
+    this.menuContextoPosicao.set(null);
+    this.categoriaMenuContexto.set(null);
   }
 
   // === Adicionais ===
@@ -255,6 +315,7 @@ export class CardapioComponent implements OnInit {
 
   onCategoriaSalva(): void {
     this.produtosComposable.carregarCategorias();
+    this.produtosComposable.carregarProdutos();
   }
 
   gerarNumerosPagina(): (number | string)[] {

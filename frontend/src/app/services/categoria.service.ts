@@ -16,6 +16,12 @@ export interface CriarCategoriaRequest {
   descricao?: string;
 }
 
+export interface AtualizarCategoriaRequest {
+  nome?: string;
+  descricao?: string;
+  ativa?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -35,5 +41,13 @@ export class CategoriaService {
 
   criar(categoria: CriarCategoriaRequest): Observable<Categoria> {
     return this.http.post<Categoria>(this.apiUrl, categoria);
+  }
+
+  atualizar(id: string, categoria: AtualizarCategoriaRequest): Observable<Categoria> {
+    return this.http.put<Categoria>(`${this.apiUrl}/${id}`, categoria);
+  }
+
+  excluir(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

@@ -80,6 +80,7 @@
                 class="filtro-opcao"
                 [class.active]="categoriaSelecionada() === categoria.nome"
                 (click)="filtrarPorCategoria(categoria.nome)"
+                (contextmenu)="abrirMenuContextoCategoria($event, categoria)"
               >
                 {{ categoria.nome }}
               </button>
@@ -324,8 +325,19 @@
 
   <app-categoria-modal
     [aberto]="mostrarModalCategoria()"
+    [categoria]="categoriaEditando()"
     (onFechar)="fecharModalCategoria()"
     (onSucesso)="onCategoriaSalva()"
+  />
+
+  <app-menu-contexto-categoria
+    [aberto]="menuContextoAberto()"
+    [posicao]="menuContextoPosicao()"
+    [categoria]="categoriaMenuContexto()"
+    [isAdmin]="authService.isAdministrador()"
+    (onFechar)="fecharMenuContexto()"
+    (onEditar)="editarCategoria($event)"
+    (onExcluir)="excluirCategoria($event)"
   />
 
   <app-adicional-modal

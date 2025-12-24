@@ -1,0 +1,38 @@
+@if (aberto() && posicao() && categoria() && isAdmin()) {
+  <div 
+    class="context-menu-overlay"
+    (click)="fechar()"
+    (contextmenu)="$event.preventDefault(); fechar()"
+  >
+    <div 
+      class="context-menu"
+      [style.left.px]="posicao()!.x"
+      [style.top.px]="posicao()!.y"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="context-menu-header">
+        <span>Opções da Categoria</span>
+      </div>
+      <div class="context-menu-items">
+        @if (categoria(); as categoriaAtual) {
+          <div class="context-menu-section">
+            <button 
+              class="context-menu-item"
+              (click)="editar()"
+            >
+              ✏️ Editar Categoria
+            </button>
+            <div class="context-menu-divider"></div>
+            <button 
+              class="context-menu-item context-menu-item-excluir"
+              (click)="excluir()"
+            >
+              🗑️ Excluir Categoria
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+

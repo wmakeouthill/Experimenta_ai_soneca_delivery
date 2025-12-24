@@ -1,8 +1,11 @@
 package com.sonecadelivery.cardapio.infrastructure.web;
 
+import com.sonecadelivery.cardapio.application.dto.AtualizarCategoriaRequest;
 import com.sonecadelivery.cardapio.application.dto.CategoriaDTO;
 import com.sonecadelivery.cardapio.application.dto.CriarCategoriaRequest;
+import com.sonecadelivery.cardapio.application.usecases.AtualizarCategoriaUseCase;
 import com.sonecadelivery.cardapio.application.usecases.CriarCategoriaUseCase;
+import com.sonecadelivery.cardapio.application.usecases.ExcluirCategoriaUseCase;
 import com.sonecadelivery.cardapio.application.usecases.ListarCategoriasUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,8 @@ public class CategoriaRestController {
     
     private final CriarCategoriaUseCase criarCategoriaUseCase;
     private final ListarCategoriasUseCase listarCategoriasUseCase;
+    private final AtualizarCategoriaUseCase atualizarCategoriaUseCase;
+    private final ExcluirCategoriaUseCase excluirCategoriaUseCase;
     
     @PostMapping
     public ResponseEntity<CategoriaDTO> criar(@Valid @RequestBody CriarCategoriaRequest request) {
@@ -38,6 +43,20 @@ public class CategoriaRestController {
         }
         
         return ResponseEntity.ok(categorias);
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoriaDTO> atualizar(
+            @PathVariable String id,
+            @Valid @RequestBody AtualizarCategoriaRequest request) {
+        CategoriaDTO categoria = atualizarCategoriaUseCase.executar(id, request);
+        return ResponseEntity.ok(categoria);
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable String id) {
+        excluirCategoriaUseCase.executar(id);
+        return ResponseEntity.noContent().build();
     }
 }
 

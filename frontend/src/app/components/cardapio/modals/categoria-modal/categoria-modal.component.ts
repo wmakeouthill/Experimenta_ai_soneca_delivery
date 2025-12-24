@@ -96,7 +96,10 @@ export class CategoriaModalComponent {
     const categoria = this.categoria();
 
     const request$ = categoria
-      ? of({}) // TODO: Implementar atualização quando backend tiver endpoint
+      ? this.categoriaService.atualizar(categoria.id, {
+          nome: valores.nome.trim(),
+          descricao: valores.descricao?.trim() || ''
+        })
       : this.categoriaService.criar({
           nome: valores.nome.trim(),
           descricao: valores.descricao?.trim() || ''
