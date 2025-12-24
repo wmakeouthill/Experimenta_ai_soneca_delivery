@@ -74,21 +74,29 @@
     </div>
   }
 
-  @if (totalEntregas() === 0 && !estaCarregando()) {
-    <div class="sem-entregas">
-      <p>Você não tem entregas no momento.</p>
-    </div>
-  } @else if (totalEntregas() > 0) {
+  @if (!estaCarregando()) {
     <div class="kanban-board">
-      <!-- Coluna: SAIU_PARA_ENTREGA (Em Trânsito) - PRIMEIRO -->
-      <div class="kanban-coluna">
-        <div class="status-section">
-          <div class="status-header">
-            <h4 class="status-titulo">🚚 Em Trânsito</h4>
-            <span class="status-count">{{ pedidosPorStatus().saiuParaEntrega.length }}</span>
-          </div>
-          <div class="pedidos-lista">
-            @for (pedido of pedidosPorStatus().saiuParaEntrega; track pedido.id) {
+      <!-- Quadro: Em Andamento -->
+      <div class="kanban-quadro">
+        <div class="quadro-header">
+          <h3 class="quadro-titulo">🚀 Em Andamento</h3>
+        </div>
+        <div class="quadro-conteudo">
+          @if (pedidosEmAndamento().length === 0) {
+            <div class="sem-pedidos-mensagem">
+              <p>Você não tem pedidos em andamento</p>
+            </div>
+          } @else {
+            <div class="kanban-colunas">
+              <!-- Coluna: SAIU_PARA_ENTREGA (Em Trânsito) -->
+              <div class="kanban-coluna">
+                <div class="status-section">
+                  <div class="status-header">
+                    <h4 class="status-titulo">🚚 Em Trânsito</h4>
+                    <span class="status-count">{{ pedidosPorStatus().saiuParaEntrega.length }}</span>
+                  </div>
+                  <div class="pedidos-lista">
+                    @for (pedido of pedidosPorStatus().saiuParaEntrega; track pedido.id) {
               <div 
                 class="pedido-card em-entrega"
                 [class.card-clicavel]="pedido.latitude && pedido.longitude"
@@ -132,70 +140,118 @@
                 </div>
               </div>
             }
-            @if (pedidosPorStatus().saiuParaEntrega.length === 0) {
-              <div class="sem-pedidos-coluna">
-                <p>Nenhum pedido em trânsito</p>
+                  </div>
+                </div>
               </div>
-            }
-          </div>
+
+              <!-- Coluna: PRONTO -->
+              <div class="kanban-coluna">
+                <div class="status-section">
+                  <div class="status-header">
+                    <h4 class="status-titulo">✅ Pronto</h4>
+                    <span class="status-count">{{ pedidosPorStatus().pronto.length }}</span>
+                  </div>
+                  <div class="pedidos-lista">
+                    @for (pedido of pedidosPorStatus().pronto; track pedido.id) {
+                      <div 
+                        class="pedido-card pronto"
+                        [class.card-clicavel]="pedido.latitude && pedido.longitude"
+                        [attr.role]="pedido.latitude && pedido.longitude ? 'button' : null"
+                        [attr.tabindex]="pedido.latitude && pedido.longitude ? 0 : null"
+                        (click)="abrirRotaParaEntrega(pedido)"
+                        (keydown)="abrirRotaComTeclado($event, pedido)"
+                        [title]="pedido.latitude && pedido.longitude ? 'Clique ou pressione Enter para abrir rota no Google Maps' : 'Endereço sem coordenadas - não é possível abrir rota'">
+                        <div class="pedido-header">
+                          <div class="pedido-numero-wrapper">
+                            <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                          </div>
+                          <div class="pedido-cliente-wrapper">
+                            <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                          </div>
+                        </div>
+                        @if (pedido.enderecoEntrega) {
+                          <div class="pedido-endereco">
+                            📍 {{ pedido.enderecoEntrega }}
+                          </div>
+                        }
+                        <div class="pedido-valor-pedido">
+                          Pedido: {{ formatarValor(pedido.valorTotal) }}
+                        </div>
+                        @if (pedido.valorMotoboy) {
+                          <div class="pedido-valor-entrega">
+                            <span class="valor-motoboy-label">Valor entrega:</span>
+                            <span class="valor-motoboy-valor">{{ formatarValor(pedido.valorMotoboy) }}</span>
+                          </div>
+                        }
+                        <div class="pedido-acoes">
+                          <button 
+                            class="btn-acao btn-saiu-entrega"
+                            (click)="$event.stopPropagation(); marcarComoSaiuParaEntrega(pedido)"
+                            title="Marcar como saiu para entrega">
+                            🚚 Saiu para Entrega
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
         </div>
       </div>
 
-      <!-- Coluna: PRONTO - SEGUNDO -->
-      <div class="kanban-coluna">
-        <div class="status-section">
-          <div class="status-header">
-            <h4 class="status-titulo">✅ Pronto</h4>
-            <span class="status-count">{{ pedidosPorStatus().pronto.length }}</span>
-          </div>
-          <div class="pedidos-lista">
-            @for (pedido of pedidosPorStatus().pronto; track pedido.id) {
-              <div 
-                class="pedido-card pronto"
-                [class.card-clicavel]="pedido.latitude && pedido.longitude"
-                [attr.role]="pedido.latitude && pedido.longitude ? 'button' : null"
-                [attr.tabindex]="pedido.latitude && pedido.longitude ? 0 : null"
-                (click)="abrirRotaParaEntrega(pedido)"
-                (keydown)="abrirRotaComTeclado($event, pedido)"
-                [title]="pedido.latitude && pedido.longitude ? 'Clique ou pressione Enter para abrir rota no Google Maps' : 'Endereço sem coordenadas - não é possível abrir rota'">
-                <div class="pedido-header">
-                  <div class="pedido-numero-wrapper">
-                    <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+      <!-- Quadro: Finalizados -->
+      <div class="kanban-quadro">
+        <div class="quadro-header">
+          <h3 class="quadro-titulo">✔️ Finalizados</h3>
+        </div>
+        <div class="quadro-conteudo">
+          @if (pedidosPorStatus().finalizados.length === 0) {
+            <div class="sem-pedidos-mensagem">
+              <p>Você não tem pedidos finalizados</p>
+            </div>
+          } @else {
+            <div class="pedidos-lista-finalizados">
+              @for (pedido of pedidosPorStatus().finalizados; track pedido.id) {
+                <div 
+                  class="pedido-card finalizado"
+                  [class.card-clicavel]="pedido.latitude && pedido.longitude"
+                  [attr.role]="pedido.latitude && pedido.longitude ? 'button' : null"
+                  [attr.tabindex]="pedido.latitude && pedido.longitude ? 0 : null"
+                  (click)="abrirRotaParaEntrega(pedido)"
+                  [title]="pedido.latitude && pedido.longitude ? 'Clique para ver detalhes' : 'Endereço sem coordenadas'">
+                  <div class="pedido-header">
+                    <div class="pedido-numero-wrapper">
+                      <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                    </div>
+                    <div class="pedido-cliente-wrapper">
+                      <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                    </div>
                   </div>
-                  <div class="pedido-cliente-wrapper">
-                    <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                  @if (pedido.enderecoEntrega) {
+                    <div class="pedido-endereco">
+                      📍 {{ pedido.enderecoEntrega }}
+                    </div>
+                  }
+                  <div class="pedido-valor-pedido">
+                    Pedido: {{ formatarValor(pedido.valorTotal) }}
                   </div>
+                  @if (pedido.valorMotoboy) {
+                    <div class="pedido-valor-entrega">
+                      <span class="valor-motoboy-label">Valor entrega:</span>
+                      <span class="valor-motoboy-valor">{{ formatarValor(pedido.valorMotoboy) }}</span>
+                    </div>
+                  }
+                  @if (pedido.updatedAt) {
+                    <div class="pedido-tempo">
+                      <span class="tempo-label">Finalizado em: {{ formatarData(pedido.updatedAt) }}</span>
+                    </div>
+                  }
                 </div>
-                @if (pedido.enderecoEntrega) {
-                  <div class="pedido-endereco">
-                    📍 {{ pedido.enderecoEntrega }}
-                  </div>
-                }
-                <div class="pedido-valor-pedido">
-                  Pedido: {{ formatarValor(pedido.valorTotal) }}
-                </div>
-                @if (pedido.valorMotoboy) {
-                  <div class="pedido-valor-entrega">
-                    <span class="valor-motoboy-label">Valor entrega:</span>
-                    <span class="valor-motoboy-valor">{{ formatarValor(pedido.valorMotoboy) }}</span>
-                  </div>
-                }
-                <div class="pedido-acoes">
-                  <button 
-                    class="btn-acao btn-saiu-entrega"
-                    (click)="$event.stopPropagation(); marcarComoSaiuParaEntrega(pedido)"
-                    title="Marcar como saiu para entrega">
-                    🚚 Saiu para Entrega
-                  </button>
-                </div>
-              </div>
-            }
-            @if (pedidosPorStatus().pronto.length === 0) {
-              <div class="sem-pedidos-coluna">
-                <p>Nenhum pedido pronto</p>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         </div>
       </div>
     </div>

@@ -72,13 +72,15 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
         status: todosPedidos[0].status,
         tipoPedidoEnum: TipoPedido.DELIVERY,
         statusEnum: StatusPedido.PRONTO,
-        statusEnum2: StatusPedido.SAIU_PARA_ENTREGA
+        statusEnum2: StatusPedido.SAIU_PARA_ENTREGA,
+        statusEnum3: StatusPedido.FINALIZADO
       });
     }
     
     // Filtra e agrupa em uma única passagem para melhor performance
     const saiuParaEntrega: Pedido[] = [];
     const pronto: Pedido[] = [];
+    const finalizados: Pedido[] = [];
     
     for (const pedido of todosPedidos) {
       // Apenas pedidos de delivery com status relevante
@@ -99,11 +101,14 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       const statusStr = String(pedido.status);
       const isSaiuParaEntrega = statusStr === StatusPedido.SAIU_PARA_ENTREGA;
       const isPronto = statusStr === StatusPedido.PRONTO;
+      const isFinalizado = statusStr === StatusPedido.FINALIZADO;
       
       if (isSaiuParaEntrega) {
         saiuParaEntrega.push(pedido);
       } else if (isPronto) {
         pronto.push(pedido);
+      } else if (isFinalizado) {
+        finalizados.push(pedido);
       } else {
         console.debug('⏭️ Pedido ignorado (status não relevante):', {
           id: pedido.id,
@@ -122,20 +127,28 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     
     saiuParaEntrega.sort(ordenarPorData);
     pronto.sort(ordenarPorData);
+    finalizados.sort(ordenarPorData);
     
     console.debug('✅ Pedidos agrupados:', {
       saiuParaEntrega: saiuParaEntrega.length,
       pronto: pronto.length,
-      total: saiuParaEntrega.length + pronto.length
+      finalizados: finalizados.length,
+      total: saiuParaEntrega.length + pronto.length + finalizados.length
     });
     
-    return { saiuParaEntrega, pronto };
+    return { saiuParaEntrega, pronto, finalizados };
+  });
+
+  // Computed: Pedidos em andamento (PRONTO + SAIU_PARA_ENTREGA)
+  readonly pedidosEmAndamento = computed(() => {
+    const { pronto, saiuParaEntrega } = this.pedidosPorStatus();
+    return [...pronto, ...saiuParaEntrega];
   });
 
   // Computed: Total de entregas (reutiliza lógica do pedidosPorStatus)
   readonly totalEntregas = computed(() => {
-    const { saiuParaEntrega, pronto } = this.pedidosPorStatus();
-    return saiuParaEntrega.length + pronto.length;
+    const { saiuParaEntrega, pronto, finalizados } = this.pedidosPorStatus();
+    return saiuParaEntrega.length + pronto.length + finalizados.length;
   });
 
   constructor() {
@@ -861,6 +874,17 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       style: 'currency',
       currency: 'BRL'
     }).format(valor);
+  }
+
+  formatarData(data: string | Date): string {
+    const dataObj = typeof data === 'string' ? new Date(data) : data;
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(dataObj);
   }
 
   logout(): void {

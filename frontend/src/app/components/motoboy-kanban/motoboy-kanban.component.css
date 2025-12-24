@@ -205,14 +205,43 @@
 }
 
 .kanban-board {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.kanban-quadro {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.quadro-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.quadro-titulo {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.quadro-conteudo {
+  min-height: 200px;
+}
+
+.kanban-colunas {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-  min-height: 600px;
 }
 
 @media (max-width: 768px) {
-  .kanban-board {
+  .kanban-colunas {
     grid-template-columns: 1fr;
   }
 }
@@ -433,6 +462,36 @@
 
 .btn-entregue:active {
   transform: translateY(0);
+}
+
+.sem-pedidos-mensagem {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.sem-pedidos-mensagem p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.pedidos-lista-finalizados {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .pedidos-lista-finalizados {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pedido-card.finalizado {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  opacity: 0.9;
 }
 
 .sem-pedidos-coluna {

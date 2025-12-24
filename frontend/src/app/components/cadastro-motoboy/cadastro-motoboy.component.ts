@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, AfterViewInit, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, AfterViewInit, AfterViewChecked, OnDestroy, ChangeDetectionStrategy, PLATFORM_ID, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, firstValueFrom } from 'rxjs';
@@ -13,7 +13,7 @@ import { GoogleSignInService } from '../../services/google-signin.service';
     styleUrls: ['./cadastro-motoboy.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CadastroMotoboyComponent implements OnInit, AfterViewInit, OnDestroy {
+export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
     private readonly motoboyAuthService = inject(MotoboyAuthService);
     private readonly googleSignInService = inject(GoogleSignInService);
     private readonly router = inject(Router);
@@ -38,14 +38,26 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, OnDestro
     }
 
     ngOnInit(): void {
-        if (!this.isBrowser) return;
-        this.inicializarGoogle();
+        // Não inicializa aqui - será feito no ngAfterViewInit como na tela /delivery
     }
 
-    ngAfterViewInit(): void {
+    async ngAfterViewInit(): Promise<void> {
         if (!this.isBrowser) return;
-        // Aguarda um pouco para garantir que o DOM está renderizado
-        setTimeout(() => this.renderizarBotaoGoogle(), 100);
+        // Segue o mesmo padrão da tela /delivery: inicializa e depois renderiza
+        await this.inicializarGoogle();
+        // Aguarda um ciclo para garantir que o DOM está totalmente renderizado
+        setTimeout(() => {
+            this.renderizarBotaoGoogle();
+        }, 0);
+    }
+
+    ngAfterViewChecked(): void {
+        // Tenta renderizar o botão do Google sempre que a view for checada
+        // Isso garante que o botão seja renderizado quando o elemento estiver disponível
+        // Mesmo padrão da tela /delivery
+        if (this.isBrowser) {
+            this.renderizarBotaoGoogle();
+        }
     }
 
     ngOnDestroy(): void {
@@ -55,12 +67,17 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, OnDestro
 
     /**
      * Inicializa o Google Sign-In SDK
+     * Segue o mesmo padrão da tela /delivery
      */
     private async inicializarGoogle(): Promise<void> {
+        if (!this.isBrowser) return;
+        
         try {
+            console.log('🔄 Inicializando Google Sign-In...');
             await this.googleSignInService.initialize();
             this.googleIniciado.set(true);
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
+            console.log('✅ Google Sign-In inicializado com sucesso');
 
             // Escutar credenciais do Google
             this.googleSignInService.credential$
@@ -69,31 +86,65 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, OnDestro
                     await this.processarLoginGoogle(token);
                 });
         } catch (e) {
-            console.error('Erro ao inicializar Google Sign-In:', e);
+            console.error('❌ Erro ao inicializar Google Sign-In:', e);
             this.erro.set('Erro ao carregar login com Google');
+            this.cdr.markForCheck();
         }
     }
 
     /**
      * Renderiza o botão do Google Sign-In
+     * Segue exatamente o mesmo padrão da tela /delivery para garantir renderização confiável
      */
     private renderizarBotaoGoogle(): void {
-        if (this.googleButtonRendered || !this.googleButtonRef?.nativeElement || !this.googleIniciado()) {
+        if (!this.isBrowser) return;
+
+        const element = this.googleButtonRef?.nativeElement;
+        
+        // Debug: verifica estado atual
+        if (!element) {
+            console.debug('⏳ Elemento do botão Google ainda não disponível');
+            return;
+        }
+
+        if (this.googleButtonRendered) {
+            console.debug('✅ Botão Google já foi renderizado');
+            return;
+        }
+
+        if (!this.googleIniciado()) {
+            console.debug('⏳ Google Sign-In ainda não inicializado');
             return;
         }
 
         try {
-            this.googleSignInService.renderButton(this.googleButtonRef.nativeElement, {
+            console.log('🔄 Renderizando botão Google...', {
+                elementExists: !!element,
+                elementVisible: element.offsetParent !== null,
+                googleIniciado: this.googleIniciado()
+            });
+
+            // Limpa o conteúdo do elemento antes de renderizar (caso tenha sido renderizado antes)
+            if (element.children.length > 0) {
+                element.innerHTML = '';
+            }
+
+            this.googleSignInService.renderButton(element, {
                 theme: 'outline',
                 size: 'large',
                 text: 'continue_with',
                 shape: 'rectangular',
                 width: 300
             });
+            
             this.googleButtonRendered = true;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
+            
+            console.log('✅ Botão Google renderizado com sucesso');
         } catch (e) {
-            console.error('Erro ao renderizar botão Google:', e);
+            console.error('❌ Erro ao renderizar botão Google:', e);
+            // Reseta o flag para tentar novamente no próximo ciclo
+            this.googleButtonRendered = false;
         }
     }
 
