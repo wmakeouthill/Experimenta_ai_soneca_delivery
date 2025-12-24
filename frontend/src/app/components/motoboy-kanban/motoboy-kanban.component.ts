@@ -49,18 +49,54 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   readonly pedidosPorStatus = computed(() => {
     const todosPedidos = this.pedidos();
     
+    // Debug: log dos pedidos recebidos
+    if (todosPedidos.length > 0) {
+      console.debug('📊 Computed pedidosPorStatus - Total pedidos:', todosPedidos.length);
+      console.debug('📋 Primeiro pedido:', {
+        id: todosPedidos[0].id,
+        tipoPedido: todosPedidos[0].tipoPedido,
+        status: todosPedidos[0].status,
+        tipoPedidoEnum: TipoPedido.DELIVERY,
+        statusEnum: StatusPedido.PRONTO,
+        statusEnum2: StatusPedido.SAIU_PARA_ENTREGA
+      });
+    }
+    
     // Filtra e agrupa em uma única passagem para melhor performance
     const saiuParaEntrega: Pedido[] = [];
     const pronto: Pedido[] = [];
     
     for (const pedido of todosPedidos) {
       // Apenas pedidos de delivery com status relevante
-      if (pedido.tipoPedido !== TipoPedido.DELIVERY) continue;
+      // Compara tanto com enum quanto com string (caso venha como string do backend)
+      const isDelivery = pedido.tipoPedido === TipoPedido.DELIVERY || 
+                         pedido.tipoPedido === 'DELIVERY';
       
-      if (pedido.status === StatusPedido.SAIU_PARA_ENTREGA) {
+      if (!isDelivery) {
+        console.debug('⏭️ Pedido ignorado (não é DELIVERY):', {
+          id: pedido.id,
+          tipoPedido: pedido.tipoPedido
+        });
+        continue;
+      }
+      
+      // Compara status (suporta tanto enum quanto string)
+      const status = pedido.status;
+      const isSaiuParaEntrega = status === StatusPedido.SAIU_PARA_ENTREGA || 
+                                status === 'SAIU_PARA_ENTREGA';
+      const isPronto = status === StatusPedido.PRONTO || 
+                       status === 'PRONTO';
+      
+      if (isSaiuParaEntrega) {
         saiuParaEntrega.push(pedido);
-      } else if (pedido.status === StatusPedido.PRONTO) {
+      } else if (isPronto) {
         pronto.push(pedido);
+      } else {
+        console.debug('⏭️ Pedido ignorado (status não relevante):', {
+          id: pedido.id,
+          status: status,
+          statusType: typeof status
+        });
       }
     }
     
@@ -73,6 +109,12 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     
     saiuParaEntrega.sort(ordenarPorData);
     pronto.sort(ordenarPorData);
+    
+    console.debug('✅ Pedidos agrupados:', {
+      saiuParaEntrega: saiuParaEntrega.length,
+      pronto: pronto.length,
+      total: saiuParaEntrega.length + pronto.length
+    });
     
     return { saiuParaEntrega, pronto };
   });
@@ -89,35 +131,52 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       
       // Verifica autenticação antes de carregar dados
       // Aguarda um pouco para garantir que o sessionStorage foi carregado após o redirect
-      // Em mobile, pode levar mais tempo para o sessionStorage estar disponível
-      setTimeout(() => {
-        this.verificarEAutenticar();
-      }, 300);
+      // Em mobile ou após refresh, pode levar mais tempo para o sessionStorage estar disponível
+      // Usa requestAnimationFrame para garantir que o DOM está pronto
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          this.verificarEAutenticar();
+        }, 500); // Aumentado para 500ms para dar mais tempo após refresh
+      });
     });
   }
 
   /**
    * Verifica autenticação e carrega dados do motoboy.
-   * Tenta múltiplas vezes se necessário (útil após redirect).
+   * Tenta múltiplas vezes se necessário (útil após redirect ou refresh).
    */
   private verificarEAutenticar(tentativa: number = 0): void {
-    const maxTentativas = 5;
-    const delayEntreTentativas = 200;
+    const maxTentativas = 10; // Aumentado para dar mais chances após refresh
+    const delayEntreTentativas = 300; // Aumentado para dar mais tempo
 
-    if (!this.motoboyAuthService.isAuthenticated()) {
+    const isAuth = this.motoboyAuthService.isAuthenticated();
+    
+    if (!isAuth) {
       if (tentativa < maxTentativas) {
+        // Log apenas nas primeiras tentativas para não poluir o console
+        if (tentativa < 3) {
+          console.debug(`🔄 Tentativa ${tentativa + 1}/${maxTentativas} de verificar autenticação...`);
+        }
         setTimeout(() => {
           this.verificarEAutenticar(tentativa + 1);
         }, delayEntreTentativas);
         return;
       }
 
+      // Após todas as tentativas, redireciona para login
+      console.warn('⚠️ Motoboy não autenticado após múltiplas tentativas. Redirecionando...');
+      this.motoboyAuthService.logout();
       window.location.href = '/cadastro-motoboy';
       return;
     }
 
+    // Autenticado com sucesso - carrega dados
+    console.debug('✅ Motoboy autenticado. Carregando dados...');
     this.carregarMotoboy();
-    this.carregarPedidos();
+    // Aguarda um pouco antes de carregar pedidos para garantir que motoboy foi carregado
+    setTimeout(() => {
+      this.carregarPedidos();
+    }, 100);
   }
 
   ngOnInit(): void {
@@ -162,9 +221,13 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
 
   carregarPedidos(): void {
     // Evita múltiplas chamadas simultâneas
-    if (this.carregandoPedidos) return;
+    if (this.carregandoPedidos) {
+      console.debug('⏸️ Carregamento de pedidos já em andamento. Ignorando chamada duplicada.');
+      return;
+    }
     
     if (!this.motoboyAuthService.isAuthenticated()) {
+      console.warn('⚠️ Tentativa de carregar pedidos sem autenticação. Redirecionando...');
       this.motoboyAuthService.logout();
       window.location.href = '/cadastro-motoboy';
       return;
@@ -174,16 +237,28 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     const motoboyId = this.motoboyAuthService.motoboyLogado?.id;
     
     if (!token || !motoboyId) {
+      console.warn('⚠️ Token ou motoboyId não encontrado:', {
+        temToken: !!token,
+        temMotoboyId: !!motoboyId,
+        motoboyId: motoboyId
+      });
       this.erro.set('Erro ao identificar motoboy. Tente fazer login novamente.');
       this.estaCarregando.set(false);
       
+      // Tenta novamente após delay maior
       setTimeout(() => {
         if (this.motoboyAuthService.isAuthenticated()) {
+          console.debug('🔄 Tentando carregar pedidos novamente...');
           this.carregarPedidos();
         }
-      }, 500);
+      }, 1000); // Aumentado para 1s
       return;
     }
+
+    console.debug('📦 Carregando pedidos do motoboy...', {
+      motoboyId: motoboyId.substring(0, 8) + '...',
+      tokenLength: token.length
+    });
 
     this.carregandoPedidos = true;
     this.estaCarregando.set(true);
@@ -193,25 +268,42 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (pedidos) => {
           this.carregandoPedidos = false;
-          this.ultimaRespostaValida = pedidos;
-          this.pedidos.set(pedidos);
+          // ✅ Cria nova referência do array (imutabilidade para signals)
+          const novosPedidos = [...pedidos];
+          this.ultimaRespostaValida = novosPedidos;
+          this.pedidos.set(novosPedidos);
           this.estaCarregando.set(false);
           this.erro.set(null);
           this.reconectando.set(false);
           
-          // Inicia polling apenas uma vez
+          console.debug('✅ Pedidos carregados com sucesso:', {
+            total: novosPedidos.length,
+            pedidos: novosPedidos.map(p => ({ id: p.id, status: p.status }))
+          });
+          
+          // Inicia SSE e polling apenas uma vez, após carregamento inicial bem-sucedido
           if (!this.pollingAtivo) {
             this.iniciarPolling();
           }
         },
-        error: () => {
+        error: (err) => {
           this.carregandoPedidos = false;
           this.estaCarregando.set(false);
+          
+          console.error('❌ Erro ao carregar pedidos:', err);
+          
           // Mantém última resposta válida para não deixar tela vazia
           if (this.ultimaRespostaValida.length > 0) {
-            this.pedidos.set(this.ultimaRespostaValida);
+            // ✅ Cria nova referência do array (imutabilidade)
+            this.pedidos.set([...this.ultimaRespostaValida]);
             this.erro.set('Erro ao atualizar. Exibindo dados em cache.');
+            console.debug('📋 Exibindo dados em cache:', this.ultimaRespostaValida.length, 'pedidos');
+          } else {
+            // Se não há cache e é o carregamento inicial, mostra mensagem
+            this.erro.set('Erro ao carregar pedidos. Tente recarregar a página.');
+            console.warn('⚠️ Nenhum pedido em cache. Tela ficará vazia.');
           }
+          
           // Inicia polling mesmo com erro para continuar tentando
           if (!this.pollingAtivo) {
             this.iniciarPolling();
@@ -287,7 +379,10 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     }
 
     // Tenta conectar ao SSE primeiro (se disponível)
-    this.tentarConectarSSE();
+    // SSE é opcional - se falhar, continua com polling apenas
+    setTimeout(() => {
+      this.tentarConectarSSE();
+    }, 500); // Pequeno delay para garantir que carregamento inicial terminou
     
     // Combina polling periódico com atualizações forçadas
     const polling$ = timer(8000, 10000); // Primeira chamada após 8s, depois a cada 10s
@@ -412,6 +507,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       // Erro ao conectar - continua com polling apenas
       this.sseReader = null;
       this.sseAbortController = null;
+      // Não loga erro aqui, é esperado que SSE possa falhar e usar polling
     });
   }
 
@@ -482,7 +578,8 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
    */
   private processarEventoSSE(eventType: string, data: string): void {
     try {
-      if (eventType === 'pedidos-update') {
+      if (eventType === 'pedidos-update' || !eventType) {
+        // Se não tem eventType, assume que é pedidos-update (evento padrão)
         const pedidos: Pedido[] = JSON.parse(data);
         this.atualizarPedidosSeMudou(pedidos);
       } else if (eventType === 'ping') {
@@ -510,14 +607,17 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
 
   /**
    * Atualiza pedidos apenas se houver mudanças.
+   * IMPORTANTE: Sempre cria nova referência do array para garantir que signals detectem mudanças.
    */
   private atualizarPedidosSeMudou(pedidos: Pedido[]): void {
     const pedidosAtuais = this.pedidos();
     
     // Comparação otimizada: verifica se houve mudanças antes de atualizar
     if (pedidos.length !== pedidosAtuais.length) {
-      this.ultimaRespostaValida = pedidos;
-      this.pedidos.set(pedidos);
+      // ✅ Cria nova referência do array (imutabilidade)
+      const novosPedidos = [...pedidos];
+      this.ultimaRespostaValida = novosPedidos;
+      this.pedidos.set(novosPedidos);
       this.erro.set(null);
       this.reconectando.set(false);
       return;
@@ -531,8 +631,10 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     });
     
     if (temMudancas) {
-      this.ultimaRespostaValida = pedidos;
-      this.pedidos.set(pedidos);
+      // ✅ Cria nova referência do array (imutabilidade)
+      const novosPedidos = [...pedidos];
+      this.ultimaRespostaValida = novosPedidos;
+      this.pedidos.set(novosPedidos);
       this.erro.set(null);
       this.reconectando.set(false);
     }
@@ -570,11 +672,15 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (pedidoAtualizado) => {
           if (pedidoAtualizado) {
-            this.pedidos.update(pedidos =>
-              pedidos.map(p => p.id === pedidoId ? pedidoAtualizado : p)
-            );
-            // Atualiza cache
-            this.ultimaRespostaValida = this.pedidos();
+            // ✅ Usa update() com map() que cria nova referência (imutabilidade)
+            this.pedidos.update(pedidos => {
+              const novosPedidos = pedidos.map(p => 
+                p.id === pedidoId ? { ...pedidoAtualizado } : { ...p }
+              );
+              return novosPedidos;
+            });
+            // Atualiza cache com nova referência
+            this.ultimaRespostaValida = [...this.pedidos()];
             this.erro.set(null);
             
             // Força atualização imediata para sincronizar

@@ -63,21 +63,31 @@ public class MotoboyPedidosSSEService {
                 motoboyId, emittersPorMotoboy.get(motoboyId).size());
 
         // Envia lista atual de pedidos imediatamente
+        // Usa executor assíncrono para não bloquear a thread principal
         try {
             List<PedidoDTO> pedidosAtuais = listarPedidosDoMotoboyUseCase.executar(motoboyId);
             cachePedidos.put(motoboyId, pedidosAtuais);
             
-            emitter.send(SseEmitter.event()
-                    .name("pedidos-update")
-                    .data(pedidosAtuais));
+            // Tenta enviar, mas não falha se cliente já desconectou
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("pedidos-update")
+                        .data(pedidosAtuais));
+                log.debug("Pedidos iniciais enviados para motoboy {}: {} pedidos", motoboyId, pedidosAtuais.size());
+            } catch (IOException e) {
+                // Cliente pode ter desconectado imediatamente - remove silenciosamente
+                log.debug("Cliente do motoboy {} desconectou durante envio inicial: {}", motoboyId, e.getMessage());
+                removerEmitter(motoboyId, emitter);
+            }
         } catch (Exception e) {
-            log.error("Erro ao enviar pedidos iniciais para motoboy {}: {}", motoboyId, e.getMessage(), e);
+            log.error("Erro ao carregar pedidos iniciais para motoboy {}: {}", motoboyId, e.getMessage(), e);
             try {
                 emitter.send(SseEmitter.event()
                         .name("error")
-                        .data(Map.of("message", "Erro ao carregar pedidos iniciais")));
+                        .data(Map.of("message", "Erro ao carregar pedidos iniciais: " + e.getMessage())));
             } catch (IOException ioException) {
-                emitter.completeWithError(ioException);
+                log.debug("Erro ao enviar mensagem de erro para motoboy {}: {}", motoboyId, ioException.getMessage());
+                removerEmitter(motoboyId, emitter);
             }
         }
 
@@ -149,12 +159,24 @@ public class MotoboyPedidosSSEService {
             String motoboyId = entry.getKey();
             List<SseEmitter> emitters = entry.getValue();
 
+            if (emitters == null || emitters.isEmpty()) {
+                continue;
+            }
+
             List<SseEmitter> emittersMortos = new CopyOnWriteArrayList<>();
 
             for (SseEmitter emitter : emitters) {
                 try {
+                    if (emitter == null) {
+                        emittersMortos.add(emitter);
+                        continue;
+                    }
                     emitter.send(SseEmitter.event().name("ping").data("pong"));
                 } catch (IOException e) {
+                    // Broken pipe ou cliente desconectado - remove silenciosamente
+                    emittersMortos.add(emitter);
+                } catch (Exception e) {
+                    log.warn("Erro inesperado no heartbeat para motoboy {}: {}", motoboyId, e.getMessage());
                     emittersMortos.add(emitter);
                 }
             }
@@ -185,11 +207,32 @@ public class MotoboyPedidosSSEService {
 
         for (SseEmitter emitter : emitters) {
             try {
+                // Verifica se o emitter ainda está ativo antes de enviar
+                if (emitter == null) {
+                    emittersMortos.add(emitter);
+                    continue;
+                }
+                
                 emitter.send(SseEmitter.event()
                         .name("pedidos-update")
                         .data(pedidos));
             } catch (IOException e) {
-                log.debug("Erro ao enviar atualização para cliente do motoboy {}: {}", motoboyId, e.getMessage());
+                // Broken pipe ou cliente desconectado - remove silenciosamente
+                // Não loga como erro, é comportamento esperado quando cliente fecha conexão
+                String errorMsg = e.getMessage();
+                if (errorMsg != null && (errorMsg.contains("Broken pipe") || 
+                                         errorMsg.contains("Connection reset") ||
+                                         errorMsg.contains("closed"))) {
+                    log.debug("Cliente do motoboy {} desconectou (broken pipe)", motoboyId);
+                } else {
+                    log.warn("Erro ao enviar atualização para cliente do motoboy {}: {}", 
+                            motoboyId, errorMsg);
+                }
+                emittersMortos.add(emitter);
+            } catch (Exception e) {
+                // Outros erros inesperados
+                log.warn("Erro inesperado ao enviar atualização para cliente do motoboy {}: {}", 
+                        motoboyId, e.getMessage());
                 emittersMortos.add(emitter);
             }
         }
@@ -197,9 +240,11 @@ public class MotoboyPedidosSSEService {
         // Remove emitters que falharam
         if (!emittersMortos.isEmpty()) {
             emitters.removeAll(emittersMortos);
+            log.debug("Removidos {} clientes mortos do motoboy {}", emittersMortos.size(), motoboyId);
             if (emitters.isEmpty()) {
                 emittersPorMotoboy.remove(motoboyId);
                 cachePedidos.remove(motoboyId);
+                log.debug("Nenhum cliente conectado para motoboy {}. Limpando cache.", motoboyId);
             }
         }
     }
