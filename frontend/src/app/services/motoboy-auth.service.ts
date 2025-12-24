@@ -58,26 +58,42 @@ export class MotoboyAuthService {
   /**
    * Verifica se há um motoboy autenticado.
    * Em mobile, verifica se o sessionStorage está acessível.
+   * Ao recarregar a página, o sessionStorage persiste, então devemos ler novamente.
    */
   isAuthenticated(): boolean {
     if (typeof sessionStorage === 'undefined') {
+      console.debug('⚠️ sessionStorage não disponível');
       return false;
     }
 
-    const token = this.getToken();
-    const motoboy = this.motoboyLogado;
+    // Sempre lê diretamente do sessionStorage para garantir que após recarregar a página,
+    // os dados sejam lidos corretamente (sessionStorage persiste durante a sessão do navegador)
+    try {
+      const token = this.getToken();
+      const motoboy = this.motoboyLogado;
 
-    const isAuth = token !== null && motoboy !== null && motoboy.id !== null && motoboy.id !== '';
+      const isAuth = token !== null && motoboy !== null && motoboy.id !== null && motoboy.id !== '';
 
-    if (!isAuth) {
-      console.debug('🔍 Motoboy não autenticado:', {
-        temToken: !!token,
-        temMotoboy: !!motoboy,
-        motoboyId: motoboy?.id
-      });
+      if (!isAuth) {
+        console.debug('🔍 Motoboy não autenticado:', {
+          temToken: !!token,
+          temMotoboy: !!motoboy,
+          motoboyId: motoboy?.id,
+          tokenStorage: sessionStorage.getItem(TOKEN_KEY) ? 'presente' : 'ausente',
+          motoboyStorage: sessionStorage.getItem(MOTOBOY_KEY) ? 'presente' : 'ausente'
+        });
+      } else {
+        console.debug('✅ Motoboy autenticado:', {
+          motoboyId: motoboy.id,
+          motoboyNome: motoboy.nome
+        });
+      }
+
+      return isAuth;
+    } catch (e) {
+      console.warn('⚠️ Erro ao verificar autenticação:', e);
+      return false;
     }
-
-    return isAuth;
   }
 
   /**

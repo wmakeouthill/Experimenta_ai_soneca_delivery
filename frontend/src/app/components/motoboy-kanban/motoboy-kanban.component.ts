@@ -36,15 +36,35 @@ export class MotoboyKanbanComponent implements OnInit {
   readonly erro = signal<string | null>(null);
 
   // Computed: Pedidos agrupados por status
+  // Ordena: SAIU_PARA_ENTREGA primeiro (em trânsito), depois PRONTO
   readonly pedidosPorStatus = computed(() => {
     const pedidosDelivery = this.pedidos().filter(p =>
       p.tipoPedido === TipoPedido.DELIVERY &&
       (p.status === StatusPedido.PRONTO || p.status === StatusPedido.SAIU_PARA_ENTREGA)
     );
 
+    // Ordena por status: SAIU_PARA_ENTREGA primeiro, depois PRONTO
+    const saiuParaEntrega = pedidosDelivery
+      .filter(p => p.status === StatusPedido.SAIU_PARA_ENTREGA)
+      .sort((a, b) => {
+        // Ordena por data de criação (mais recentes primeiro)
+        const dataA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dataB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dataB - dataA;
+      });
+    
+    const pronto = pedidosDelivery
+      .filter(p => p.status === StatusPedido.PRONTO)
+      .sort((a, b) => {
+        // Ordena por data de criação (mais recentes primeiro)
+        const dataA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dataB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dataB - dataA;
+      });
+
     return {
-      pronto: pedidosDelivery.filter(p => p.status === StatusPedido.PRONTO),
-      saiuParaEntrega: pedidosDelivery.filter(p => p.status === StatusPedido.SAIU_PARA_ENTREGA)
+      saiuParaEntrega,
+      pronto
     };
   });
 
@@ -58,14 +78,20 @@ export class MotoboyKanbanComponent implements OnInit {
       if (!isPlatformBrowser(this.platformId)) return;
       
       // Verifica autenticação antes de carregar dados
-      if (!this.motoboyAuthService.isAuthenticated()) {
-        console.warn('⚠️ Motoboy não autenticado. Redirecionando para login...');
-        window.location.href = '/cadastro-motoboy';
-        return;
-      }
-      
-      this.carregarMotoboy();
-      this.carregarPedidos();
+      // Aguarda um pouco para garantir que o sessionStorage foi carregado
+      setTimeout(() => {
+        if (!this.motoboyAuthService.isAuthenticated()) {
+          console.warn('⚠️ Motoboy não autenticado. Redirecionando para login...', {
+            temToken: !!this.motoboyAuthService.getToken(),
+            temMotoboy: !!this.motoboyAuthService.motoboyLogado
+          });
+          window.location.href = '/cadastro-motoboy';
+          return;
+        }
+        
+        this.carregarMotoboy();
+        this.carregarPedidos();
+      }, 100);
     });
   }
 
