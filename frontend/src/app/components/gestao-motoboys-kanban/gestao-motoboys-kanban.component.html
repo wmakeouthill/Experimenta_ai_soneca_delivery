@@ -73,17 +73,17 @@
               <div class="motoboy-avatar">🛵</div>
               <div class="motoboy-detalhes-wrapper">
                 <div class="motoboy-linha-principal">
-                  <h3 class="motoboy-nome">{{ coluna.motoboy.nome }}</h3>
+                  <h3 class="motoboy-nome" [title]="coluna.motoboy.nome">{{ coluna.motoboy.nome }}</h3>
                   <div class="coluna-metadados">
+                    <div class="coluna-contador">
+                      <span class="contador-total">{{ coluna.pedidos.length }}</span>
+                    </div>
                     @if (coluna.valorAPagar > 0) {
                       <div class="coluna-valor-pagar-compacto">
                         <span class="valor-label-compacto">A pagar:</span>
                         <span class="valor-total-compacto">{{ formatarValor(coluna.valorAPagar) }}</span>
                       </div>
                     }
-                    <div class="coluna-contador">
-                      <span class="contador-total">{{ coluna.pedidos.length }}</span>
-                    </div>
                   </div>
                 </div>
                 <div class="motoboy-linha-secundaria">
@@ -117,9 +117,10 @@
                       <div class="pedido-header">
                         <div class="pedido-numero-wrapper">
                           <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                          <span class="pedido-status-badge pronto-badge">✅ Pronto</span>
                         </div>
                         <div class="pedido-cliente-wrapper">
-                          <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                          <span class="pedido-cliente" [title]="pedido.clienteNome">{{ pedido.clienteNome }}</span>
                         </div>
                       </div>
                       @if (pedido.enderecoEntrega) {
@@ -127,14 +128,15 @@
                           📍 {{ pedido.enderecoEntrega }}
                         </div>
                       }
-                      <div class="pedido-valor-pedido">
-                        Pedido: {{ formatarValor(pedido.valorTotal) }}
-                      </div>
-                      <div class="pedido-valor-entrega">
+                      <div class="pedido-valores-linha">
+                        <div class="pedido-valor-pedido">
+                          Pedido: {{ formatarValor(pedido.valorTotal) }}
+                        </div>
+                        <div class="pedido-valor-entrega">
                         @if (editandoValor() === pedido.id) {
                           <div class="editar-valor-wrapper">
-                            <input 
-                              type="number" 
+                            <input
+                              type="number"
                               class="input-valor-motoboy"
                               [value]="valorEditando()"
                               (input)="valorEditando.set(+$any($event.target).value)"
@@ -144,13 +146,13 @@
                               (keydown.escape)="cancelarEdicaoValor()"
                               autofocus>
                             <div class="acoes-edicao">
-                              <button 
+                              <button
                                 class="btn-salvar-valor"
                                 (click)="salvarValorMotoboy(pedido)"
                                 title="Salvar">
                                 ✓
                               </button>
-                              <button 
+                              <button
                                 class="btn-cancelar-valor"
                                 (click)="cancelarEdicaoValor()"
                                 title="Cancelar">
@@ -159,15 +161,16 @@
                             </div>
                           </div>
                         } @else {
-                          <div class="valor-motoboy-display" (click)="iniciarEdicaoValor(pedido)" (keydown.enter)="iniciarEdicaoValor(pedido)" tabindex="0" role="button" title="Clique para editar">
+                          <button type="button" class="valor-motoboy-display" (click)="iniciarEdicaoValor(pedido)" title="Clique para editar">
                             <span class="valor-motoboy-label">Valor entrega:</span>
                             <span class="valor-motoboy-valor">{{ formatarValor(obterValorMotoboy(pedido)) }}</span>
                             <span class="icone-editar">✏️</span>
-                          </div>
+                          </button>
                         }
+                        </div>
                       </div>
                       <div class="pedido-acoes">
-                        <button 
+                        <button
                           class="btn-acao btn-saiu-entrega"
                           (click)="marcarComoSaiuParaEntrega(pedido)"
                           title="Marcar como saiu para entrega">
@@ -193,9 +196,10 @@
                       <div class="pedido-header">
                         <div class="pedido-numero-wrapper">
                           <span class="pedido-numero">#{{ pedido.numeroPedido }}</span>
+                          <span class="pedido-status-badge em-entrega-badge">🚚 Em trânsito</span>
                         </div>
                         <div class="pedido-cliente-wrapper">
-                          <span class="pedido-cliente">{{ pedido.clienteNome }}</span>
+                          <span class="pedido-cliente" [title]="pedido.clienteNome">{{ pedido.clienteNome }}</span>
                         </div>
                       </div>
                       @if (pedido.enderecoEntrega) {
@@ -203,14 +207,15 @@
                           📍 {{ pedido.enderecoEntrega }}
                         </div>
                       }
-                      <div class="pedido-valor-pedido">
-                        Pedido: {{ formatarValor(pedido.valorTotal) }}
-                      </div>
-                      <div class="pedido-valor-entrega">
+                      <div class="pedido-valores-linha">
+                        <div class="pedido-valor-pedido">
+                          Pedido: {{ formatarValor(pedido.valorTotal) }}
+                        </div>
+                        <div class="pedido-valor-entrega">
                         @if (editandoValor() === pedido.id) {
                           <div class="editar-valor-wrapper">
-                            <input 
-                              type="number" 
+                            <input
+                              type="number"
                               class="input-valor-motoboy"
                               [value]="valorEditando()"
                               (input)="valorEditando.set(+$any($event.target).value)"
@@ -220,13 +225,13 @@
                               (keydown.escape)="cancelarEdicaoValor()"
                               autofocus>
                             <div class="acoes-edicao">
-                              <button 
+                              <button
                                 class="btn-salvar-valor"
                                 (click)="salvarValorMotoboy(pedido)"
                                 title="Salvar">
                                 ✓
                               </button>
-                              <button 
+                              <button
                                 class="btn-cancelar-valor"
                                 (click)="cancelarEdicaoValor()"
                                 title="Cancelar">
@@ -235,15 +240,13 @@
                             </div>
                           </div>
                         } @else {
-                          <div class="valor-motoboy-display" (click)="iniciarEdicaoValor(pedido)" (keydown.enter)="iniciarEdicaoValor(pedido)" tabindex="0" role="button" title="Clique para editar">
+                          <button type="button" class="valor-motoboy-display" (click)="iniciarEdicaoValor(pedido)" title="Clique para editar">
                             <span class="valor-motoboy-label">Valor entrega:</span>
                             <span class="valor-motoboy-valor">{{ formatarValor(obterValorMotoboy(pedido)) }}</span>
                             <span class="icone-editar">✏️</span>
-                          </div>
+                          </button>
                         }
-                      </div>
-                      <div class="pedido-tempo">
-                        <span class="tempo-label">Em trânsito</span>
+                        </div>
                       </div>
                     </div>
                   }
