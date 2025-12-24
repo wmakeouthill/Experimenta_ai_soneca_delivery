@@ -12,6 +12,7 @@
   background: #f9fafb;
   border-radius: 8px;
   border-left: 4px solid #4285F4;
+  flex-wrap: wrap;
 }
 
 .status-item {
@@ -19,6 +20,7 @@
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 150px;
 }
 
 .status-icon {

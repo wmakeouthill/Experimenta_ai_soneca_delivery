@@ -14,6 +14,24 @@
             <small>{{ rastreamento()?.motoboyNome || 'Entregador' }}</small>
           </div>
         </div>
+        @if (eta()) {
+          <div class="status-item">
+            <span class="status-icon">⏰</span>
+            <div class="status-info">
+              <strong>Tempo estimado</strong>
+              <small>{{ eta() }}</small>
+            </div>
+          </div>
+        }
+        @if (distancia()) {
+          <div class="status-item">
+            <span class="status-icon">📏</span>
+            <div class="status-info">
+              <strong>Distância</strong>
+              <small>{{ distancia() }}</small>
+            </div>
+          </div>
+        }
         <div class="status-item">
           <span class="status-icon">⏱️</span>
           <div class="status-info">

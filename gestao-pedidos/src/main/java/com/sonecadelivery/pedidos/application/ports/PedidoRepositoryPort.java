@@ -32,6 +32,11 @@ public interface PedidoRepositoryPort {
 
     List<Pedido> buscarPorDataInicioSessao(LocalDate dataInicio);
 
+    /**
+     * Busca todos os pedidos atribuídos a um motoboy específico.
+     */
+    List<Pedido> buscarPorMotoboyId(String motoboyId);
+
     int buscarUltimoNumeroPedido();
 
     void excluir(@NonNull String id);

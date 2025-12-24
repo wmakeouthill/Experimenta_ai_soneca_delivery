@@ -12,9 +12,6 @@ import jakarta.validation.constraints.Max;
 @Data
 public class AtualizarLocalizacaoRequest {
     
-    @NotNull(message = "Pedido ID é obrigatório")
-    private String pedidoId;
-    
     @NotNull(message = "Latitude é obrigatória")
     @Min(value = -90, message = "Latitude deve estar entre -90 e 90")
     @Max(value = 90, message = "Latitude deve estar entre -90 e 90")

@@ -5,14 +5,17 @@ const MOTOBOY_KEY = 'motoboy-auth-data';
 
 /**
  * Interceptor que adiciona automaticamente o token JWT e o X-Motoboy-Id
- * em todas as requisições para /api/motoboy/
+ * em todas as requisições para /api/motoboy/ e /api/motoboys/
  *
- * Isso garante que todas as ações do motoboy (listar pedidos, etc.)
+ * Isso garante que todas as ações do motoboy (listar pedidos, enviar localização, etc.)
  * sejam autenticadas corretamente.
  */
 export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
-    // Só intercepta requisições para /api/motoboy/
-    if (!req.url.includes('/api/motoboy/')) {
+    // Intercepta requisições para /api/motoboy/ e /api/motoboys/ (mas não /api/motoboys-kanban)
+    const isMotoboyEndpoint = req.url.includes('/api/motoboy/') || req.url.includes('/api/motoboys/');
+    const isExcecao = req.url.includes('/api/motoboys-kanban');
+    
+    if (!isMotoboyEndpoint || isExcecao) {
         return next(req);
     }
 

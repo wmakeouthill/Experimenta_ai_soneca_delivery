@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PedidoService, StatusPedido, Pedido, TipoPedido } from '../../services/pedido.service';
 import { MotoboyAuthService, MotoboyAuth } from '../../services/motoboy-auth.service';
+import { MotoboyRastreamentoService } from '../../services/motoboy-rastreamento.service';
 import { GoogleMapsService } from '../../services/google-maps.service';
 import { ModalMapaEntregaComponent } from '../gestao-motoboys-kanban/modal-mapa-entrega/modal-mapa-entrega.component';
 import { catchError, of, timer, switchMap, retry, timeout, delay, throwError, EMPTY, Subject, merge } from 'rxjs';
@@ -27,6 +28,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly pedidoService = inject(PedidoService);
   private readonly motoboyAuthService = inject(MotoboyAuthService);
+  private readonly rastreamentoService = inject(MotoboyRastreamentoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -236,18 +238,57 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     }, 100);
   }
 
+  /**
+   * Inicia rastreamento de localização quando motoboy está autenticado.
+   */
+  private iniciarRastreamento(): void {
+    const motoboy = this.motoboy();
+    if (!motoboy?.id) {
+      return;
+    }
+
+    if (this.rastreamentoService.estaRastreando()) {
+      console.debug('[Rastreamento Motoboy] Já está rastreando');
+      return;
+    }
+
+    // Verifica se está no browser e tem geolocalização
+    if (!isPlatformBrowser(this.platformId) || !navigator.geolocation) {
+      console.warn('[Rastreamento Motoboy] Geolocalização não disponível');
+      return;
+    }
+
+    console.log('[Rastreamento Motoboy] Iniciando rastreamento automático');
+    this.rastreamentoService.iniciarRastreamento(motoboy.id);
+  }
+
+  /**
+   * Para rastreamento de localização.
+   */
+  private pararRastreamento(): void {
+    if (this.rastreamentoService.estaRastreando()) {
+      console.log('[Rastreamento Motoboy] Parando rastreamento');
+      this.rastreamentoService.pararRastreamento();
+    }
+  }
+
   ngOnInit(): void {
     // Tudo feito no afterNextRender
   }
 
   ngOnDestroy(): void {
     this.pararPolling();
+    this.pararRastreamento();
   }
 
   carregarMotoboy(): void {
     const motoboyLogado = this.motoboyAuthService.motoboyLogado;
     if (motoboyLogado) {
       this.motoboy.set(motoboyLogado);
+      // Inicia rastreamento após definir motoboy
+      setTimeout(() => {
+        this.iniciarRastreamento();
+      }, 500); // Aguarda um pouco para garantir que tudo está inicializado
       return;
     }
 
@@ -271,6 +312,8 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
             if (typeof sessionStorage !== 'undefined') {
               sessionStorage.setItem('motoboy-auth-data', JSON.stringify(motoboy));
             }
+            // Inicia rastreamento após carregar motoboy
+            this.iniciarRastreamento();
           }
         }
       });
@@ -799,6 +842,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    this.pararRastreamento();
     this.motoboyAuthService.logout();
     window.location.href = '/cadastro-motoboy';
   }

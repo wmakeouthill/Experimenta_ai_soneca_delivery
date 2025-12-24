@@ -101,4 +101,11 @@ public class PedidoRepositoryAdapter implements PedidoRepositoryPort {
     public void excluir(@NonNull String id) {
         jpaRepository.deleteById(id);
     }
+
+    @Override
+    public List<Pedido> buscarPorMotoboyId(String motoboyId) {
+        return jpaRepository.findByMotoboyIdOrderByCreatedAtDesc(motoboyId).stream()
+                .map(mapper::paraDomain)
+                .toList();
+    }
 }
