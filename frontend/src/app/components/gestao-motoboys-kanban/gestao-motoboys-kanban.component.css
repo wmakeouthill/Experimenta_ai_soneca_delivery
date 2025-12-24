@@ -229,9 +229,19 @@
 
 .motoboy-info {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
   min-width: 0;
+}
+
+.motoboy-linha-principal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .motoboy-avatar {
@@ -246,27 +256,14 @@
   flex-shrink: 0;
 }
 
-.motoboy-detalhes-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-  min-width: 0;
-}
-
-.motoboy-linha-principal {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 0;
-}
-
 .motoboy-linha-secundaria {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
+  width: 100%;
+  margin-left: 0;
+  justify-content: flex-start;
 }
 
 .motoboy-nome {
@@ -281,7 +278,15 @@
   min-width: 0;
 }
 
-.motoboy-telefone,
+.motoboy-telefone {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+  margin: 0;
+}
+
 .motoboy-veiculo {
   display: inline-flex;
   align-items: center;
@@ -289,12 +294,6 @@
   color: #6b7280;
   white-space: nowrap;
   margin: 0;
-}
-
-.motoboy-telefone::after {
-  content: " • ";
-  margin: 0 4px;
-  color: #9ca3af;
 }
 
 .coluna-metadados {
