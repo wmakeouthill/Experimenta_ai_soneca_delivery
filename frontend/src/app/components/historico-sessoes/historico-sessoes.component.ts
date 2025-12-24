@@ -73,11 +73,7 @@ export class HistoricoSessoesComponent implements OnInit {
   }
 
   formatarData(data: string | undefined): string {
-    if (!data) return '';
-    // Extrai apenas a parte da data (YYYY-MM-DD) se vier com hora
-    const dataParte = data.split('T')[0];
-    const [ano, mes, dia] = dataParte.split('-');
-    return `${dia}/${mes}/${ano}`;
+    return FormatoUtil.data(data);
   }
 
   formatarDataHora(data: string | undefined): string {

@@ -89,8 +89,8 @@ gcloud auth configure-docker gcr.io --quiet
 # Build da imagem
 Write-Host ""
 Write-Host "[5/6] Fazendo build da imagem Docker..." -ForegroundColor Green
-$IMAGE_NAME = "gcr.io/$PROJECT_ID/soneca-delivery-app:latest"
-$TIMESTAMP_TAG = "gcr.io/$PROJECT_ID/soneca-delivery-app:$(Get-Date -Format 'yyyyMMddHHmmss')"
+$IMAGE_NAME = "gcr.io/$PROJECT_ID/experimentaai-delivery:latest"
+$TIMESTAMP_TAG = "gcr.io/$PROJECT_ID/experimentaai-delivery:$(Get-Date -Format 'yyyyMMddHHmmss')"
 
 Write-Host "   Usando Dockerfile.cloud-run" -ForegroundColor Yellow
 Write-Host "   Isso pode levar varios minutos..." -ForegroundColor Yellow
@@ -145,7 +145,7 @@ Write-Host "Configuracao do Cloud Run:" -ForegroundColor Cyan
 Write-Host "  - Project ID: $PROJECT_ID" -ForegroundColor Cyan
 Write-Host "  - Region: $REGION" -ForegroundColor Cyan
 Write-Host "  - Cloud SQL: experimenta-ai-soneca-balcao:southamerica-east1:experimenta-ai-balcao" -ForegroundColor Cyan
-Write-Host "  - DB URL: jdbc:mysql:///snackbar_db?cloudSqlInstance=experimenta-ai-soneca-balcao:southamerica-east1:experimenta-ai-balcao&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo" -ForegroundColor Cyan
+Write-Host "  - DB URL: jdbc:mysql:///experimentaai_delivery?cloudSqlInstance=experimenta-ai-soneca-balcao:southamerica-east1:experimenta-ai-balcao&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo" -ForegroundColor Cyan
 Write-Host ""
 
 # Perguntar se deseja fazer deploy automatico
@@ -155,9 +155,9 @@ if ($deploy -eq "S" -or $deploy -eq "s" -or $deploy -eq "Y" -or $deploy -eq "y")
     Write-Host "Fazendo deploy no Cloud Run..." -ForegroundColor Green
     
     $CLOUD_SQL_CONNECTION = "experimenta-ai-soneca-balcao:southamerica-east1:experimenta-ai-balcao"
-    $DB_URL = "jdbc:mysql:///snackbar_db?cloudSqlInstance=$CLOUD_SQL_CONNECTION&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo"
+    $DB_URL = "jdbc:mysql:///experimentaai_delivery?cloudSqlInstance=$CLOUD_SQL_CONNECTION&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo"
     
-    gcloud run deploy experimenta-ai-soneca `
+    gcloud run deploy experimentaai-delivery `
         --image $IMAGE_NAME `
         --region $REGION `
         --platform managed `
@@ -176,7 +176,7 @@ if ($deploy -eq "S" -or $deploy -eq "s" -or $deploy -eq "Y" -or $deploy -eq "y")
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
         Write-Host "OK: Deploy concluido com sucesso!" -ForegroundColor Green
-        $SERVICE_URL = gcloud run services describe experimenta-ai-soneca --region $REGION --format="value(status.url)" --project=$PROJECT_ID
+        $SERVICE_URL = gcloud run services describe experimentaai-delivery --region $REGION --format="value(status.url)" --project=$PROJECT_ID
         Write-Host "URL do servico: $SERVICE_URL" -ForegroundColor Cyan
     }
     else {

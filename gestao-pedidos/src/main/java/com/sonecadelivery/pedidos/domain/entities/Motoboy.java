@@ -2,6 +2,7 @@ package com.sonecadelivery.pedidos.domain.entities;
 
 import com.sonecadelivery.kernel.domain.entities.BaseEntity;
 import com.sonecadelivery.kernel.domain.exceptions.ValidationException;
+import com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -174,7 +175,7 @@ public class Motoboy extends BaseEntity {
      * Registra último login/acesso.
      */
     public void registrarAcesso() {
-        this.ultimoLogin = LocalDateTime.now();
+        this.ultimoLogin = DateTimeUtils.now();
         touch();
     }
 

@@ -1,11 +1,11 @@
 version: "3.8"
 
 services:
-  soneca-delivery-app:
+  experimentaai-delivery:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: soneca-delivery-app
+    container_name: experimentaai-delivery
     ports:
       - "8080:8080"
       - "3306:3306"
@@ -17,10 +17,10 @@ services:
     environment:
       - DB_HOST=${DB_HOST:-localhost}
       - DB_PORT=${DB_PORT:-3306}
-      - DB_NAME=${DB_NAME:-soneca_delivery_db}
+      - DB_NAME=${DB_NAME:-experimentaai_delivery}
       - DB_USERNAME=${DB_USERNAME:-soneca_delivery_user}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_URL=${DB_URL:-jdbc:mysql://localhost:3306/soneca_delivery_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo}
+      - DB_URL=${DB_URL:-jdbc:mysql://localhost:3306/experimentaai_delivery?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo}
       - SERVER_PORT=${SERVER_PORT:-8080}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-86400}

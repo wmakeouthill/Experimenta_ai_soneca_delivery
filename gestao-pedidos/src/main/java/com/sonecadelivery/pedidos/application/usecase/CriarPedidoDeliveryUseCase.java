@@ -179,7 +179,7 @@ public class CriarPedidoDeliveryUseCase {
      * Gera número sequencial do pedido no formato: DEL-YYYYMMDD-XXXX
      */
     private String gerarNumeroPedido() {
-        String dataHoje = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String dataHoje = com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils.today().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         long countHoje = pedidoRepository.countPedidosHoje();
         return String.format("DEL-%s-%04d", dataHoje, countHoje + 1);
     }
@@ -188,7 +188,7 @@ public class CriarPedidoDeliveryUseCase {
      * Calcula previsão de entrega (45 minutos por padrão).
      */
     private LocalDateTime calcularPrevisaoEntrega() {
-        return LocalDateTime.now().plusMinutes(45);
+        return com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils.now().plusMinutes(45);
     }
 
     // ===== Records para Input =====

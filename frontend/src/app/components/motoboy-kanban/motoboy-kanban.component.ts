@@ -7,6 +7,7 @@ import { MotoboyAuthService, MotoboyAuth } from '../../services/motoboy-auth.ser
 import { MotoboyRastreamentoService } from '../../services/motoboy-rastreamento.service';
 import { GoogleMapsService } from '../../services/google-maps.service';
 import { ModalMapaEntregaComponent } from '../gestao-motoboys-kanban/modal-mapa-entrega/modal-mapa-entrega.component';
+import { FormatoUtil } from '../../utils/formato.util';
 import { catchError, of, timer, switchMap, retry, timeout, delay, throwError, EMPTY, Subject, merge } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
@@ -877,14 +878,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   }
 
   formatarData(data: string | Date): string {
-    const dataObj = typeof data === 'string' ? new Date(data) : data;
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(dataObj);
+    return FormatoUtil.dataHora(data);
   }
 
   logout(): void {

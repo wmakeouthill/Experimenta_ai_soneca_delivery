@@ -10,7 +10,7 @@ SHOW DATABASES;
 -- ========================================
 -- 2. Criar banco se não existir
 -- ========================================
-CREATE DATABASE IF NOT EXISTS snackbar_db 
+CREATE DATABASE IF NOT EXISTS experimentaai_delivery 
     CHARACTER SET utf8mb4 
     COLLATE utf8mb4_unicode_ci;
 
@@ -28,8 +28,8 @@ DROP USER IF EXISTS 'root'@'localhost';
 -- Criar usuário root que aceita conexões de qualquer host
 CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'SUA_SENHA_AQUI';
 
--- Dar permissões no banco snackbar_db
-GRANT ALL PRIVILEGES ON snackbar_db.* TO 'root'@'%';
+-- Dar permissões no banco experimentaai_delivery
+GRANT ALL PRIVILEGES ON experimentaai_delivery.* TO 'root'@'%';
 
 -- Dar permissões globais (se necessário)
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
@@ -43,8 +43,8 @@ DROP USER IF EXISTS 'WESLEY'@'localhost';
 -- Criar usuário WESLEY que aceita conexões de qualquer host
 CREATE USER IF NOT EXISTS 'WESLEY'@'%' IDENTIFIED BY 'SUA_SENHA_AQUI';
 
--- Dar permissões no banco snackbar_db
-GRANT ALL PRIVILEGES ON snackbar_db.* TO 'WESLEY'@'%';
+-- Dar permissões no banco experimentaai_delivery
+GRANT ALL PRIVILEGES ON experimentaai_delivery.* TO 'WESLEY'@'%';
 
 -- ========================================
 -- 6. Aplicar mudanças

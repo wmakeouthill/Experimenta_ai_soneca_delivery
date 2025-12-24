@@ -2,12 +2,12 @@ services:
   # MySQL para desenvolvimento
   mysql-dev:
     image: mysql:8.0
-    container_name: soneca-delivery-mysql-dev
+    container_name: experimentaai-delivery-mysql-dev
     ports:
       - "${MYSQL_PORT:-3307}:3306" # Porta 3307 por padrão para evitar conflito com MySQL local
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-dev_password}
-      - MYSQL_DATABASE=${DB_NAME:-soneca_delivery_db}
+      - MYSQL_DATABASE=${DB_NAME:-experimentaai_delivery}
       - MYSQL_USER=${DB_USERNAME:-soneca_delivery_user}
       - MYSQL_PASSWORD=${DB_PASSWORD:-dev_password}
     volumes:
@@ -37,7 +37,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev.backend
-    container_name: soneca-delivery-backend-dev
+    container_name: experimentaai-delivery-backend-dev
     ports:
       - "8080:8080"
       - "5005:5005" # Porta para debug remoto Java
@@ -50,10 +50,10 @@ services:
     environment:
       - DB_HOST=mysql-dev
       - DB_PORT=3306
-      - DB_NAME=${DB_NAME:-soneca_delivery_db}
+      - DB_NAME=${DB_NAME:-experimentaai_delivery}
       - DB_USERNAME=${DB_USERNAME:-soneca_delivery_user}
       - DB_PASSWORD=${DB_PASSWORD:-dev_password}
-      - DB_URL=jdbc:mysql://mysql-dev:3306/${DB_NAME:-soneca_delivery_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo
+      - DB_URL=jdbc:mysql://mysql-dev:3306/${DB_NAME:-experimentaai_delivery}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo
       - MYSQL_PORT=${MYSQL_PORT:-3307}
       - SERVER_PORT=8080
       - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret-minimo-256-bits-para-desenvolvimento-local}
@@ -109,7 +109,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev.frontend
-    container_name: soneca-delivery-frontend-dev
+    container_name: experimentaai-delivery-frontend-dev
     ports:
       - "4200:4200" # Porta padrão do ng serve
     environment:

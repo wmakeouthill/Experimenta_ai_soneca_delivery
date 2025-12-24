@@ -65,15 +65,7 @@ export class RelatorioFinanceiroComponent implements OnInit {
   }
 
   formatarData(data: string): string {
-    if (!data) return '';
-    const date = new Date(data);
-    return date.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return FormatoUtil.dataHora(data);
   }
 
   formatarStatus(status: StatusPedido): string {

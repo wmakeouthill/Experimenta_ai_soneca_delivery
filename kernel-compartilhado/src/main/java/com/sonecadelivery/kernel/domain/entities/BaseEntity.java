@@ -1,5 +1,6 @@
 package com.sonecadelivery.kernel.domain.entities;
 
+import com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -13,12 +14,12 @@ public abstract class BaseEntity {
     
     protected BaseEntity() {
         this.id = UUID.randomUUID().toString();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = DateTimeUtils.now();
+        this.updatedAt = DateTimeUtils.now();
     }
     
     protected void touch() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = DateTimeUtils.now();
     }
     
     /**

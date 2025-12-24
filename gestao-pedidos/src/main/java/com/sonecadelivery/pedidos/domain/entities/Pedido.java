@@ -3,6 +3,7 @@ package com.sonecadelivery.pedidos.domain.entities;
 import com.sonecadelivery.cardapio.domain.valueobjects.Preco;
 import com.sonecadelivery.kernel.domain.entities.BaseEntity;
 import com.sonecadelivery.kernel.domain.exceptions.ValidationException;
+import com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils;
 import com.sonecadelivery.pedidos.domain.valueobjects.NumeroPedido;
 import lombok.Getter;
 
@@ -42,7 +43,7 @@ public class Pedido extends BaseEntity {
         this.itens = new ArrayList<>();
         this.meiosPagamento = new ArrayList<>();
         this.status = StatusPedido.PENDENTE;
-        this.dataPedido = LocalDateTime.now();
+        this.dataPedido = com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils.now();
         this.dataFinalizacao = null; // Inicialmente nulo, será definido apenas quando finalizado
         this.tipoPedido = TipoPedido.BALCAO; // Padrão é balcão
         this.taxaEntrega = Preco.zero();
@@ -155,7 +156,7 @@ public class Pedido extends BaseEntity {
         // Define data de finalização apenas quando o status muda para FINALIZADO pela
         // primeira vez
         if (novoStatus == StatusPedido.FINALIZADO && this.dataFinalizacao == null) {
-            this.dataFinalizacao = LocalDateTime.now();
+            this.dataFinalizacao = com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils.now();
         }
 
         this.status = novoStatus;

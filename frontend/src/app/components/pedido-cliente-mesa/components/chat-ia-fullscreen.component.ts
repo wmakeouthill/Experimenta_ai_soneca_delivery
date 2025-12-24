@@ -11,6 +11,7 @@ import {
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MensagemChat, ProdutoDestacado, ConversaSalva } from '../composables/use-chat-ia';
+import { FormatoUtil } from '../../../utils/formato.util';
 
 /**
  * Componente de Chat IA fullscreen responsivo.
@@ -1035,7 +1036,7 @@ export class ChatIAFullscreenComponent implements AfterViewChecked {
   }
 
   formatTime(date: Date): string {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return FormatoUtil.hora(date);
   }
 
   formatDate(date: Date): string {
@@ -1043,12 +1044,17 @@ export class ChatIAFullscreenComponent implements AfterViewChecked {
     const ontem = new Date(hoje);
     ontem.setDate(ontem.getDate() - 1);
 
-    if (date.toDateString() === hoje.toDateString()) {
+    // Usa fuso horário de Brasília para comparação
+    const hojeBrasilia = new Date(hoje.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const ontemBrasilia = new Date(ontem.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const dateBrasilia = new Date(date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+
+    if (dateBrasilia.toDateString() === hojeBrasilia.toDateString()) {
       return `Hoje às ${this.formatTime(date)}`;
-    } else if (date.toDateString() === ontem.toDateString()) {
+    } else if (dateBrasilia.toDateString() === ontemBrasilia.toDateString()) {
       return `Ontem às ${this.formatTime(date)}`;
     } else {
-      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ` às ${this.formatTime(date)}`;
+      return FormatoUtil.data(date) + ` às ${this.formatTime(date)}`;
     }
   }
 

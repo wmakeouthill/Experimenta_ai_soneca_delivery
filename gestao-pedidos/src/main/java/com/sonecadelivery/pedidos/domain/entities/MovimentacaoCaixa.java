@@ -2,6 +2,7 @@ package com.sonecadelivery.pedidos.domain.entities;
 
 import com.sonecadelivery.kernel.domain.entities.BaseEntity;
 import com.sonecadelivery.kernel.domain.exceptions.ValidationException;
+import com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -22,7 +23,7 @@ public class MovimentacaoCaixa extends BaseEntity {
 
     private MovimentacaoCaixa() {
         super();
-        this.dataMovimentacao = LocalDateTime.now();
+        this.dataMovimentacao = DateTimeUtils.now();
     }
 
     /**

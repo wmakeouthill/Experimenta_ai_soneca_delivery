@@ -45,7 +45,7 @@ if (-not $dbPassword) {
 } else {
     try {
         $mysqlCmd = "SELECT COUNT(*) as total FROM usuarios WHERE email = 'admin@snackbar.com';"
-        $result = docker exec soneca-delivery-mysql-dev mysql -u soneca_delivery_user -p$dbPassword soneca_delivery_db -e $mysqlCmd 2>&1
+        $result = docker exec experimentaai-delivery-mysql-dev mysql -u soneca_delivery_user -p$dbPassword experimentaai_delivery -e $mysqlCmd 2>&1
     
         if ($result -match "total\s+(\d+)") {
             $count = $matches[1]

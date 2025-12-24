@@ -96,10 +96,10 @@ RUN chown -R mysql:mysql /var/lib/mysql /var/run/mysqld /run/mysqld /etc/mysql
 # NUNCA hardcode credenciais sensíveis aqui!
 ENV DB_HOST=localhost
 ENV DB_PORT=3306
-ENV DB_NAME=soneca_delivery_db
+ENV DB_NAME=experimentaai_delivery
 ENV DB_USERNAME=soneca_delivery_user
 # DB_PASSWORD deve ser fornecido via variável de ambiente ou secret
-ENV DB_URL=jdbc:mysql://localhost:3306/soneca_delivery_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo
+ENV DB_URL=jdbc:mysql://localhost:3306/experimentaai_delivery?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo
 ENV SERVER_PORT=8080
 # JWT_SECRET deve ser fornecido via variável de ambiente ou secret (mínimo 256 bits)
 ENV JWT_EXPIRATION=86400

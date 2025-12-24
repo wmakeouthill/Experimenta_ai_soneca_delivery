@@ -176,8 +176,8 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --quiet || echo -e "${YELLOW}⚠️  Permissão já configurada (continuando...)${NC}"
 
 # Solicitar informações do banco
-read -p "Digite o nome do banco de dados (default: soneca_delivery_db): " DB_NAME
-DB_NAME=${DB_NAME:-soneca_delivery_db}
+read -p "Digite o nome do banco de dados (default: experimentaai_delivery): " DB_NAME
+DB_NAME=${DB_NAME:-experimentaai_delivery}
 
 read -p "Digite o usuário do banco de dados (default: soneca_delivery_user): " DB_USERNAME
 DB_USERNAME=${DB_USERNAME:-soneca_delivery_user}
@@ -187,7 +187,7 @@ DB_USERNAME=${DB_USERNAME:-soneca_delivery_user}
 DB_URL="jdbc:mysql:///${DB_NAME}?cloudSqlInstance=${CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo"
 
 # Imagem a ser usada
-IMAGE_NAME="gcr.io/${PROJECT_ID}/soneca-delivery-app:latest"
+IMAGE_NAME="gcr.io/${PROJECT_ID}/experimentaai-delivery:latest"
 
 # Verificar se a imagem existe
 echo ""
@@ -203,7 +203,7 @@ echo ""
 echo -e "${BLUE}🚀 Fazendo deploy no Cloud Run...${NC}"
 echo -e "${YELLOW}   Isso pode levar alguns minutos...${NC}"
 
-gcloud run deploy soneca-delivery-app \
+gcloud run deploy experimentaai-delivery \
     --image "$IMAGE_NAME" \
     --region "$REGION" \
     --platform managed \
@@ -225,7 +225,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Obter URL do serviço
-SERVICE_URL=$(gcloud run services describe soneca-delivery-app \
+SERVICE_URL=$(gcloud run services describe experimentaai-delivery \
     --region "$REGION" \
     --format="value(status.url)" \
     --project="$PROJECT_ID")

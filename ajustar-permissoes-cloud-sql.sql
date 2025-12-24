@@ -5,12 +5,12 @@
 -- Execute este script no Cloud SQL Console (SQL Editor)
 
 -- ========================================
--- 1. Verificar banco snackbar_db existe
+-- 1. Verificar banco experimentaai_delivery existe
 -- ========================================
-SHOW DATABASES LIKE 'snackbar_db';
+SHOW DATABASES LIKE 'experimentaai_delivery';
 
 -- Se não existir, criar (isso geralmente funciona)
-CREATE DATABASE IF NOT EXISTS snackbar_db 
+CREATE DATABASE IF NOT EXISTS experimentaai_delivery 
     CHARACTER SET utf8mb4 
     COLLATE utf8mb4_unicode_ci;
 
@@ -25,11 +25,11 @@ SELECT User, Host FROM mysql.user WHERE User IN ('root', 'WESLEY');
 -- Isso só funciona se o usuário já existir
 
 -- Permissões para root (qualquer host)
-GRANT ALL PRIVILEGES ON snackbar_db.* TO 'root'@'%';
+GRANT ALL PRIVILEGES ON experimentaai_delivery.* TO 'root'@'%';
 FLUSH PRIVILEGES;
 
 -- Se usar WESLEY também
-GRANT ALL PRIVILEGES ON snackbar_db.* TO 'WESLEY'@'%';
+GRANT ALL PRIVILEGES ON experimentaai_delivery.* TO 'WESLEY'@'%';
 FLUSH PRIVILEGES;
 
 -- ========================================

@@ -54,6 +54,7 @@ export class FormatoUtil {
 
   /**
    * Formata data/hora para exibição em português brasileiro.
+   * Usa fuso horário de Brasília/São Paulo (America/Sao_Paulo).
    */
   static dataHora(data: string | Date | null | undefined): string {
     if (!data) return '';
@@ -61,13 +62,70 @@ export class FormatoUtil {
     const dataObj = typeof data === 'string' ? new Date(data) : data;
     if (isNaN(dataObj.getTime())) return '';
 
-    return dataObj.toLocaleString('pt-BR', {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    });
+    }).format(dataObj);
+  }
+
+  /**
+   * Formata apenas a data (sem hora) para exibição em português brasileiro.
+   * Usa fuso horário de Brasília/São Paulo (America/Sao_Paulo).
+   */
+  static data(data: string | Date | null | undefined): string {
+    if (!data) return '';
+
+    const dataObj = typeof data === 'string' ? new Date(data) : data;
+    if (isNaN(dataObj.getTime())) return '';
+
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(dataObj);
+  }
+
+  /**
+   * Formata apenas a hora (sem data) para exibição em português brasileiro.
+   * Usa fuso horário de Brasília/São Paulo (America/Sao_Paulo).
+   */
+  static hora(data: string | Date | null | undefined): string {
+    if (!data) return '';
+
+    const dataObj = typeof data === 'string' ? new Date(data) : data;
+    if (isNaN(dataObj.getTime())) return '';
+
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(dataObj);
+  }
+
+  /**
+   * Formata data e hora completa para exibição em português brasileiro.
+   * Inclui segundos. Usa fuso horário de Brasília/São Paulo (America/Sao_Paulo).
+   */
+  static dataHoraCompleta(data: string | Date | null | undefined): string {
+    if (!data) return '';
+
+    const dataObj = typeof data === 'string' ? new Date(data) : data;
+    if (isNaN(dataObj.getTime())) return '';
+
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(dataObj);
   }
 
   /**

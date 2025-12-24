@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MotoboyService, Motoboy, CriarMotoboyRequest, AtualizarMotoboyRequest } from '../../services/motoboy.service';
+import { FormatoUtil } from '../../utils/formato.util';
 
 @Component({
     selector: 'app-gestao-motoboys',
@@ -247,8 +248,7 @@ export class GestaoMotoboysComponent implements OnInit {
     }
 
     formatarData(dataStr: string): string {
-        const data = new Date(dataStr);
-        return data.toLocaleDateString('pt-BR');
+        return FormatoUtil.data(dataStr);
     }
 
     formatarTelefoneOptional(telefone?: string): string {

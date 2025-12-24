@@ -6,6 +6,7 @@ import { useSessoes } from './composables/use-sessoes';
 import { useUsuarios } from './composables/use-usuarios';
 import { SessaoTrabalhoService, SessaoTrabalho, StatusSessao } from '../../services/sessao-trabalho.service';
 import { AuthService } from '../../services/auth.service';
+import { FormatoUtil } from '../../utils/formato.util';
 
 @Component({
   selector: 'app-sessoes',
@@ -213,11 +214,11 @@ export class SessoesComponent implements OnInit {
   }
 
   formatarData(data: string): string {
-    return new Date(data).toLocaleDateString('pt-BR');
+    return FormatoUtil.data(data);
   }
 
   formatarDataHora(data: string): string {
-    return new Date(data).toLocaleString('pt-BR');
+    return FormatoUtil.dataHora(data);
   }
 
   gerarNumerosPagina(): (number | string)[] {

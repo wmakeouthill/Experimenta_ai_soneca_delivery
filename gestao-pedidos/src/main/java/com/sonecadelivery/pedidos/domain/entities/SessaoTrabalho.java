@@ -2,6 +2,7 @@ package com.sonecadelivery.pedidos.domain.entities;
 
 import com.sonecadelivery.kernel.domain.entities.BaseEntity;
 import com.sonecadelivery.kernel.domain.exceptions.ValidationException;
+import com.sonecadelivery.kernel.infrastructure.utils.DateTimeUtils;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -23,8 +24,8 @@ public class SessaoTrabalho extends BaseEntity {
     private SessaoTrabalho() {
         super();
         this.status = StatusSessao.ABERTA;
-        this.dataInicioCompleta = LocalDateTime.now();
-        this.dataInicio = LocalDate.now();
+        this.dataInicioCompleta = DateTimeUtils.now();
+        this.dataInicio = DateTimeUtils.today();
     }
 
     public static SessaoTrabalho criar(Integer numeroSessao, String usuarioId, BigDecimal valorAbertura) {
@@ -76,7 +77,7 @@ public class SessaoTrabalho extends BaseEntity {
         validarValorFechamento(valorFechamento);
 
         this.status = StatusSessao.FINALIZADA;
-        this.dataFim = LocalDateTime.now();
+        this.dataFim = DateTimeUtils.now();
         this.valorFechamento = valorFechamento;
         touch();
     }

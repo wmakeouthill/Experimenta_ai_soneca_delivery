@@ -11,6 +11,7 @@ import { ImpressaoService, TipoImpressora } from '../../services/impressao.servi
 import { NovoPedidoModalComponent } from './components/novo-pedido-modal/novo-pedido-modal.component';
 import { MenuContextoPedidoComponent } from './components/menu-contexto-pedido/menu-contexto-pedido.component';
 import { SeletorMotoboyComponent } from './components/seletor-motoboy/seletor-motoboy.component';
+import { FormatoUtil } from '../../utils/formato.util';
 import { catchError, of, Subscription, timer, switchMap, takeWhile } from 'rxjs';
 import { NotificationService } from '../../services/notification.service';
 import { FilaPedidosMesaService, PedidoPendente } from '../../services/fila-pedidos-mesa.service';
@@ -502,7 +503,7 @@ export class PedidosComponent implements OnInit, OnDestroy {
   }
 
   formatarData(data: string): string {
-    return new Date(data).toLocaleString('pt-BR');
+    return FormatoUtil.dataHora(data);
   }
 
   formatarPreco(preco: number): string {

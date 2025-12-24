@@ -78,7 +78,7 @@ public class CloudSqlDataSourceConfig {
             throw new IllegalArgumentException(
                 "cloudSqlInstance não encontrado na URL JDBC. " +
                 "A URL deve conter 'cloudSqlInstance=project:region:instance'. " +
-                "Exemplo: jdbc:mysql:///snackbar_db?cloudSqlInstance=experimenta-ai-soneca-balcao:southamerica-east1:experimenta-ai-balcao&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo" +
+                "Exemplo: jdbc:mysql:///experimentaai_delivery?cloudSqlInstance=experimenta-ai-soneca-balcao:southamerica-east1:experimenta-ai-balcao&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo" +
                 "\n\nURL recebida (mascarada): " + maskedUrl);
         }
         
