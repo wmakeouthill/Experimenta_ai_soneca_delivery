@@ -43,6 +43,7 @@ public class SecurityConfig {
     private static final String CLIENTE_PEDIDOS_RASTREAMENTO_STREAM_PATTERN = "/api/cliente/pedidos/*/rastreamento/**";
     private static final String PUBLIC_MOTOBOY_AUTH_PATTERN = "/api/publico/motoboy/auth/**";
     private static final String MOTOBOY_CONTA_PATTERN = "/api/motoboy/**";
+    private static final String MOTOBOYS_CONTA_PATTERN = "/api/motoboys/**";
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -81,8 +82,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/publico/cliente/imagem/**").permitAll()
                         // Endpoints públicos de autenticação de motoboy (login, Google OAuth)
                         .requestMatchers(PUBLIC_MOTOBOY_AUTH_PATTERN).permitAll()
-                        // Endpoints de conta do motoboy (pedidos, perfil) - usa header X-Motoboy-Id
+                        // Endpoints de conta do motoboy (pedidos, perfil, localização) - usa header X-Motoboy-Id
                         .requestMatchers(MOTOBOY_CONTA_PATTERN).permitAll()
+                        .requestMatchers(MOTOBOYS_CONTA_PATTERN).permitAll()
                         // Endpoints de conta do cliente (favoritos, perfil, etc.) - usa header
                         // X-Cliente-Id
                         .requestMatchers(CLIENTE_CONTA_PATTERN).permitAll()

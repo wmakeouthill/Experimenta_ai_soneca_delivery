@@ -53,6 +53,7 @@ export class ModalRastreamentoComponent {
   constructor() {
     if (this.isBrowser) {
       // Effect para monitorar quando o modal abre/fecha e dados de rastreamento mudam
+      // allowSignalWrites: true permite atualizar signals dentro do effect
       effect(() => {
         const estaAberto = this.aberto();
         const dados = this.rastreamento();
@@ -72,7 +73,7 @@ export class ModalRastreamentoComponent {
             this.ultimaPosicaoMotoboy = null;
           }, 0);
         }
-      });
+      }, { allowSignalWrites: true });
     }
   }
 
