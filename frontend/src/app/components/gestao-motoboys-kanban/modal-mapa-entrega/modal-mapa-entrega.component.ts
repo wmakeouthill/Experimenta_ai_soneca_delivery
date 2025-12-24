@@ -150,29 +150,37 @@ export class ModalMapaEntregaComponent {
 
       this.mapaInicializado = true;
 
-      // Tenta obter localização atual e mostrar rota
+      // Tenta obter localização atual do navegador/celular e mostrar rota
       // Verifica se a biblioteca directions está disponível
       if (navigator.geolocation && maps.DirectionsService) {
+        console.log('Solicitando localização atual do navegador/celular...');
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const origem = {
               lat: position.coords.latitude,
               lng: position.coords.longitude
             };
+            console.log('Localização obtida:', origem);
             this.exibirRota(origem, destino, maps);
           },
           (error) => {
             // Se não conseguir obter localização, apenas mostra o destino
-            console.log('Não foi possível obter localização atual:', error);
+            console.warn('Não foi possível obter localização atual do navegador:', error.message);
+            console.log('Exibindo apenas o destino no mapa');
           },
           {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
+            enableHighAccuracy: true, // Usa GPS quando disponível (celular)
+            timeout: 10000, // Timeout de 10 segundos
+            maximumAge: 0 // Não usa cache, sempre busca localização atual
           }
         );
       } else {
-        console.warn('Biblioteca Directions não disponível ou geolocalização não suportada');
+        if (!navigator.geolocation) {
+          console.warn('Geolocalização não suportada pelo navegador');
+        }
+        if (!maps.DirectionsService) {
+          console.warn('Biblioteca Directions não disponível');
+        }
       }
     } catch (error) {
       console.error('Erro ao inicializar mapa:', error);

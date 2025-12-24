@@ -18,38 +18,49 @@ export class GoogleMapsService {
      * Carrega o script da API do Google Maps dinamicamente.
      */
     loadScript(): Promise<void> {
-        if (this.scriptLoaded) return Promise.resolve();
+        // Sempre verifica se precisa recarregar (pode ter mudado a biblioteca)
+        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]') as HTMLScriptElement;
+        
+        if (existingScript && !existingScript.src.includes('directions')) {
+            // Remove script antigo sem directions
+            existingScript.remove();
+            this.scriptLoaded = false;
+            this.loadPromise = null;
+        } else if (existingScript && existingScript.src.includes('directions')) {
+            // Script já existe com directions, verifica se está carregado
+            if (this.scriptLoaded && typeof google !== 'undefined' && google.maps) {
+                return Promise.resolve();
+            }
+            if (this.loadPromise) return this.loadPromise;
+        }
+
+        if (this.scriptLoaded && typeof google !== 'undefined' && google.maps) {
+            return Promise.resolve();
+        }
         if (this.loadPromise) return this.loadPromise;
 
         if (!this.apiKey) {
             console.warn('Google Maps API Key não encontrada em environment.ts. O mapa não será carregado.');
-            return Promise.reject('API Key missing'); // Rejeita para que quem chame saiba que não vai rolar
+            return Promise.reject('API Key missing');
         }
 
         this.loadPromise = new Promise((resolve, reject) => {
-            // Verifica se já existe script
-            const existingScript = document.querySelector('script[src*="maps.googleapis.com"]') as HTMLScriptElement;
+            // Verifica se já existe script com directions
+            const existingScriptWithDirections = document.querySelector('script[src*="maps.googleapis.com"][src*="directions"]') as HTMLScriptElement;
             
-            if (existingScript) {
-                // Verifica se o script existente já tem a biblioteca directions
-                if (existingScript.src.includes('directions')) {
-                    // Verifica se google.maps já está disponível
-                    if (typeof google !== 'undefined' && google.maps) {
+            if (existingScriptWithDirections) {
+                // Verifica se google.maps já está disponível
+                if (typeof google !== 'undefined' && google.maps) {
+                    this.scriptLoaded = true;
+                    resolve();
+                    return;
+                } else {
+                    // Aguarda o script carregar
+                    existingScriptWithDirections.addEventListener('load', () => {
                         this.scriptLoaded = true;
                         resolve();
-                        return;
-                    } else {
-                        // Aguarda o script carregar
-                        existingScript.addEventListener('load', () => {
-                            this.scriptLoaded = true;
-                            resolve();
-                        });
-                        return;
-                    }
-                } else {
-                    // Remove o script antigo se não tiver directions e recarrega
-                    existingScript.remove();
-                    this.scriptLoaded = false;
+                    });
+                    return;
                 }
             }
 
