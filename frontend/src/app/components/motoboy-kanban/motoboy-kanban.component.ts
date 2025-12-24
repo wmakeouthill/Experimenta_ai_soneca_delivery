@@ -43,6 +43,10 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   readonly modalMapaAberto = signal(false);
   readonly pedidoSelecionado = signal<Pedido | null>(null);
   
+  // PWA
+  readonly mostrarBannerPwa = signal(false);
+  private deferredPrompt: any = null;
+  
   // Controle de polling e atualizações
   private pollingAtivo = false;
   private pollingSubscription: any = null;
@@ -137,6 +141,9 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   constructor() {
     afterNextRender(() => {
       if (!isPlatformBrowser(this.platformId)) return;
+      
+      // Inicializa PWA para motoboy
+      this.inicializarPWA();
       
       // Restaura cache do sessionStorage se existir
       this.restaurarCache();
@@ -878,6 +885,122 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   fecharModalMapa(): void {
     this.modalMapaAberto.set(false);
     this.pedidoSelecionado.set(null);
+  }
+
+  // ========== PWA ==========
+
+  /**
+   * Inicializa o PWA para a tela de motoboy.
+   * Registra o service worker específico e configura o manifest.
+   */
+  private inicializarPWA(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    // Adiciona o manifest dinamicamente se não existir
+    this.adicionarManifestMotoboy();
+
+    // Registra o service worker específico do motoboy
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/pwa-sw-motoboy.js')
+          .then((registration) => {
+            console.log('[PWA Motoboy] Service Worker registrado com sucesso:', registration.scope);
+            
+            // Verifica atualizações periodicamente
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[PWA Motoboy] Nova versão disponível. Recarregue a página para atualizar.');
+                  }
+                });
+              }
+            });
+          })
+          .catch((err) => {
+            console.warn('[PWA Motoboy] Erro ao registrar Service Worker:', err);
+          });
+      });
+    }
+
+    // Listener para o prompt de instalação
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      this.mostrarBannerPwa.set(true);
+    });
+
+    // Detecta quando o app é instalado
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA Motoboy] App instalado com sucesso');
+      this.mostrarBannerPwa.set(false);
+      this.deferredPrompt = null;
+    });
+  }
+
+  /**
+   * Adiciona o manifest do motoboy dinamicamente ao HTML.
+   */
+  private adicionarManifestMotoboy(): void {
+    // Verifica se já existe um link para o manifest do motoboy
+    const existingLink = document.querySelector('link[rel="manifest"][href="/manifest-motoboy.webmanifest"]');
+    if (existingLink) {
+      return; // Já existe, não precisa adicionar novamente
+    }
+
+    // Remove o manifest do delivery se existir (para evitar conflito)
+    const deliveryManifest = document.querySelector('link[rel="manifest"][href="/assets/manifest.webmanifest"]');
+    if (deliveryManifest) {
+      deliveryManifest.remove();
+    }
+
+    // Adiciona o manifest do motoboy
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = '/manifest-motoboy.webmanifest';
+    document.head.appendChild(link);
+  }
+
+  /**
+   * Instala o PWA quando o usuário clicar no botão.
+   */
+  async instalarPwa(): Promise<void> {
+    if (!this.deferredPrompt) {
+      console.warn('[PWA Motoboy] Prompt de instalação não disponível');
+      return;
+    }
+
+    try {
+      this.deferredPrompt.prompt();
+      const { outcome } = await this.deferredPrompt.userChoice;
+      
+      console.log(`[PWA Motoboy] Usuário ${outcome === 'accepted' ? 'aceitou' : 'rejeitou'} a instalação`);
+      
+      if (outcome === 'accepted') {
+        this.deferredPrompt = null;
+      }
+      
+      this.mostrarBannerPwa.set(false);
+    } catch (error) {
+      console.error('[PWA Motoboy] Erro ao instalar PWA:', error);
+    }
+  }
+
+  /**
+   * Fecha o banner de instalação PWA.
+   */
+  fecharBannerPwa(): void {
+    this.mostrarBannerPwa.set(false);
+  }
+
+  /**
+   * Verifica se o app está rodando em modo standalone (instalado).
+   */
+  isStandalone(): boolean {
+    if (!isPlatformBrowser(this.platformId)) return false;
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           (navigator as any).standalone === true;
   }
 }
 

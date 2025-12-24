@@ -431,3 +431,132 @@
   margin: 0;
 }
 
+/* ========== PWA BANNER ========== */
+
+.pwa-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pwa-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pwa-banner-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.pwa-banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: white;
+  min-width: 200px;
+}
+
+.pwa-banner-text strong {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.pwa-banner-text span {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.pwa-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.btn-instalar-pwa {
+  background: white;
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-instalar-pwa:hover {
+  background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-instalar-pwa:active {
+  transform: translateY(0);
+}
+
+.btn-fechar-pwa {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+
+.btn-fechar-pwa:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-fechar-pwa:active {
+  transform: scale(0.95);
+}
+
+/* Responsivo para mobile */
+@media (max-width: 640px) {
+  .pwa-banner-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pwa-banner-text {
+    text-align: center;
+  }
+
+  .pwa-banner-actions {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .btn-instalar-pwa {
+    flex: 1;
+  }
+}
+

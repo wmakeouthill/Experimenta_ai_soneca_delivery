@@ -1,0 +1,65 @@
+{
+  "name": "Experimenta aí - Motoboy",
+  "short_name": "Motoboy",
+  "description": "Gerencie suas entregas de forma rápida e prática. Visualize pedidos e atualize status em tempo real.",
+  "start_url": "/motoboy/kanban",
+  "scope": "/motoboy/",
+  "id": "/motoboy/kanban",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#FF6B35",
+  "categories": [
+    "productivity",
+    "business"
+  ],
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Tela de Entregas do Motoboy"
+    }
+  ],
+  "prefer_related_applications": false,
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ]
+}
+

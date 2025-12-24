@@ -29,7 +29,17 @@
                 "output": "."
               },
               {
+                "glob": "pwa-sw-motoboy.js",
+                "input": "src",
+                "output": "."
+              },
+              {
                 "glob": "manifest.webmanifest",
+                "input": "src",
+                "output": "."
+              },
+              {
+                "glob": "manifest-motoboy.webmanifest",
                 "input": "src",
                 "output": "."
               }
