@@ -100,11 +100,13 @@ export function usePagamento(totalCarrinho: () => number) {
         }
     }
 
-    function atualizarValorMeio(tipo: MeioPagamentoTipo, valor: number): void {
+    function atualizarValorMeio(tipo: MeioPagamentoTipo, valor: number | null | undefined): void {
         const meios = [...meiosSelecionados()];
         const index = meios.findIndex(m => m.tipo === tipo);
         if (index >= 0) {
-            meios[index].valor = valor;
+            // Permite valor vazio/null durante a digitação, mas converte para 0 apenas quando necessário
+            const valorFinal = (valor === null || valor === undefined || isNaN(valor)) ? 0 : valor;
+            meios[index].valor = valorFinal;
             meiosSelecionados.set(meios);
         }
     }

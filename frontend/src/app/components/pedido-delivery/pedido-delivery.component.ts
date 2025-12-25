@@ -311,12 +311,31 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         () => this.meusPedidos.pedidoSelecionado(),
         (pedidoId: string) => this.meusPedidos.marcarComoAvaliado(pedidoId)
     );
-    
-    // Rastreamento de pedido
-    readonly rastreamento = useRastreamentoPedido(() => this.sucessoPedido.pedidoId());
+
+    // Rastreamento de pedido em tempo real
+    readonly rastreamento = useRastreamentoPedido(
+        () => this.sucessoPedido.pedidoId(),
+        () => this.cliente()?.id
+    );
     readonly modalRastreamentoAberto = signal<boolean>(false);
 
     // ========== COMPUTED ==========
+
+    // Computed que filtra pedidos realmente não avaliados (verificando backend)
+    readonly pedidosNaoAvaliadosCorrigido = computed(() => {
+        const todosPedidos = this.meusPedidos.pedidos();
+        if (!todosPedidos || todosPedidos.length === 0) return [];
+
+        return todosPedidos.filter(pedido => {
+            // Apenas pedidos finalizados ou entregues
+            if (pedido.status !== 'FINALIZADO' && pedido.status !== 'ENTREGUE') {
+                return false;
+            }
+
+            // Verifica se foi avaliado no backend através do composable
+            return !this.avaliacao.isPedidoAvaliado(pedido.id);
+        });
+    });
 
     readonly deveMostrarCtaTelefone = computed(() => {
         // Mostra CTA quando cliente logado não tem telefone e está no cardápio
@@ -976,8 +995,9 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     abrirAvaliacaoPedido(): void {
-        const pedido = this.meusPedidos.primeiroPedidoNaoAvaliado();
-        if (pedido) {
+        const pedidosNaoAvaliados = this.pedidosNaoAvaliadosCorrigido();
+        if (pedidosNaoAvaliados.length > 0) {
+            const pedido = pedidosNaoAvaliados[0];
             this.navegarPara('perfil');
             this.secaoPerfil.set('pedidos');
             // Aguarda a navegação e seleciona o pedido
@@ -1035,23 +1055,23 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         if (!pedidoId) {
             return;
         }
-        
+
         // Carrega dados iniciais
         this.rastreamento.carregar();
-        
+
         // Inicia polling se ainda não estiver ativo
         if (!this.rastreamento.ativo()) {
             this.rastreamento.iniciar();
         }
-        
+
         // Abre modal de rastreamento
         this.modalRastreamentoAberto.set(true);
     }
-    
+
     fecharModalRastreamento(): void {
         this.modalRastreamentoAberto.set(false);
     }
-    
+
     /**
      * Acompanha um pedido específico pelo ID.
      * Útil para quando o usuário clica em um pedido específico em "Meus Pedidos".
@@ -1418,11 +1438,13 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    atualizarValorMeio(tipo: MeioPagamentoTipo, valor: number): void {
+    atualizarValorMeio(tipo: MeioPagamentoTipo, valor: number | null | undefined): void {
         const meios = [...this.meiosPagamentoSelecionados()];
         const index = meios.findIndex(m => m.tipo === tipo);
         if (index >= 0) {
-            meios[index].valor = valor;
+            // Permite valor vazio/null durante a digitação, mas converte para 0 apenas quando necessário
+            const valorFinal = (valor === null || valor === undefined || isNaN(valor)) ? 0 : valor;
+            meios[index].valor = valorFinal;
             this.meiosPagamentoSelecionados.set(meios);
         }
     }

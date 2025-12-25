@@ -1,63 +1,122 @@
-<app-base-modal
-  [aberto]="aberto()"
-  [titulo]="'📍 Rota de Entrega - Pedido #' + numeroPedido()"
-  [tamanho]="'grande'"
-  (onFechar)="fechar()">
-  
+<app-base-modal [aberto]="aberto() && !modoNavegacao()" [titulo]="'📍 Rota de Entrega - Pedido #' + numeroPedido()"
+  [tamanho]="'grande'" (onFechar)="fechar()">
+
   <div class="modal-mapa-conteudo">
     <div class="mapa-container" [class.carregando]="carregandoMapa()">
       @if (carregandoMapa()) {
-        <div class="mapa-carregando">
-          <div class="spinner"></div>
-          <p>Carregando mapa...</p>
-        </div>
+      <div class="mapa-carregando">
+        <div class="spinner"></div>
+        <p>Carregando mapa...</p>
+      </div>
       }
       <div #mapContainer class="mapa-embutido"></div>
     </div>
 
     @if (enderecoEntrega()) {
-      <div class="endereco-info">
-        <p class="endereco-texto">
-          <strong>📍 Endereço:</strong> {{ enderecoEntrega() }}
-        </p>
-      </div>
+    <div class="endereco-info">
+      <p class="endereco-texto">
+        <strong>📍 Endereço:</strong> {{ enderecoEntrega() }}
+      </p>
+    </div>
     }
 
     <div class="acoes-mapa">
       @if (podeMarcarComoEntregue()) {
-        <button
-          type="button"
-          class="btn-entregue"
-          (click)="marcarComoEntregue()">
-          ✓ Marcar como Entregue
-        </button>
+      <button type="button" class="btn-entregue" (click)="marcarComoEntregue()">
+        ✓ Marcar como Entregue
+      </button>
       }
-      <button
-        type="button"
-        class="btn-iniciar-viagem"
-        [class.viagem-ativa]="viagemIniciada()"
-        (click)="iniciarViagem()"
-        [disabled]="!latitude() || !longitude()">
+      <button type="button" class="btn-iniciar-viagem" [class.viagem-ativa]="viagemIniciada()"
+        (click)="iniciarNavegacao()" [disabled]="!latitude() || !longitude()">
         @if (viagemIniciada()) {
-          🛑 Parar Viagem
+        🛑 Parar Viagem
         } @else {
-          🚀 Iniciar Viagem
+        🚀 Iniciar Viagem
         }
       </button>
-      <button
-        type="button"
-        class="btn-abrir-maps"
-        (click)="abrirNoGoogleMaps()"
+      <button type="button" class="btn-abrir-maps" (click)="abrirNoGoogleMaps()"
         [disabled]="!latitude() || !longitude()">
         🗺️ Abrir no Google Maps
       </button>
-      <button
-        type="button"
-        class="btn-fechar"
-        (click)="fechar()">
+      <button type="button" class="btn-fechar" (click)="fechar()">
         Fechar
       </button>
     </div>
   </div>
 </app-base-modal>
 
+<!-- Modo Navegação Fullscreen -->
+@if (modoNavegacao()) {
+<div class="navegacao-fullscreen" [class.visivel]="modoNavegacao()">
+  <!-- Header da Navegação -->
+  <header class="navegacao-header">
+    <button class="btn-voltar" (click)="sairModoNavegacao()">
+      <span class="icone-voltar">←</span>
+    </button>
+    <div class="info-pedido">
+      <span class="numero-pedido">Entrega #{{ numeroPedido() }}</span>
+      @if (etaMinutos() !== null) {
+      <span class="eta">ETA: {{ etaMinutos() }} min</span>
+      }
+    </div>
+    <div class="info-distancia">
+      @if (distanciaRestante()) {
+      <span class="distancia">{{ distanciaRestante() }}</span>
+      }
+    </div>
+  </header>
+
+  <!-- Mapa em Tela Cheia -->
+  <div class="mapa-navegacao">
+    <div #mapContainerNav class="mapa-fullscreen"></div>
+  </div>
+
+  <!-- Painel de Instruções -->
+  <div class="painel-instrucoes" [class.minimizado]="painelMinimizado()">
+    <button class="btn-toggle-painel" (click)="togglePainel()">
+      <span class="icone-toggle">{{ painelMinimizado() ? '▲' : '▼' }}</span>
+    </button>
+
+    @if (!painelMinimizado()) {
+    <div class="instrucao-atual">
+      @if (proximaInstrucao()) {
+      <div class="icone-manobra">
+        <span class="seta-direcao">{{ iconeManobra() }}</span>
+      </div>
+      <div class="detalhes-instrucao">
+        <p class="texto-instrucao">{{ proximaInstrucao() }}</p>
+        @if (distanciaProximaManobra()) {
+        <span class="distancia-manobra">em {{ distanciaProximaManobra() }}</span>
+        }
+      </div>
+      } @else {
+      <div class="icone-manobra">
+        <span class="seta-direcao">📍</span>
+      </div>
+      <div class="detalhes-instrucao">
+        <p class="texto-instrucao">Seguindo rota...</p>
+        <span class="distancia-manobra">Aguarde instruções</span>
+      </div>
+      }
+    </div>
+
+    <div class="endereco-destino">
+      <span class="label-destino">Destino:</span>
+      <span class="texto-destino">{{ enderecoEntrega() || 'Carregando...' }}</span>
+    </div>
+    }
+  </div>
+
+  <!-- Botão Flutuante de Ação -->
+  <div class="acoes-flutuantes">
+    @if (podeMarcarComoEntregue()) {
+    <button type="button" class="btn-entregue-flutuante" (click)="marcarComoEntregue()">
+      ✓ Entregue
+    </button>
+    }
+    <button type="button" class="btn-parar-flutuante" (click)="sairModoNavegacao()">
+      ✕ Parar
+    </button>
+  </div>
+</div>
+}

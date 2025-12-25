@@ -65,7 +65,7 @@ steps:
       - '--set-secrets'
       - 'DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest,OPENAI_API_KEY=openai-api-key:latest'
       - '--set-env-vars'
-      - 'DB_HOST=/cloudsql/${_CLOUD_SQL_CONNECTION_NAME},DB_PORT=3306,DB_NAME=${_DB_NAME},DB_USERNAME=${_DB_USERNAME},DB_URL=jdbc:mysql:///${_DB_NAME}?cloudSqlInstance=${_CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo,SERVER_PORT=8080,PORT=8080,JWT_EXPIRATION=86400,SHOW_SQL=false,LOG_LEVEL=INFO,SPRING_PROFILES_ACTIVE=prod,OPENAI_MODEL=gpt-4o-mini,OPENAI_MAX_TOKENS=4000,OPENAI_MODELS_FALLBACK=gpt-4o-mini'
+      - 'DB_HOST=/cloudsql/${_CLOUD_SQL_CONNECTION_NAME},DB_PORT=3306,DB_NAME=${_DB_NAME},DB_USERNAME=${_DB_USERNAME},DB_URL=jdbc:mysql:///${_DB_NAME}?cloudSqlInstance=${_CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false&serverTimezone=America/Sao_Paulo,SERVER_PORT=8080,JWT_EXPIRATION=86400,SHOW_SQL=false,LOG_LEVEL=INFO,SPRING_PROFILES_ACTIVE=prod,OPENAI_MODEL=gpt-4o-mini,OPENAI_MAX_TOKENS=4000,OPENAI_MODELS_FALLBACK=gpt-4o-mini'
     secretEnv: ['DB_PASSWORD', 'JWT_SECRET', 'OPENAI_API_KEY']
 
 # Secrets do Secret Manager

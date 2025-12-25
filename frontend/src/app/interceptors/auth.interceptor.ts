@@ -19,10 +19,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Não adiciona token de admin/operador em requisições para endpoints públicos, de cliente ou de motoboy
   // Esses endpoints usam autenticação própria (cliente/motoboy) ou são públicos
-  if (req.url.includes('/api/public/') || 
-      req.url.includes('/api/publico/') || 
-      req.url.includes('/api/cliente/') ||
-      req.url.includes('/api/motoboy/')) {
+  if (req.url.includes('/api/public/') ||
+    req.url.includes('/api/publico/') ||
+    req.url.includes('/api/cliente/') ||
+    req.url.includes('/api/motoboy/') ||
+    req.url.includes('/api/motoboys/')) {  // Plural - usado para localização
     return next(req);
   }
 

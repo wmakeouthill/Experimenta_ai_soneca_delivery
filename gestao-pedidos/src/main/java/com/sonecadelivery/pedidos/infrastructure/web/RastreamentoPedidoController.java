@@ -15,26 +15,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-
 /**
  * Controller REST para rastreamento de pedidos.
  * 
  * Endpoints:
- * - GET /api/cliente/pedidos/{id}/rastreamento - Obtém dados de rastreamento (cliente)
- * - GET /api/cliente/pedidos/{id}/rastreamento/stream - SSE stream para atualizações em tempo real (cliente)
- * - POST /api/motoboys/{motoboyId}/localizacao - Atualiza localização do motoboy
+ * - GET /api/cliente/pedidos/{id}/rastreamento - Obtém dados de rastreamento
+ * (cliente)
+ * - GET /api/cliente/pedidos/{id}/rastreamento/stream - SSE stream para
+ * atualizações em tempo real (cliente)
+ * - POST /api/motoboys/{motoboyId}/localizacao - Atualiza localização do
+ * motoboy
  */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
 public class RastreamentoPedidoController {
-    
+
     private final ObterRastreamentoPedidoUseCase obterRastreamentoUseCase;
     private final AtualizarLocalizacaoMotoboyUseCase atualizarLocalizacaoUseCase;
     private final RastreamentoPedidoSSEService sseService;
     private final MotoboyJwtServicePort motoboyJwtService;
-    
+
     /**
      * GET /api/cliente/pedidos/{pedidoId}/rastreamento
      * Obtém dados de rastreamento de um pedido.
@@ -44,14 +46,14 @@ public class RastreamentoPedidoController {
     public ResponseEntity<RastreamentoPedidoResponse> obterRastreamento(
             @PathVariable String pedidoId,
             @RequestHeader("X-Cliente-Id") String clienteId) {
-        
+
         log.debug("Buscando rastreamento do pedido {} para cliente {}", pedidoId, clienteId);
-        
+
         RastreamentoPedidoResponse response = obterRastreamentoUseCase.executar(pedidoId, clienteId);
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * GET /api/cliente/pedidos/{pedidoId}/rastreamento/stream
      * SSE stream para receber atualizações de localização em tempo real.
@@ -61,20 +63,20 @@ public class RastreamentoPedidoController {
     public SseEmitter streamRastreamento(
             @PathVariable String pedidoId,
             @RequestHeader("X-Cliente-Id") String clienteId) {
-        
+
         log.info("Cliente {} conectando ao SSE de rastreamento do pedido {}", clienteId, pedidoId);
-        
+
         // Valida que cliente pode rastrear (será validado no use case se necessário)
         // Por enquanto, apenas registra o SSE
         // TODO: Validar autorização antes de registrar SSE
-        
+
         return sseService.registrar(pedidoId);
     }
-    
+
     /**
      * POST /api/motoboys/{motoboyId}/localizacao
      * Endpoint para motoboy enviar localização.
-     * Requer autenticação de motoboy via header X-Motoboy-Id e Authorization Bearer token.
+     * Requer autenticação de motoboy via header Authorization Bearer token.
      */
     @PostMapping("/motoboys/{motoboyId}/localizacao")
     public ResponseEntity<Void> atualizarLocalizacao(
@@ -82,34 +84,36 @@ public class RastreamentoPedidoController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestHeader(value = "X-Motoboy-Id", required = false) String motoboyIdHeader,
             @Valid @RequestBody AtualizarLocalizacaoRequest request) {
-        
+
+        log.debug("Recebendo localização do motoboy. Path motoboyId: {}, Header X-Motoboy-Id: {}",
+                motoboyId, motoboyIdHeader);
+
         // Valida token JWT
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            log.warn("Requisição sem token JWT válido");
+            log.warn("Requisição sem token JWT válido para motoboy {}", motoboyId);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
+
         String token = authorization.substring(7);
         if (!motoboyJwtService.validarToken(token)) {
-            log.warn("Token JWT inválido ou expirado");
+            log.warn("Token JWT inválido ou expirado para motoboy {}", motoboyId);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        
-        // Extrai motoboyId do token e valida com o path/header
+
+        // Extrai motoboyId do token e valida com o path
         String motoboyIdDoToken = motoboyJwtService.extrairMotoboyId(token);
-        String motoboyIdFinal = motoboyIdHeader != null && !motoboyIdHeader.isBlank() 
-            ? motoboyIdHeader 
-            : motoboyIdDoToken;
-        
-        if (!motoboyId.equals(motoboyIdFinal) || !motoboyIdDoToken.equals(motoboyIdFinal)) {
-            log.warn("MotoboyId do path ({}) não corresponde ao autenticado ({})", 
-                motoboyId, motoboyIdFinal);
+        log.debug("MotoboyId extraído do token: {}", motoboyIdDoToken);
+
+        // O motoboyId no path DEVE corresponder ao motoboyId do token
+        if (!motoboyId.equals(motoboyIdDoToken)) {
+            log.warn("MotoboyId do path ({}) não corresponde ao do token ({})",
+                    motoboyId, motoboyIdDoToken);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         atualizarLocalizacaoUseCase.executar(motoboyId, request);
-        
+        log.debug("Localização atualizada com sucesso para motoboy {}", motoboyId);
+
         return ResponseEntity.noContent().build();
     }
 }
-

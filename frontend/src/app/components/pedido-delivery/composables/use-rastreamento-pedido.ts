@@ -1,40 +1,43 @@
-import { inject, signal, computed, DestroyRef } from '@angular/core';
+import { inject, signal, computed, effect, DestroyRef } from '@angular/core';
 import { RastreamentoPedidoService, RastreamentoPedidoResponse } from '../../../services/rastreamento-pedido.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /**
- * Composable para gerenciar rastreamento de pedido.
+ * Composable para gerenciar rastreamento de pedido em tempo real.
+ * Usa signals reativos e SSE para atualizações imediatas.
+ * Segue padrões .cursorrules-frontend (Angular 20+ Zoneless).
  * 
- * Performance:
- * - Signals reativos (Angular 20+ Zoneless)
- * - Polling automático quando ativo
- * - Cleanup automático ao destruir componente
+ * @param pedidoId Função que retorna o ID do pedido
+ * @param clienteId Função que retorna o ID do cliente
  */
-export function useRastreamentoPedido(pedidoId: () => string | null | undefined) {
+export function useRastreamentoPedido(
+  pedidoId: () => string | null | undefined,
+  clienteId: () => string | null | undefined
+) {
   const rastreamentoService = inject(RastreamentoPedidoService);
   const destroyRef = inject(DestroyRef);
-  
-  // Estado
-  const rastreamento = signal<RastreamentoPedidoResponse | null>(null);
-  const carregando = signal(false);
-  const erro = signal<string | null>(null);
+
+  // === SIGNALS LOCAIS (derivados do service) ===
   const ativo = signal(false);
-  
-  // Computed
+
+  // === COMPUTEDS - Exposição reativa dos dados do service ===
+  const rastreamento = computed(() => rastreamentoService.rastreamentoAtual());
+  const carregando = computed(() => rastreamentoService.carregando());
+  const erro = computed(() => rastreamentoService.erro());
+  const conectado = computed(() => rastreamentoService.conectado());
+
   const podeRastrear = computed(() => {
     const r = rastreamento();
     return r?.permiteRastreamento ?? false;
   });
-  
+
   const temLocalizacaoMotoboy = computed(() => {
-    const r = rastreamento();
-    return r?.localizacaoMotoboy?.valida ?? false;
+    return rastreamentoService.temLocalizacaoMotoboy();
   });
-  
+
   const localizacaoMotoboy = computed(() => {
     return rastreamento()?.localizacaoMotoboy ?? null;
   });
-  
+
   const destino = computed(() => {
     const r = rastreamento();
     if (!r) return null;
@@ -44,102 +47,102 @@ export function useRastreamentoPedido(pedidoId: () => string | null | undefined)
       endereco: r.enderecoEntrega
     };
   });
-  
+
+  const motoboyNome = computed(() => rastreamento()?.motoboyNome ?? null);
+  const statusPedido = computed(() => rastreamento()?.statusPedido ?? null);
+  const ultimaAtualizacao = computed(() => rastreamento()?.ultimaAtualizacao ?? null);
+
+  // Cleanup automático ao destruir componente
+  destroyRef.onDestroy(() => {
+    if (ativo()) {
+      rastreamentoService.pararRastreamento();
+    }
+  });
+
   /**
-   * Inicia rastreamento com polling.
+   * Inicia rastreamento em tempo real com SSE.
    */
   function iniciar() {
     const id = pedidoId();
-    if (!id || ativo()) {
+    const cliente = clienteId();
+
+    if (!id || !cliente || ativo()) {
+      console.warn('[useRastreamento] Não pode iniciar:', { id, cliente, ativo: ativo() });
       return;
     }
-    
+
+    console.log('[useRastreamento] Iniciando rastreamento:', { pedidoId: id, clienteId: cliente });
     ativo.set(true);
-    carregando.set(true);
-    
-    rastreamentoService.iniciarPolling(id, 5000)
-      .pipe(takeUntilDestroyed(destroyRef))
-      .subscribe({
-        next: (dados) => {
-          rastreamento.set(dados);
-          carregando.set(false);
-          erro.set(null);
-        },
-        error: (err) => {
-          console.error('Erro ao rastrear pedido:', err);
-          erro.set(err.message || 'Erro ao rastrear pedido');
-          carregando.set(false);
-        }
-      });
+    rastreamentoService.iniciarRastreamento(id, cliente);
   }
-  
+
   /**
    * Para rastreamento.
    */
   function parar() {
+    console.log('[useRastreamento] Parando rastreamento');
     ativo.set(false);
-    rastreamento.set(null);
-    erro.set(null);
+    rastreamentoService.pararRastreamento();
   }
-  
+
   /**
-   * Carrega dados iniciais uma vez.
+   * Carrega dados iniciais uma vez (sem SSE).
    */
   function carregar() {
     const id = pedidoId();
-    if (!id || rastreamento()) {
+    const cliente = clienteId();
+
+    if (!id || !cliente) {
       return;
     }
-    
-    carregando.set(true);
-    rastreamentoService.obterRastreamento(id)
-      .pipe(takeUntilDestroyed(destroyRef))
-      .subscribe({
-        next: (dados) => {
-          rastreamento.set(dados);
-          carregando.set(false);
-        },
-        error: (err) => {
-          console.error('Erro ao carregar rastreamento:', err);
-          erro.set(err.message || 'Erro ao carregar rastreamento');
-          carregando.set(false);
-        }
-      });
+
+    rastreamentoService.obterRastreamento(id, cliente).subscribe({
+      next: (dados) => {
+        console.log('[useRastreamento] Dados carregados:', dados);
+      },
+      error: (err) => {
+        console.error('[useRastreamento] Erro ao carregar:', err);
+      }
+    });
   }
-  
+
   /**
    * Calcula tempo decorrido desde uma data.
    */
   function calcularTempoDesde(timestamp: string | null | undefined): string {
     if (!timestamp) return '';
-    
+
     const agora = new Date();
     const data = new Date(timestamp);
     const diffMs = agora.getTime() - data.getTime();
     const diffMin = Math.floor(diffMs / 60000);
-    
+
     if (diffMin < 1) return 'agora mesmo';
     if (diffMin === 1) return 'há 1 minuto';
     if (diffMin < 60) return `há ${diffMin} minutos`;
-    
+
     const diffHoras = Math.floor(diffMin / 60);
     if (diffHoras === 1) return 'há 1 hora';
     return `há ${diffHoras} horas`;
   }
-  
+
   return {
     // Estado
     rastreamento,
     carregando,
     erro,
     ativo,
-    
+    conectado,
+
     // Computed
     podeRastrear,
     temLocalizacaoMotoboy,
     localizacaoMotoboy,
     destino,
-    
+    motoboyNome,
+    statusPedido,
+    ultimaAtualizacao,
+
     // Métodos
     iniciar,
     parar,
@@ -147,4 +150,3 @@ export function useRastreamentoPedido(pedidoId: () => string | null | undefined)
     calcularTempoDesde
   };
 }
-

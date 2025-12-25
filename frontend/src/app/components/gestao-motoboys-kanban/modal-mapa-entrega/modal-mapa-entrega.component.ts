@@ -5,8 +5,12 @@ import { GoogleMapsService } from '../../../services/google-maps.service';
 import { StatusPedido } from '../../../services/pedido.service';
 
 /**
- * Modal para exibir mapa com localização de entrega e opção de abrir rota.
+ * Modal para exibir mapa com localização de entrega e modo navegação fullscreen.
  * Segue padrões Angular 20+ Zoneless com signals.
+ * 
+ * Funcionalidades:
+ * - Modo normal: modal com mapa e botões de ação
+ * - Modo navegação: fullscreen com instruções, ETA e Wake Lock
  */
 @Component({
   selector: 'app-modal-mapa-entrega',
@@ -22,70 +26,144 @@ export class ModalMapaEntregaComponent {
   private readonly googleMapsService = inject(GoogleMapsService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  // === INPUTS ===
   readonly aberto = input<boolean>(false);
   readonly latitude = input<number | null>(null);
   readonly longitude = input<number | null>(null);
   readonly enderecoEntrega = input<string>('');
   readonly numeroPedido = input<string>('');
-  readonly statusPedido = input<string>(''); // Status do pedido para controlar visibilidade do botão
+  readonly statusPedido = input<string>('');
 
+  // === OUTPUTS ===
   readonly onFechar = output<void>();
   readonly onMarcarComoEntregue = output<void>();
 
-  // Computed para verificar se deve mostrar o botão "Marcar como Entregue"
+  // === VIEW CHILDREN ===
+  @ViewChild('mapContainer', { static: false }) mapContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('mapContainerNav', { static: false }) mapContainerNav?: ElementRef<HTMLDivElement>;
+
+  // === SIGNALS - Estado do componente ===
+  readonly carregandoMapa = signal<boolean>(false);
+  readonly viagemIniciada = signal<boolean>(false);
+  readonly modoNavegacao = signal<boolean>(false);
+  readonly painelMinimizado = signal<boolean>(false);
+
+  // === SIGNALS - Navegação ===
+  readonly etaMinutos = signal<number | null>(null);
+  readonly distanciaRestante = signal<string>('');
+  readonly proximaInstrucao = signal<string>('');
+  readonly distanciaProximaManobra = signal<string>('');
+  readonly iconeManobra = signal<string>('↑');
+
+  // === COMPUTED ===
   readonly podeMarcarComoEntregue = computed(() => {
     return this.statusPedido() === StatusPedido.SAIU_PARA_ENTREGA;
   });
 
-  @ViewChild('mapContainer', { static: false }) mapContainer?: ElementRef<HTMLDivElement>;
-
+  // === ESTADO PRIVADO ===
   private map: any = null;
+  private mapNav: any = null;
   private marker: any = null;
-  private markerAtual: any = null; // Marcador da localização atual durante a viagem
+  private markerAtual: any = null;
   private directionsRenderer: any = null;
-  readonly carregandoMapa = signal<boolean>(false);
+  private directionsRendererNav: any = null;
   private mapaInicializado = false;
-  readonly viagemIniciada = signal<boolean>(false);
   private watchPositionId: number | null = null;
-  private zoomOriginal: number = 16; // Zoom original antes de iniciar viagem
-  private centerOriginal: any = null; // Centro original antes de iniciar viagem
+  private wakeLock: any = null;
+  private ultimaRotaCalculada: any = null;
+  private ultimaPosicao: { lat: number; lng: number } | null = null;
 
   constructor() {
     if (this.isBrowser) {
-      // Effect para monitorar quando o modal abre/fecha e coordenadas mudam
       effect(() => {
         const estaAberto = this.aberto();
         const temCoordenadas = this.latitude() && this.longitude();
 
         if (estaAberto && temCoordenadas && !this.mapaInicializado) {
-          // Aguarda um ciclo completo de renderização antes de tentar inicializar
-          // O ViewChild precisa estar disponível no DOM
           setTimeout(() => {
             this.tentarInicializarMapa();
           }, 300);
         } else if (!estaAberto) {
-          // Usa setTimeout para sair do contexto do effect antes de escrever signals
           setTimeout(() => {
             this.limparMapa();
             this.mapaInicializado = false;
             this.viagemIniciada.set(false);
+            this.modoNavegacao.set(false);
+            this.liberarWakeLock();
           }, 0);
         }
       });
     }
   }
 
+  // === MÉTODOS PÚBLICOS ===
+
   /**
-   * Tenta inicializar o mapa, verificando se o ViewChild está disponível.
-   * Se não estiver, tenta novamente após um delay.
+   * Inicia o modo navegação fullscreen.
    */
+  iniciarNavegacao(): void {
+    if (this.modoNavegacao()) {
+      this.sairModoNavegacao();
+      return;
+    }
+
+    this.modoNavegacao.set(true);
+    this.viagemIniciada.set(true);
+    this.cdr.markForCheck();
+
+    // Aguarda DOM atualizar para inicializar mapa fullscreen
+    setTimeout(() => {
+      this.inicializarMapaNavegacao();
+      this.solicitarWakeLock();
+    }, 100);
+  }
+
+  /**
+   * Sai do modo navegação e volta ao modal normal.
+   */
+  sairModoNavegacao(): void {
+    this.pararNavegacao();
+    this.modoNavegacao.set(false);
+    this.viagemIniciada.set(false);
+    this.painelMinimizado.set(false);
+    this.liberarWakeLock();
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Toggle do painel de instruções.
+   */
+  togglePainel(): void {
+    this.painelMinimizado.update(v => !v);
+  }
+
+  fechar(): void {
+    this.sairModoNavegacao();
+    this.onFechar.emit();
+  }
+
+  marcarComoEntregue(): void {
+    this.onMarcarComoEntregue.emit();
+  }
+
+  abrirNoGoogleMaps(): void {
+    if (!this.latitude() || !this.longitude()) {
+      return;
+    }
+    this.googleMapsService.abrirRotaComLocalizacaoAtual(
+      this.latitude()!,
+      this.longitude()!
+    );
+  }
+
+  // === MÉTODOS PRIVADOS - MAPA MODAL ===
+
   private tentarInicializarMapa(tentativa: number = 0): void {
     const maxTentativas = 5;
 
     if (this.mapContainer?.nativeElement && this.latitude() && this.longitude()) {
       this.inicializarMapa();
     } else if (tentativa < maxTentativas) {
-      // Tenta novamente após um delay
       setTimeout(() => {
         this.tentarInicializarMapa(tentativa + 1);
       }, 150);
@@ -96,26 +174,13 @@ export class ModalMapaEntregaComponent {
   }
 
   private async inicializarMapa(): Promise<void> {
-    // Verifica se o container está disponível ANTES de tudo
     const container = this.mapContainer?.nativeElement;
-    if (!container) {
-      console.warn('MapContainer ainda não disponível, tentando novamente...');
-      this.tentarInicializarMapa(1);
+    if (!container || !this.latitude() || !this.longitude()) {
       return;
     }
 
-    if (!this.latitude() || !this.longitude()) {
-      console.warn('Coordenadas não disponíveis:', {
-        latitude: this.latitude(),
-        longitude: this.longitude()
-      });
-      return;
-    }
-
-    // Se já existe um mapa, limpa antes de criar um novo
     if (this.map) {
       this.limparMapa();
-      // Aguarda um pouco para garantir que a limpeza foi concluída
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
@@ -124,32 +189,14 @@ export class ModalMapaEntregaComponent {
 
     try {
       const maps = await this.googleMapsService.getGoogleMaps();
-
-      // Verifica se maps.Map está disponível
-      if (!maps || !maps.Map) {
-        console.error('Google Maps API não está disponível:', { maps, temMap: !!maps?.Map });
+      if (!maps?.Map) {
         throw new Error('Google Maps API não está disponível');
       }
 
-      // Verifica novamente se o container ainda está disponível após carregar Maps
-      const containerAtualizado = this.mapContainer?.nativeElement;
-      if (!containerAtualizado) {
-        console.error('MapContainer não disponível após carregar Google Maps');
-        this.carregandoMapa.set(false);
-        this.cdr.markForCheck();
-        return;
-      }
-
       const destino = { lat: this.latitude()!, lng: this.longitude()! };
+      container.innerHTML = '';
 
-      console.log('Inicializando mapa com destino:', destino);
-      console.log('Maps disponível:', { temMap: !!maps.Map, temMarker: !!maps.Marker });
-
-      // Limpa o container antes de criar o mapa
-      containerAtualizado.innerHTML = '';
-
-      // Cria o mapa centralizado no destino
-      this.map = new maps.Map(containerAtualizado, {
+      this.map = new maps.Map(container, {
         center: destino,
         zoom: 16,
         mapTypeControl: true,
@@ -158,7 +205,6 @@ export class ModalMapaEntregaComponent {
         zoomControl: true
       });
 
-      // Adiciona marcador no destino
       this.marker = new maps.Marker({
         position: destino,
         map: this.map,
@@ -168,84 +214,251 @@ export class ModalMapaEntregaComponent {
 
       this.mapaInicializado = true;
 
-      // Salva configurações originais do mapa
-      this.zoomOriginal = 16;
-      this.centerOriginal = destino;
-
-      // Tenta obter localização atual do navegador/celular e mostrar rota
-      // Verifica se a biblioteca directions está disponível
-      console.log('Verificando disponibilidade:', {
-        temGeolocation: !!navigator.geolocation,
-        temDirectionsService: !!maps.DirectionsService,
-        temDirectionsRenderer: !!maps.DirectionsRenderer
-      });
-
-      if (navigator.geolocation && maps.DirectionsService && maps.DirectionsRenderer) {
-        console.log('Solicitando localização atual do navegador/celular (GPS)...');
-        // Tenta obter localização com GPS (alta precisão)
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const origem = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-            const precisao = position.coords.accuracy;
-            console.log('Localização obtida:', origem, 'Precisão:', precisao, 'metros');
-
-            // Se a precisão for muito ruim (> 1000m), tenta novamente
-            if (precisao > 1000) {
-              console.warn('Precisão muito baixa, tentando novamente com GPS...');
-              this.tentarObterLocalizacaoPrecisa(destino, maps);
-            } else {
-              this.exibirRota(origem, destino, maps);
-            }
-          },
-          (error) => {
-            console.warn('Erro ao obter localização:', error.message);
-            // ✅ Timeout aumentado e tenta novamente
-            this.tentarObterLocalizacaoPrecisa(destino, maps);
-          },
-          {
-            enableHighAccuracy: true, // FORÇA uso de GPS
-            timeout: 30000, // ✅ Aumentado para 30 segundos (era 20s)
-            maximumAge: 0 // Não usa cache
-          }
-        );
-      } else {
-        if (!navigator.geolocation) {
-          console.warn('Geolocalização não suportada pelo navegador');
-        }
-        if (!maps.DirectionsService) {
-          console.error('Biblioteca DirectionsService não disponível - verifique se a API Directions está habilitada');
-        }
-        if (!maps.DirectionsRenderer) {
-          console.error('Biblioteca DirectionsRenderer não disponível - verifique se a API Directions está habilitada');
-        }
+      // Tenta mostrar rota inicial
+      if (navigator.geolocation && maps.DirectionsService) {
+        this.obterLocalizacaoEMostrarRota(destino, maps, this.map);
       }
     } catch (error) {
       console.error('Erro ao inicializar mapa:', error);
-      this.carregandoMapa.set(false);
-      this.cdr.markForCheck();
     } finally {
       this.carregandoMapa.set(false);
       this.cdr.markForCheck();
     }
   }
 
-  private exibirRota(origem: { lat: number; lng: number }, destino: { lat: number; lng: number }, maps: any): void {
-    if (!maps.DirectionsService || !maps.DirectionsRenderer) {
-      console.error('Biblioteca Directions não está disponível:', {
-        temDirectionsService: !!maps.DirectionsService,
-        temDirectionsRenderer: !!maps.DirectionsRenderer
-      });
+  // === MÉTODOS PRIVADOS - MAPA NAVEGAÇÃO ===
+
+  private async inicializarMapaNavegacao(): Promise<void> {
+    const container = this.mapContainerNav?.nativeElement;
+    if (!container || !this.latitude() || !this.longitude()) {
+      console.warn('Container de navegação não disponível');
       return;
     }
 
-    console.log('Calculando rota de', origem, 'para', destino);
+    try {
+      const maps = await this.googleMapsService.getGoogleMaps();
+      if (!maps?.Map) {
+        throw new Error('Google Maps API não está disponível');
+      }
+
+      const destino = { lat: this.latitude()!, lng: this.longitude()! };
+      container.innerHTML = '';
+
+      // Mapa em modo navegação 3D
+      this.mapNav = new maps.Map(container, {
+        center: destino,
+        zoom: 19,
+        tilt: 45,
+        heading: 0,
+        mapTypeId: maps.MapTypeId.ROADMAP,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        zoomControl: false,
+        gestureHandling: 'greedy'
+      });
+
+      // Inicia tracking contínuo
+      this.iniciarTrackingNavegacao(destino, maps);
+
+    } catch (error) {
+      console.error('Erro ao inicializar mapa de navegação:', error);
+      this.sairModoNavegacao();
+    }
+  }
+
+  private iniciarTrackingNavegacao(destino: { lat: number; lng: number }, maps: any): void {
+    if (!navigator.geolocation) {
+      console.error('Geolocalização não suportada');
+      return;
+    }
+
+    let ultimaAtualizacaoRota = Date.now();
+    const intervaloRecalculoRota = 10000; // 10 segundos
+
+    // DirectionsRenderer para navegação
+    this.directionsRendererNav = new maps.DirectionsRenderer({
+      map: this.mapNav,
+      suppressMarkers: true,
+      preserveViewport: true,
+      polylineOptions: {
+        strokeColor: '#4285F4',
+        strokeWeight: 6,
+        strokeOpacity: 0.9
+      }
+    });
+
+    // Obtém posição inicial
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const origem = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        this.ultimaPosicao = origem;
+        this.calcularRotaNavegacao(origem, destino, maps);
+        this.criarMarcadorLocalizacao(origem, maps);
+      },
+      (error) => console.warn('Erro ao obter posição inicial:', error),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+
+    // Tracking contínuo
+    this.watchPositionId = navigator.geolocation.watchPosition(
+      (position) => {
+        const origem = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+
+        // Atualiza marcador
+        if (this.markerAtual) {
+          this.markerAtual.setPosition(origem);
+        } else {
+          this.criarMarcadorLocalizacao(origem, maps);
+        }
+
+        // Centraliza mapa
+        if (this.mapNav) {
+          this.mapNav.setCenter(origem);
+
+          // Calcula heading se houver posição anterior
+          if (this.ultimaPosicao) {
+            const heading = this.calcularHeading(this.ultimaPosicao, origem);
+            this.mapNav.setHeading(heading);
+          }
+        }
+
+        // Recalcula rota periodicamente
+        const agora = Date.now();
+        const distanciaMovida = this.ultimaPosicao
+          ? this.calcularDistancia(origem, this.ultimaPosicao)
+          : 0;
+
+        if (agora - ultimaAtualizacaoRota >= intervaloRecalculoRota || distanciaMovida > 100) {
+          ultimaAtualizacaoRota = agora;
+          this.calcularRotaNavegacao(origem, destino, maps);
+        }
+
+        this.ultimaPosicao = origem;
+        this.cdr.markForCheck();
+      },
+      (error) => console.warn('Erro ao rastrear localização:', error),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+
+  private calcularRotaNavegacao(origem: { lat: number; lng: number }, destino: { lat: number; lng: number }, maps: any): void {
+    const directionsService = new maps.DirectionsService();
+
+    directionsService.route(
+      {
+        origin: origem,
+        destination: destino,
+        travelMode: maps.TravelMode.DRIVING,
+        provideRouteAlternatives: false
+      },
+      (result: any, status: string) => {
+        if (status === 'OK' && result.routes[0]) {
+          this.directionsRendererNav?.setDirections(result);
+          this.ultimaRotaCalculada = result;
+          this.atualizarInstrucoesNavegacao(result);
+        }
+      }
+    );
+  }
+
+  private atualizarInstrucoesNavegacao(result: any): void {
+    if (!result?.routes[0]?.legs[0]) return;
+
+    const leg = result.routes[0].legs[0];
+
+    // ETA e distância total
+    this.etaMinutos.set(Math.round(leg.duration.value / 60));
+    this.distanciaRestante.set(leg.distance.text);
+
+    // Próxima instrução
+    if (leg.steps[0]) {
+      const step = leg.steps[0];
+      const instrucaoHtml = step.instructions || '';
+      const instrucaoTexto = instrucaoHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+      this.proximaInstrucao.set(instrucaoTexto);
+      this.distanciaProximaManobra.set(step.distance?.text || '');
+
+      // Ícone baseado na manobra
+      this.iconeManobra.set(this.obterIconeManobra(step.maneuver));
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  private obterIconeManobra(maneuver: string | undefined): string {
+    if (!maneuver) return '↑';
+
+    const icones: Record<string, string> = {
+      'turn-left': '↰',
+      'turn-right': '↱',
+      'turn-slight-left': '↖',
+      'turn-slight-right': '↗',
+      'turn-sharp-left': '⬅',
+      'turn-sharp-right': '➡',
+      'uturn-left': '⤺',
+      'uturn-right': '⤻',
+      'roundabout-left': '↺',
+      'roundabout-right': '↻',
+      'merge': '↑',
+      'fork-left': '↖',
+      'fork-right': '↗',
+      'straight': '↑'
+    };
+
+    return icones[maneuver] || '↑';
+  }
+
+  private criarMarcadorLocalizacao(posicao: { lat: number; lng: number }, maps: any): void {
+    if (this.markerAtual) {
+      this.markerAtual.setMap(null);
+    }
+
+    this.markerAtual = new maps.Marker({
+      position: posicao,
+      map: this.mapNav,
+      title: 'Sua localização',
+      icon: {
+        path: maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: '#4285F4',
+        fillOpacity: 1,
+        strokeColor: '#FFFFFF',
+        strokeWeight: 3
+      },
+      zIndex: 999
+    });
+  }
+
+  // === MÉTODOS PRIVADOS - UTILITÁRIOS ===
+
+  private obterLocalizacaoEMostrarRota(destino: { lat: number; lng: number }, maps: any, map: any): void {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const origem = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        this.exibirRota(origem, destino, maps, map);
+      },
+      (error) => console.warn('Erro ao obter localização:', error),
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+    );
+  }
+
+  private exibirRota(origem: { lat: number; lng: number }, destino: { lat: number; lng: number }, maps: any, map: any): void {
+    if (!maps.DirectionsService || !maps.DirectionsRenderer) return;
 
     const directionsService = new maps.DirectionsService();
     this.directionsRenderer = new maps.DirectionsRenderer({
-      map: this.map,
+      map: map,
       suppressMarkers: false,
       polylineOptions: {
         strokeColor: '#667eea',
@@ -257,432 +470,110 @@ export class ModalMapaEntregaComponent {
       {
         origin: origem,
         destination: destino,
-        travelMode: maps.TravelMode.DRIVING,
-        optimizeWaypoints: false,
-        avoidHighways: false,
-        avoidTolls: false
+        travelMode: maps.TravelMode.DRIVING
       },
-      (result: any, status: any) => {
-        console.log('Status da rota:', status);
+      (result: any, status: string) => {
         if (status === 'OK') {
-          console.log('Rota calculada com sucesso!');
           this.directionsRenderer.setDirections(result);
-
-          // Ajusta o zoom para mostrar toda a rota
           const bounds = new maps.LatLngBounds();
           result.routes[0].legs.forEach((leg: any) => {
             bounds.extend(leg.start_location);
             bounds.extend(leg.end_location);
           });
-          this.map?.fitBounds(bounds);
-
-          // Adiciona marcador na origem (localização atual)
-          if (this.markerAtual) {
-            this.markerAtual.setMap(null);
-          }
-          this.markerAtual = new maps.Marker({
-            position: origem,
-            map: this.map,
-            title: 'Sua localização atual',
-            icon: {
-              path: maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: '#4285F4',
-              fillOpacity: 1,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 2
-            }
-          });
-        } else {
-          console.error('Erro ao calcular rota:', status);
-          // Se houver erro, pelo menos mostra o destino centralizado
-          if (this.map) {
-            this.map.setCenter(destino);
-            this.map.setZoom(16);
-          }
+          map?.fitBounds(bounds);
         }
       }
     );
   }
 
-  /**
-   * Tenta obter localização precisa com GPS
-   */
-  private tentarObterLocalizacaoPrecisa(destino: { lat: number; lng: number }, maps: any, tentativa: number = 0): void {
-    const maxTentativas = 3;
-
-    if (tentativa >= maxTentativas) {
-      console.warn('Não foi possível obter localização precisa após múltiplas tentativas');
-      // Mostra apenas o destino
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const origem = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        const precisao = position.coords.accuracy;
-        console.log(`Tentativa ${tentativa + 1}: Localização obtida com precisão de ${precisao}m`);
-
-        if (precisao <= 100) {
-          // Precisão aceitável (<= 100m)
-          this.exibirRota(origem, destino, maps);
-        } else {
-          // Precisão ainda ruim, tenta novamente
-          setTimeout(() => {
-            this.tentarObterLocalizacaoPrecisa(destino, maps, tentativa + 1);
-          }, 2000);
-        }
-      },
-      (error) => {
-        console.warn(`Tentativa ${tentativa + 1} falhou:`, error.message);
-        if (tentativa < maxTentativas - 1) {
-          setTimeout(() => {
-            this.tentarObterLocalizacaoPrecisa(destino, maps, tentativa + 1);
-          }, 2000);
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 30000, // ✅ Aumentado para 30 segundos (era 20s)
-        maximumAge: 0
-      }
-    );
+  private calcularDistancia(p1: { lat: number; lng: number }, p2: { lat: number; lng: number }): number {
+    const R = 6371e3;
+    const φ1 = p1.lat * Math.PI / 180;
+    const φ2 = p2.lat * Math.PI / 180;
+    const Δφ = (p2.lat - p1.lat) * Math.PI / 180;
+    const Δλ = (p2.lng - p1.lng) * Math.PI / 180;
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
-  iniciarViagem(): void {
-    if (!this.map || !this.latitude() || !this.longitude()) {
-      return;
-    }
-
-    if (this.viagemIniciada()) {
-      this.pararViagem();
-      return;
-    }
-
-    this.viagemIniciada.set(true);
-    const maps = (window as any).google?.maps;
-    if (!maps || !maps.DirectionsService || !maps.DirectionsRenderer) {
-      console.error('Google Maps Directions não disponível');
-      this.viagemIniciada.set(false);
-      return;
-    }
-
-    const destino = { lat: this.latitude()!, lng: this.longitude()! };
-
-    // Salva configurações atuais antes de entrar em modo navegação
-    this.zoomOriginal = this.map.getZoom();
-    this.centerOriginal = this.map.getCenter();
-
-    // ✅ Inicializa o DirectionsRenderer se ainda não foi inicializado
-    if (!this.directionsRenderer) {
-      this.directionsRenderer = new maps.DirectionsRenderer({
-        map: this.map,
-        suppressMarkers: false, // Mostra marcadores de origem e destino
-        preserveViewport: false, // Permite ajustar viewport durante navegação
-        polylineOptions: {
-          strokeColor: '#4285F4',
-          strokeWeight: 6,
-          strokeOpacity: 0.8
-        },
-        markerOptions: {
-          visible: true
-        }
-      });
-    } else {
-      // Garante que o renderer está no mapa
-      this.directionsRenderer.setMap(this.map);
-    }
-
-    // Configura o mapa para modo navegação (visão de rua)
-    this.map.setZoom(19); // Zoom muito próximo para navegação (visão de rua)
-    this.map.setMapTypeId(maps.MapTypeId.ROADMAP); // Tipo de mapa para navegação
-    this.map.setTilt(45); // Inclina o mapa para visão 3D (como GPS)
-    this.map.setHeading(0); // Direção inicial
-
-    let ultimaPosicao: { lat: number; lng: number } | null = null;
-    let ultimaAtualizacaoRota = Date.now();
-    const intervaloRecalculoRota = 10000; // Recalcula rota a cada 10 segundos
-    let primeiraPosicaoObtida = false;
-
-    // ✅ Função para calcular rota inicial assim que obtiver a primeira posição
-    const calcularRotaInicial = (origem: { lat: number; lng: number }) => {
-      if (!primeiraPosicaoObtida) {
-        primeiraPosicaoObtida = true;
-        console.log('Primeira posição obtida, calculando rota inicial...');
-        this.recalcularRota(origem, destino, maps);
-      }
-    };
-
-    // Inicia o tracking da localização em tempo real
-    if (navigator.geolocation) {
-      // ✅ Primeiro tenta obter a posição atual para calcular rota inicial
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const origem = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          ultimaPosicao = origem;
-          calcularRotaInicial(origem);
-
-          // Cria marcador da localização atual
-          if (this.markerAtual) {
-            this.markerAtual.setPosition(origem);
-          } else {
-            this.markerAtual = new maps.Marker({
-              position: origem,
-              map: this.map,
-              title: 'Sua localização atual',
-              icon: {
-                path: maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: '#4285F4',
-                fillOpacity: 1,
-                strokeColor: '#FFFFFF',
-                strokeWeight: 3
-              }
-            });
-          }
-        },
-        (error) => {
-          console.warn('Erro ao obter posição inicial:', error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000, // ✅ Aumentado para 15 segundos
-          maximumAge: 0
-        }
-      );
-
-      // ✅ Inicia watchPosition para atualização contínua
-      this.watchPositionId = navigator.geolocation.watchPosition(
-        (position) => {
-          const origem = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-
-          // Calcula rota inicial se ainda não foi calculada
-          if (!primeiraPosicaoObtida) {
-            calcularRotaInicial(origem);
-          }
-
-          // Atualiza o marcador da localização atual
-          if (this.markerAtual) {
-            this.markerAtual.setPosition(origem);
-          } else {
-            this.markerAtual = new maps.Marker({
-              position: origem,
-              map: this.map,
-              title: 'Sua localização atual',
-              icon: {
-                path: maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: '#4285F4',
-                fillOpacity: 1,
-                strokeColor: '#FFFFFF',
-                strokeWeight: 3
-              }
-            });
-          }
-
-          // Centraliza o mapa na localização atual (modo navegação)
-          this.map.setCenter(origem);
-
-          // Calcula o heading (direção) baseado no movimento
-          if (ultimaPosicao) {
-            const heading = this.calcularHeading(ultimaPosicao, origem);
-            this.map.setHeading(heading); // Rotaciona o mapa na direção do movimento
-          }
-
-          // Recalcula a rota periodicamente ou se mudou muito de posição
-          const agora = Date.now();
-          const tempoDesdeUltimaAtualizacao = agora - ultimaAtualizacaoRota;
-          const distanciaDesdeUltimaPosicao = ultimaPosicao ? this.calcularDistancia(origem, ultimaPosicao) : 0;
-          const deveRecalcular = tempoDesdeUltimaAtualizacao >= intervaloRecalculoRota ||
-            distanciaDesdeUltimaPosicao > 100; // Mais de 100 metros
-
-          if (deveRecalcular && maps.DirectionsService) {
-            ultimaAtualizacaoRota = agora;
-            ultimaPosicao = origem;
-            this.recalcularRota(origem, destino, maps);
-          }
-        },
-        (error) => {
-          console.error('Erro ao rastrear localização:', error);
-          // ✅ Não para a viagem em caso de erro temporário
-        },
-        {
-          enableHighAccuracy: true, // Usa GPS para navegação
-          timeout: 15000, // ✅ Aumentado para 15 segundos (era 5s)
-          maximumAge: 0 // Sempre busca localização atual
-        }
-      );
-    } else {
-      console.error('Geolocalização não suportada');
-      this.viagemIniciada.set(false);
-    }
-  }
-
-  /**
-   * Calcula a distância entre dois pontos em metros (fórmula de Haversine)
-   */
-  private calcularDistancia(ponto1: { lat: number; lng: number }, ponto2: { lat: number; lng: number }): number {
-    const R = 6371e3; // Raio da Terra em metros
-    const φ1 = ponto1.lat * Math.PI / 180;
-    const φ2 = ponto2.lat * Math.PI / 180;
-    const Δφ = (ponto2.lat - ponto1.lat) * Math.PI / 180;
-    const Δλ = (ponto2.lng - ponto1.lng) * Math.PI / 180;
-
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) *
-      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
-  }
-
-  /**
-   * Calcula o heading (direção) entre dois pontos em graus
-   */
-  private calcularHeading(ponto1: { lat: number; lng: number }, ponto2: { lat: number; lng: number }): number {
-    const lat1 = ponto1.lat * Math.PI / 180;
-    const lat2 = ponto2.lat * Math.PI / 180;
-    const dLon = (ponto2.lng - ponto1.lng) * Math.PI / 180;
-
+  private calcularHeading(p1: { lat: number; lng: number }, p2: { lat: number; lng: number }): number {
+    const lat1 = p1.lat * Math.PI / 180;
+    const lat2 = p2.lat * Math.PI / 180;
+    const dLon = (p2.lng - p1.lng) * Math.PI / 180;
     const y = Math.sin(dLon) * Math.cos(lat2);
     const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-
-    const heading = Math.atan2(y, x) * 180 / Math.PI;
-    return (heading + 360) % 360; // Normaliza para 0-360
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
   }
 
-  /**
-   * Recalcula a rota durante a navegação
-   */
-  private recalcularRota(origem: { lat: number; lng: number }, destino: { lat: number; lng: number }, maps: any): void {
-    if (!maps.DirectionsService) {
-      console.error('DirectionsService não disponível');
-      return;
-    }
+  // === WAKE LOCK API ===
 
-    // ✅ Garante que o DirectionsRenderer existe
-    if (!this.directionsRenderer) {
-      this.directionsRenderer = new maps.DirectionsRenderer({
-        map: this.map,
-        suppressMarkers: false,
-        preserveViewport: true, // ✅ Mantém viewport durante navegação (não ajusta zoom)
-        polylineOptions: {
-          strokeColor: '#4285F4',
-          strokeWeight: 6,
-          strokeOpacity: 0.8
-        }
-      });
-    }
+  private async solicitarWakeLock(): Promise<void> {
+    if (!this.isBrowser) return;
 
-    const directionsService = new maps.DirectionsService();
+    try {
+      if ('wakeLock' in navigator) {
+        this.wakeLock = await (navigator as any).wakeLock.request('screen');
+        console.log('[Navegação] Wake Lock ativado - tela não irá apagar');
 
-    console.log('Recalculando rota de', origem, 'para', destino);
-
-    directionsService.route(
-      {
-        origin: origem,
-        destination: destino,
-        travelMode: maps.TravelMode.DRIVING, // Modo de condução (moto/carro)
-        optimizeWaypoints: false,
-        avoidHighways: false,
-        avoidTolls: false,
-        provideRouteAlternatives: false // ✅ Apenas uma rota para melhor performance
-      },
-      (result: any, status: any) => {
-        if (status === 'OK') {
-          console.log('Rota recalculada com sucesso durante navegação');
-          this.directionsRenderer.setDirections(result);
-          // ✅ Mantém o mapa centralizado na localização atual (não ajusta bounds durante navegação)
-          // O preserveViewport: true garante que o zoom e posição não mudem
-        } else {
-          console.warn('Erro ao recalcular rota durante navegação:', status);
-          // ✅ Em caso de erro, mantém a rota anterior visível
-        }
+        this.wakeLock.addEventListener('release', () => {
+          console.log('[Navegação] Wake Lock liberado');
+        });
       }
-    );
+    } catch (error) {
+      console.warn('[Navegação] Wake Lock não disponível:', error);
+    }
   }
 
-  pararViagem(): void {
-    this.viagemIniciada.set(false);
+  private liberarWakeLock(): void {
+    if (this.wakeLock) {
+      this.wakeLock.release();
+      this.wakeLock = null;
+    }
+  }
+
+  // === LIMPEZA ===
+
+  private pararNavegacao(): void {
     if (this.watchPositionId !== null) {
       navigator.geolocation.clearWatch(this.watchPositionId);
       this.watchPositionId = null;
     }
-  }
 
-  /**
-   * Limpa o mapa sem escrever signals (para uso dentro de effects)
-   */
-  private limparMapaSemSignals(): void {
-    // Para o rastreamento de localização sem escrever signal
-    if (this.watchPositionId !== null) {
-      navigator.geolocation.clearWatch(this.watchPositionId);
-      this.watchPositionId = null;
+    if (this.directionsRendererNav) {
+      this.directionsRendererNav.setMap(null);
+      this.directionsRendererNav = null;
     }
 
-    // Limpa os marcadores e renderizador
-    if (this.marker) {
-      this.marker.setMap(null);
-      this.marker = null;
-    }
     if (this.markerAtual) {
       this.markerAtual.setMap(null);
       this.markerAtual = null;
     }
-    if (this.directionsRenderer) {
-      this.directionsRenderer.setMap(null);
-      this.directionsRenderer = null;
-    }
-    this.map = null;
+
+    this.mapNav = null;
+    this.ultimaRotaCalculada = null;
+    this.ultimaPosicao = null;
+
+    // Limpa signals
+    this.etaMinutos.set(null);
+    this.distanciaRestante.set('');
+    this.proximaInstrucao.set('');
+    this.distanciaProximaManobra.set('');
   }
 
-  /**
-   * Limpa o mapa completamente (pode escrever signals)
-   */
   private limparMapa(): void {
-    this.pararViagem();
+    this.pararNavegacao();
+
     if (this.marker) {
       this.marker.setMap(null);
       this.marker = null;
     }
-    if (this.markerAtual) {
-      this.markerAtual.setMap(null);
-      this.markerAtual = null;
-    }
+
     if (this.directionsRenderer) {
       this.directionsRenderer.setMap(null);
       this.directionsRenderer = null;
     }
+
     this.map = null;
-  }
-
-  abrirNoGoogleMaps(): void {
-    if (!this.latitude() || !this.longitude()) {
-      return;
-    }
-
-    // Tenta abrir no app do Google Maps (mobile) ou web (desktop)
-    this.googleMapsService.abrirRotaComLocalizacaoAtual(
-      this.latitude()!,
-      this.longitude()!
-    );
-  }
-
-  fechar(): void {
-    this.onFechar.emit();
-  }
-
-  marcarComoEntregue(): void {
-    this.onMarcarComoEntregue.emit();
+    this.liberarWakeLock();
   }
 }
-

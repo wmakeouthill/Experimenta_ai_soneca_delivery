@@ -1024,11 +1024,11 @@
         }
 
         <!-- CTA Avaliação -->
-        @if (meusPedidos.temPedidosParaAvaliar() && !sucessoPedido.pedidoId()) {
+        @if (pedidosNaoAvaliadosCorrigido().length > 0 && !sucessoPedido.pedidoId()) {
         <div class="cta-avaliacao-float" (click)="abrirAvaliacaoPedido()">
             <button class="cta-close" (click)="fecharCtaAvaliacao(); $event.stopPropagation()">✕</button>
             <span class="cta-icon">⭐</span>
-            <span class="cta-texto">Você tem <strong>{{ meusPedidos.pedidosNaoAvaliados().length }} pedido(s)</strong>
+            <span class="cta-texto">Você tem <strong>{{ pedidosNaoAvaliadosCorrigido().length }} pedido(s)</strong>
                 para avaliar!</span>
             <span class="cta-seta">›</span>
         </div>

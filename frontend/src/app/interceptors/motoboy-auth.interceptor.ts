@@ -14,7 +14,7 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
     // Intercepta requisições para /api/motoboy/ e /api/motoboys/ (mas não /api/motoboys-kanban)
     const isMotoboyEndpoint = req.url.includes('/api/motoboy/') || req.url.includes('/api/motoboys/');
     const isExcecao = req.url.includes('/api/motoboys-kanban');
-    
+
     if (!isMotoboyEndpoint || isExcecao) {
         return next(req);
     }
@@ -52,7 +52,7 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
             motoboyIdLength: motoboyId?.length || 0,
             sessionStorageDisponivel: typeof sessionStorage !== 'undefined'
         });
-        
+
         // Se sessionStorage está disponível mas não encontrou os dados,
         // pode ser que ainda não foram salvos após o login
         // Nesse caso, deixa passar e o backend vai retornar 401
@@ -66,6 +66,19 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
             'X-Motoboy-Id': motoboyId
         }
     });
+
+    // Verifica se há discrepância entre motoboyId na URL e no storage
+    const urlMotoboyIdMatch = req.url.match(/\/motoboys\/([a-f0-9-]+)/);
+    if (urlMotoboyIdMatch) {
+        const urlMotoboyId = urlMotoboyIdMatch[1];
+        if (urlMotoboyId !== motoboyId) {
+            console.error('❌ DISCREPÂNCIA DE MOTOBOY ID!', {
+                urlMotoboyId,
+                storedMotoboyId: motoboyId,
+                url: req.url
+            });
+        }
+    }
 
     // Log detalhado em desenvolvimento
     console.debug('✅ Headers adicionados para motoboy:', {
