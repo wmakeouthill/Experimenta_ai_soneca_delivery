@@ -16,9 +16,9 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class RastreamentoEventPublisher {
-    
+
     private final ApplicationEventPublisher eventPublisher;
-    
+
     /**
      * Publica evento de localização atualizada.
      * O evento será capturado pelo RastreamentoPedidoSSEService
@@ -28,31 +28,30 @@ public class RastreamentoEventPublisher {
      */
     public void publicarLocalizacaoAtualizada(LocalizacaoMotoboy localizacao) {
         LocalizacaoAtualizadaEvent event = new LocalizacaoAtualizadaEvent(
-            localizacao.getPedidoId(),
-            localizacao.getMotoboyId(),
-            localizacao.getLatitude(),
-            localizacao.getLongitude(),
-            localizacao.getHeading(),
-            localizacao.getVelocidade(),
-            localizacao.getTimestamp()
-        );
-        
+                localizacao.getPedidoId(),
+                localizacao.getMotoboyId(),
+                localizacao.getLatitude(),
+                localizacao.getLongitude(),
+                localizacao.getHeading(),
+                localizacao.getVelocidade(),
+                localizacao.getTimestamp());
+
         eventPublisher.publishEvent(event);
-        log.debug("Evento de localização publicado: pedido={}", localizacao.getPedidoId());
+        log.info("Evento de localização publicado: pedido={}, motoboy={}",
+                localizacao.getPedidoId(), localizacao.getMotoboyId());
     }
-    
+
     /**
      * Evento de localização atualizada.
      * Record imutável para transporte de dados.
      */
     public record LocalizacaoAtualizadaEvent(
-        String pedidoId,
-        String motoboyId,
-        double latitude,
-        double longitude,
-        Double heading,
-        Double velocidade,
-        LocalDateTime timestamp
-    ) {}
+            String pedidoId,
+            String motoboyId,
+            double latitude,
+            double longitude,
+            Double heading,
+            Double velocidade,
+            LocalDateTime timestamp) {
+    }
 }
-

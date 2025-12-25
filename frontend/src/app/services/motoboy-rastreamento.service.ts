@@ -28,22 +28,25 @@ export interface AtualizarLocalizacaoRequest {
 export class MotoboyRastreamentoService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/motoboys`;
-  
+
   private watchId: number | null = null;
+  private pollingIntervalId: ReturnType<typeof setInterval> | null = null;
   private ultimaLocalizacaoEnviada: { lat: number; lng: number } | null = null;
   private ultimoEnvioTimestamp = 0;
-  private readonly MIN_DISTANCIA_METROS = 10; // Mínimo de 10 metros para enviar
-  private readonly MIN_INTERVALO_SEGUNDOS = 5; // Mínimo de 5 segundos entre envios
+  private readonly MIN_DISTANCIA_METROS = 5; // Reduzido para 5 metros
+  private readonly MIN_INTERVALO_SEGUNDOS = 3; // Reduzido para 3 segundos
+  private readonly MAX_INTERVALO_SEGUNDOS = 10; // Força envio a cada 10 segundos
+  private readonly POLLING_INTERVAL_MS = 5000; // Polling a cada 5 segundos
   private motoboyIdAtivo: string | null = null;
 
   /**
    * Inicia envio contínuo de localização.
-   * Usa watchPosition para monitorar mudanças de localização.
+   * Usa watchPosition + polling periódico para garantir detecção de mudanças.
    * 
    * @param motoboyId ID do motoboy autenticado
    */
   iniciarRastreamento(motoboyId: string): void {
-    if (this.watchId !== null) {
+    if (this.watchId !== null || this.pollingIntervalId !== null) {
       console.warn('[Rastreamento Motoboy] Já está rastreando');
       return;
     }
@@ -56,20 +59,42 @@ export class MotoboyRastreamentoService {
     this.motoboyIdAtivo = motoboyId;
     console.log('[Rastreamento Motoboy] Iniciando rastreamento para motoboy:', motoboyId);
 
+    // Método 1: watchPosition (funciona bem em mobile)
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
         this.processarLocalizacao(position, motoboyId);
       },
       (error) => {
         console.error('[Rastreamento Motoboy] Erro ao obter localização:', error);
-        // Não para o rastreamento em caso de erro temporário
       },
       {
-        enableHighAccuracy: true, // Usa GPS quando disponível
-        maximumAge: 0, // Não usa cache
-        timeout: 20000 // Timeout de 20 segundos
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 20000
       }
     );
+
+    // Método 2: Polling periódico (backup para desktop/DevTools)
+    this.pollingIntervalId = setInterval(() => {
+      if (this.motoboyIdAtivo) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('[Rastreamento Motoboy] Polling periódico - verificando posição');
+            this.processarLocalizacao(position, this.motoboyIdAtivo!);
+          },
+          (error) => {
+            console.warn('[Rastreamento Motoboy] Erro no polling:', error.message);
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+          }
+        );
+      }
+    }, this.POLLING_INTERVAL_MS);
+
+    console.log('[Rastreamento Motoboy] Polling iniciado a cada', this.POLLING_INTERVAL_MS, 'ms');
   }
 
   /**
@@ -79,10 +104,16 @@ export class MotoboyRastreamentoService {
     if (this.watchId !== null) {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
-      this.ultimaLocalizacaoEnviada = null;
-      this.motoboyIdAtivo = null;
-      console.log('[Rastreamento Motoboy] Rastreamento parado');
     }
+
+    if (this.pollingIntervalId !== null) {
+      clearInterval(this.pollingIntervalId);
+      this.pollingIntervalId = null;
+    }
+
+    this.ultimaLocalizacaoEnviada = null;
+    this.motoboyIdAtivo = null;
+    console.log('[Rastreamento Motoboy] Rastreamento parado');
   }
 
   /**
@@ -95,12 +126,22 @@ export class MotoboyRastreamentoService {
     const heading = position.coords.heading ?? null;
     const velocidade = position.coords.speed ? position.coords.speed * 3.6 : null; // Converte m/s para km/h
 
+    console.log('[Rastreamento Motoboy] GPS callback recebido:', {
+      lat: lat.toFixed(6),
+      lng: lng.toFixed(6),
+      accuracy: position.coords.accuracy,
+      timestamp: new Date(position.timestamp).toISOString()
+    });
+
     // Verifica se deve enviar (throttling)
     const deveEnviar = this.deveEnviarLocalizacao(lat, lng, agora);
 
     if (!deveEnviar) {
+      console.debug('[Rastreamento Motoboy] Throttled - não enviando');
       return; // Ignora esta localização
     }
+
+    console.log('[Rastreamento Motoboy] Enviando localização ao backend...');
 
     // Prepara requisição
     const request: AtualizarLocalizacaoRequest = {
@@ -125,17 +166,21 @@ export class MotoboyRastreamentoService {
     });
   }
 
-  /**
-   * Verifica se deve enviar localização baseado em distância e tempo.
-   */
   private deveEnviarLocalizacao(lat: number, lng: number, timestamp: number): boolean {
     // Primeira localização sempre envia
     if (!this.ultimaLocalizacaoEnviada) {
       return true;
     }
 
-    // Verifica intervalo mínimo
     const tempoDesdeUltimoEnvio = (timestamp - this.ultimoEnvioTimestamp) / 1000; // em segundos
+
+    // Força envio a cada MAX_INTERVALO_SEGUNDOS mesmo sem movimento
+    if (tempoDesdeUltimoEnvio >= this.MAX_INTERVALO_SEGUNDOS) {
+      console.debug('[Rastreamento Motoboy] Forçando envio periódico');
+      return true;
+    }
+
+    // Verifica intervalo mínimo
     if (tempoDesdeUltimoEnvio < this.MIN_INTERVALO_SEGUNDOS) {
       return false;
     }
@@ -163,8 +208,8 @@ export class MotoboyRastreamentoService {
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
