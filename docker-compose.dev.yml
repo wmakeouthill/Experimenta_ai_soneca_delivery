@@ -61,6 +61,9 @@ services:
       - SHOW_SQL=${SHOW_SQL:-true}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - SPRING_PROFILES_ACTIVE=dev
+      # ✅ Hot Reload Frontend: Backend faz proxy para ng serve (porta 4200) em dev
+      - PROJECT_BASE_DIR=/app
+      - FRONTEND_PROXY_URL=http://frontend-dev:4200
       # ========== Chat IA - OpenAI ==========
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-mini}

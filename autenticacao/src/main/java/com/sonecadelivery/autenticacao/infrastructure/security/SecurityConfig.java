@@ -59,6 +59,9 @@ public class SecurityConfig {
                                 "/*.jpg", "/*.svg", "/*.woff", "/*.woff2", "/*.ttf", "/*.eot")
                         .permitAll()
                         .requestMatchers("/assets/**", "/styles/**").permitAll()
+                        // ✅ Caminhos especiais do Vite (dev server) - necessário para hot reload
+                        .requestMatchers("/@vite/**", "/@fs/**", "/@id/**", "/@react-refresh", "/node_modules/**")
+                        .permitAll()
 
                         // Rotas do Angular Router (SPA) - PÚBLICO para frontend routing
                         // Apenas rotas de auto-atendimento do cliente (QR Code) e login

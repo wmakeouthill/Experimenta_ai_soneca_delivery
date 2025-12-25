@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -131,6 +132,38 @@ public class GlobalExceptionHandler {
         // Outros erros de I/O inesperados - loga como warning
         logger.warn("Erro de I/O: {}", errorMsg);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+    
+    /**
+     * Trata exceções quando recursos estáticos não são encontrados (ex: index.html).
+     * Isso pode acontecer em dev se o frontend ainda não foi buildado.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResourceFoundException(NoResourceFoundException ex) {
+        String resourcePath = ex.getResourcePath();
+        
+        // Se for index.html ou raiz, retornar mensagem amigável
+        if (resourcePath == null || resourcePath.equals("/") || resourcePath.equals("/index.html")) {
+            Map<String, Object> body = criarRespostaErro(
+                HttpStatus.NOT_FOUND.value(),
+                "Frontend não encontrado",
+                "O frontend ainda não foi buildado. " +
+                "Em desenvolvimento, execute 'npm run watch' no container frontend para gerar os arquivos. " +
+                "Ou acesse o frontend diretamente em http://localhost:4200"
+            );
+            body.put("resourcePath", resourcePath);
+            body.put("hint", "Execute 'npm run watch' no container frontend-dev para habilitar hot reload");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+        }
+        
+        // Para outros recursos, retornar erro padrão
+        Map<String, Object> body = criarRespostaErro(
+            HttpStatus.NOT_FOUND.value(),
+            "Recurso não encontrado",
+            "O recurso solicitado não foi encontrado: " + resourcePath
+        );
+        body.put("resourcePath", resourcePath);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
     
     @ExceptionHandler(Exception.class)

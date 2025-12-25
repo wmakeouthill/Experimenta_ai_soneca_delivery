@@ -44,6 +44,16 @@ jwt:
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
 
+# ✅ Hot Reload Frontend: Configurações para desenvolvimento
+project:
+  base:
+    dir: ${PROJECT_BASE_DIR:${user.dir:/app}}
+
+# URL do frontend para proxy reverso em desenvolvimento
+frontend:
+  proxy:
+    url: ${FRONTEND_PROXY_URL:http://frontend-dev:4200}
+
 server:
   port: ${PORT:${SERVER_PORT:8080}} # Cloud Run define PORT automaticamente, fallback para SERVER_PORT ou 8080
   address: ${SERVER_ADDRESS:0.0.0.0} # Escuta em todas as interfaces (permite acesso via IP da rede)
