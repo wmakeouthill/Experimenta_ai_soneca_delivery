@@ -4,9 +4,11 @@
  */
 
 const ORIGINS_PERMITIDAS = [
-  'https://experimenta-ai-soneca-699875180084.southamerica-east1.run.app',
+  'https://experimentaai-delivery-699875180084.southamerica-east1.run.app',
   'http://localhost:4200',
-  'http://127.0.0.1:4200'
+  'http://127.0.0.1:4200',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080'
 ];
 
 /**
