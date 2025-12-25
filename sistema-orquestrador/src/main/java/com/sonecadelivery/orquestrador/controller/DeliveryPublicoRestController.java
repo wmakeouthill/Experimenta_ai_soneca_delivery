@@ -51,6 +51,7 @@ public class DeliveryPublicoRestController {
         private final PedidoDeliveryJpaRepository pedidoDeliveryRepository;
         private final BuscarProdutosPopularesUseCase buscarProdutosPopularesUseCase;
         private final GerenciarAdicionaisProdutoUseCase gerenciarAdicionaisProdutoUseCase;
+        private final com.sonecadelivery.pedidos.application.ports.PedidoRepositoryPort pedidoRepository;
 
         /**
          * Retorna o cardápio público para delivery.
@@ -225,6 +226,7 @@ public class DeliveryPublicoRestController {
          * 1. Primeiro verifica se o pedido está na fila de pendentes
          * (AGUARDANDO_ACEITACAO)
          * 2. Se não estiver, busca na tabela de pedidos delivery aceitos
+         * 3. Se não encontrar, busca na tabela principal de pedidos (refatorada)
          */
         @GetMapping("/pedido/{pedidoId}/status")
         public ResponseEntity<StatusPedidoResponse> buscarStatusPedido(@PathVariable String pedidoId) {
@@ -244,18 +246,34 @@ public class DeliveryPublicoRestController {
                         return ResponseEntity.ok(response);
                 }
 
-                // 2. Se não está pendente, busca nos pedidos aceitos
-                return pedidoDeliveryRepository.findById(pedidoId)
+                // 2. Busca na tabela pedidos_delivery (legada)
+                var pedidoDelivery = pedidoDeliveryRepository.findById(pedidoId);
+                if (pedidoDelivery.isPresent()) {
+                        var pedido = pedidoDelivery.get();
+                        StatusPedidoResponse response = new StatusPedidoResponse(
+                                        pedido.getId(),
+                                        pedido.getNumeroPedido(),
+                                        pedido.getStatus().name(),
+                                        pedido.getMotoboyNome(),
+                                        null,
+                                        pedido.getPrevisaoEntrega() != null
+                                                        ? pedido.getPrevisaoEntrega().toString()
+                                                        : null);
+                        return ResponseEntity.ok(response);
+                }
+
+                // 3. Busca na tabela principal de pedidos (após refatoração)
+                return pedidoRepository.buscarPorId(pedidoId)
                                 .map(pedido -> {
                                         StatusPedidoResponse response = new StatusPedidoResponse(
                                                         pedido.getId(),
-                                                        pedido.getNumeroPedido(),
+                                                        pedido.getNumeroPedido() != null
+                                                                        ? pedido.getNumeroPedido().getNumero()
+                                                                        : null,
                                                         pedido.getStatus().name(),
-                                                        pedido.getMotoboyNome(),
-                                                        null, // TODO: Adicionar telefone do motoboy se necessário
-                                                        pedido.getPrevisaoEntrega() != null
-                                                                        ? pedido.getPrevisaoEntrega().toString()
-                                                                        : null);
+                                                        null, // TODO: buscar nome do motoboy se atribuído
+                                                        null,
+                                                        null);
                                         return ResponseEntity.ok(response);
                                 })
                                 .orElse(ResponseEntity.notFound().build());

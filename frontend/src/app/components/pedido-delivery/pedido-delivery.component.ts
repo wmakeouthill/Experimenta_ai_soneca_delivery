@@ -319,6 +319,15 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     );
     readonly modalRastreamentoAberto = signal<boolean>(false);
 
+    // Effect: Fecha modal automaticamente quando pedido for entregue
+    private readonly fecharModalAoEntregar = effect(() => {
+        if (this.rastreamento.pedidoEntregue() && this.modalRastreamentoAberto()) {
+            console.log('[PedidoDelivery] Pedido entregue - fechando modal de rastreamento');
+            this.modalRastreamentoAberto.set(false);
+            this.rastreamento.parar();
+        }
+    });
+
     // ========== COMPUTED ==========
 
     // Computed que filtra pedidos realmente não avaliados (verificando backend)

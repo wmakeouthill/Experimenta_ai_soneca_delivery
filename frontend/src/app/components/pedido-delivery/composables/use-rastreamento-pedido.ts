@@ -52,6 +52,12 @@ export function useRastreamentoPedido(
   const statusPedido = computed(() => rastreamento()?.statusPedido ?? null);
   const ultimaAtualizacao = computed(() => rastreamento()?.ultimaAtualizacao ?? null);
 
+  // Detecta se pedido foi entregue/finalizado
+  const pedidoEntregue = computed(() => {
+    const status = statusPedido();
+    return status === 'ENTREGUE' || status === 'FINALIZADO';
+  });
+
   // Cleanup automático ao destruir componente
   destroyRef.onDestroy(() => {
     if (ativo()) {
@@ -142,6 +148,7 @@ export function useRastreamentoPedido(
     motoboyNome,
     statusPedido,
     ultimaAtualizacao,
+    pedidoEntregue,
 
     // Métodos
     iniciar,
