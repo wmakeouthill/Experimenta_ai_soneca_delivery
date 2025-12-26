@@ -162,25 +162,27 @@ async function processarBase64ParaArquivo(base64Data, filename = 'logo', maxWidt
         let image = await JimpLib.read(imageBuffer);
 
         const paperWidth = maxWidth; // 384px para 48mm
-        const maxLogoWidth = 320; // Máximo para deixar margem de centralização (32px cada lado)
+        // Tamanho fixo recomendado: 320px de largura
+        // Isso deixa 32px (4 bytes) de margem de cada lado para centralização visível
+        const fixedLogoWidth = 320;
         let imgWidth = image.width || 100;
         let imgHeight = image.height || 100;
 
-        console.log(`📊 Imagem original: ${imgWidth}x${imgHeight}px, papel: ${paperWidth}px`);
+        console.log(`📊 Imagem original: ${imgWidth}x${imgHeight}px`);
 
-        // Só redimensiona se MAIOR que o máximo permitido (320px)
-        // Imagens pequenas mantêm tamanho original!
-        if (imgWidth > maxLogoWidth) {
-            image.resize({ w: maxLogoWidth });
-            imgWidth = image.width || maxLogoWidth;
+        // Sempre redimensiona para o tamanho padrão (320px)
+        // Isso garante consistência em todos os logos
+        if (imgWidth !== fixedLogoWidth) {
+            image.resize({ w: fixedLogoWidth });
+            imgWidth = image.width || fixedLogoWidth;
             imgHeight = image.height || 100;
-            console.log(`📐 Logo redimensionado para ${maxLogoWidth}px (era ${image.width}px)`);
+            console.log(`📐 Logo padronizado: ${imgWidth}x${imgHeight}px (320px = padrão)`);
         }
 
-        // Nota: Centralização será feita pelo ESC a 1 no node-thermal-printer
-        // Não fazemos padding manual porque Jimp v1.x composite não está funcionando corretamente
+        // Centralização será feita no buffer raster (print-routes.js)
+        // Resultado: 384px papel - 320px imagem = 64px margem total = 32px cada lado
 
-        console.log(`✅ Logo pronto: ${imgWidth}x${imgHeight}px`);
+        console.log(`✅ Logo pronto: ${imgWidth}x${imgHeight}px (margem: ${(paperWidth - imgWidth) / 2}px cada lado)`);
 
 
         // Salva como PNG temporário

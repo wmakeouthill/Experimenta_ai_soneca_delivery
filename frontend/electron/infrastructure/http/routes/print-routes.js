@@ -101,13 +101,108 @@ router.post('/imprimir/cupom-fiscal', async (req, res) => {
       console.log(`🖼️ Processando logo para impressão (${logoBase64.length} chars)...`);
       const logoResult = await converterLogoParaBuffer(logoBase64, tipoImpressora);
       if (logoResult.success && logoResult.buffer) {
-        logoEscPos = logoResult.buffer;
-        console.log(`✅ Logo convertido via node-thermal-printer: ${logoEscPos.length} bytes`);
+        // Centraliza o raster no papel
+        // Detecta largura do papel baseado no tipo de impressora
+        let paperWidthBytes;
+        if (tipoImpressora && tipoImpressora.includes('DIEBOLD')) {
+          paperWidthBytes = 80; // 80mm = 640px = 80 bytes (full width)
+        } else if (tipoImpressora && tipoImpressora.includes('58')) {
+          paperWidthBytes = 48; // 58mm = 384px = 48 bytes
+        } else {
+          paperWidthBytes = 72; // 80mm padrão = 576px = 72 bytes
+        }
+        console.log(`📄 Papel detectado: ${paperWidthBytes} bytes (${paperWidthBytes * 8}px)`);
+        logoEscPos = centralizarRasterBuffer(logoResult.buffer, paperWidthBytes);
+        console.log(`✅ Logo processado e centralizado: ${logoEscPos.length} bytes`);
       } else {
         console.warn(`⚠️ Falha ao processar logo: ${logoResult.error}`);
       }
     } else {
       console.log('ℹ️ Sem logo para imprimir (logoBase64 vazio ou não enviado)');
+    }
+
+    /**
+     * Centraliza um buffer GS v 0 adicionando bytes brancos à esquerda de cada linha
+     * @param {Buffer} buffer - Buffer com ESC a 1 + GS v 0 + dados
+     * @param {number} paperWidthBytes - Largura do papel em bytes (48 para 48mm = 384px)
+     * @returns {Buffer} - Buffer modificado com imagem centralizada
+     */
+    function centralizarRasterBuffer(buffer, paperWidthBytes) {
+      // Procura o comando GS v 0 (1D 76 30)
+      let gsv0Index = -1;
+      for (let i = 0; i < buffer.length - 7; i++) {
+        if (buffer[i] === 0x1D && buffer[i + 1] === 0x76 && buffer[i + 2] === 0x30) {
+          gsv0Index = i;
+          break;
+        }
+      }
+
+      if (gsv0Index === -1) {
+        console.log('⚠️ GS v 0 não encontrado no buffer');
+        return buffer;
+      }
+
+      // Extrai parâmetros do GS v 0
+      // Formato: 1D 76 30 m xL xH yL yH [dados]
+      const m = buffer[gsv0Index + 3];
+      const xL = buffer[gsv0Index + 4];
+      const xH = buffer[gsv0Index + 5];
+      const yL = buffer[gsv0Index + 6];
+      const yH = buffer[gsv0Index + 7];
+
+      const widthBytes = xL + (xH * 256);
+      const height = yL + (yH * 256);
+      const dataStart = gsv0Index + 8;
+
+      console.log(`📊 Raster original: ${widthBytes} bytes/linha x ${height} linhas (${widthBytes * 8}px)`);
+
+      // Calcula padding para centralizar (igual dos dois lados)
+      const leftPaddingBytes = Math.floor((paperWidthBytes - widthBytes) / 2);
+      const rightPaddingBytes = paperWidthBytes - widthBytes - leftPaddingBytes;
+
+      if (leftPaddingBytes <= 0) {
+        console.log('ℹ️ Imagem já está na largura máxima, sem padding');
+        return buffer;
+      }
+
+      console.log(`🎯 Centralizando: ${leftPaddingBytes} bytes esquerda + ${widthBytes} imagem + ${rightPaddingBytes} bytes direita = ${paperWidthBytes} bytes total`);
+
+      // Novo buffer terá a largura total do papel
+      const newWidthBytes = paperWidthBytes;
+      const headerBefore = buffer.slice(0, gsv0Index); // ESC a 1 e outros
+      const leftPadding = Buffer.alloc(leftPaddingBytes, 0x00); // Zeros = pixels brancos
+      const rightPadding = Buffer.alloc(rightPaddingBytes, 0x00);
+
+      // Novo cabeçalho GS v 0 com largura = papel
+      const newGsv0 = Buffer.from([
+        0x1D, 0x76, 0x30, m,
+        newWidthBytes & 0xFF,
+        (newWidthBytes >> 8) & 0xFF,
+        yL, yH
+      ]);
+
+      // Reconstrói os dados linha por linha: padding esquerdo + imagem + padding direito
+      const newDataParts = [];
+      for (let y = 0; y < height; y++) {
+        const lineStart = dataStart + (y * widthBytes);
+        const lineEnd = lineStart + widthBytes;
+        if (lineEnd <= buffer.length) {
+          const lineData = buffer.slice(lineStart, lineEnd);
+          newDataParts.push(leftPadding);
+          newDataParts.push(lineData);
+          newDataParts.push(rightPadding);
+        }
+      }
+
+      // Parte final do buffer (após os dados da imagem)
+      const dataEnd = dataStart + (widthBytes * height);
+      const footer = buffer.slice(dataEnd);
+
+      const result = Buffer.concat([headerBefore, newGsv0, ...newDataParts, footer]);
+
+      console.log(`✅ Raster centralizado: largura=${newWidthBytes} bytes (${leftPaddingBytes} + ${widthBytes} + ${rightPaddingBytes})`);
+
+      return result;
     }
 
     // Converte dados do cupom para ESC/POS
