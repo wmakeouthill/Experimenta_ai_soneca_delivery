@@ -1,4 +1,6 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { ClienteAuthService } from '../services/cliente-auth.service';
 
 const TOKEN_KEY = 'cliente-auth-token';
 const CLIENTE_KEY = 'cliente-auth-data';
@@ -7,8 +9,9 @@ const CLIENTE_KEY = 'cliente-auth-data';
  * Interceptor que adiciona automaticamente o token JWT e o X-Cliente-Id
  * em todas as requisições para /api/cliente/
  *
- * Isso garante que todas as ações do cliente (favoritos, avaliações, telefone, etc.)
- * sejam autenticadas corretamente.
+ * Prioriza o token do serviço (BehaviorSubject) que é atualizado sincronamente
+ * após o login, garantindo que requisições imediatas funcionem.
+ * Usa sessionStorage apenas como fallback.
  */
 export const clienteAuthInterceptor: HttpInterceptorFn = (req, next) => {
     // Só intercepta requisições para /api/cliente/
@@ -16,23 +19,26 @@ export const clienteAuthInterceptor: HttpInterceptorFn = (req, next) => {
         return next(req);
     }
 
-    // Sempre anexa os headers (inclusive em localhost e durante testes)
-    // para garantir chamadas autenticadas do cliente.
+    // Obtém token e clienteId preferencialmente do serviço
+    const authService = inject(ClienteAuthService);
 
-    // Tenta obter dados do sessionStorage
-    let token: string | null = null;
-    let clienteId: string | null = null;
+    let token: string | null = authService.token;
+    let clienteId: string | null = authService.clienteLogado?.id ?? null;
 
-    if (typeof sessionStorage !== 'undefined') {
-        token = sessionStorage.getItem(TOKEN_KEY);
-        const clienteStr = sessionStorage.getItem(CLIENTE_KEY);
-
-        if (clienteStr) {
-            try {
-                const cliente = JSON.parse(clienteStr);
-                clienteId = cliente?.id || null;
-            } catch {
-                // Ignora erro de parse
+    // Fallback: tenta obter do sessionStorage se o serviço não tiver
+    if ((!token || !clienteId) && typeof sessionStorage !== 'undefined') {
+        if (!token) {
+            token = sessionStorage.getItem(TOKEN_KEY);
+        }
+        if (!clienteId) {
+            const clienteStr = sessionStorage.getItem(CLIENTE_KEY);
+            if (clienteStr) {
+                try {
+                    const cliente = JSON.parse(clienteStr);
+                    clienteId = cliente?.id || null;
+                } catch {
+                    // Ignora erro de parse
+                }
             }
         }
     }

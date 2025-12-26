@@ -44,7 +44,9 @@
     <div class="pwa-install-banner">
         <div class="pwa-install-texto">
             <strong>Instale o app</strong>
-            @if (pwaInstrucao()) {
+            @if (pwaPromptDisponivel()) {
+            <span>Atalho na tela inicial, experiência fullscreen e mais rápida.</span>
+            } @else if (pwaInstrucao()) {
             <span>{{ pwaInstrucao() }}</span>
             } @else {
             <span>Atalho na tela inicial, experiência fullscreen e mais rápida.</span>
@@ -52,7 +54,7 @@
         </div>
         <div class="pwa-install-botoes">
             <button class="pwa-btn-secundario" (click)="fecharBannerPwa()">Fechar</button>
-            @if (!pwaInstrucao()) {
+            @if (pwaPromptDisponivel()) {
             <button class="pwa-btn-primario" (click)="instalarPwa()">Instalar</button>
             }
         </div>
@@ -725,13 +727,18 @@
             </button>
 
             <!-- Instalar App (só aparece quando no navegador, não no PWA instalado) -->
-            @if (!isStandalone()) {
+            @if (!isStandalone() && pwaPromptDisponivel()) {
             <button class="perfil-item instalar" (click)="instalarPwa()">
                 <span class="item-icon">📲</span>
                 <span class="item-texto">Instalar o App</span>
                 <span class="item-badge destaque">Recomendado</span>
                 <span class="item-arrow">›</span>
             </button>
+            } @else if (!isStandalone() && pwaInstrucao()) {
+            <div class="perfil-item instalar-instrucao">
+                <span class="item-icon">📲</span>
+                <span class="item-texto">{{ pwaInstrucao() }}</span>
+            </div>
             }
 
             <!-- Sair -->

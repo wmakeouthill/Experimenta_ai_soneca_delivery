@@ -50,17 +50,26 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   readonly isSafari = signal(false);
   readonly isFirefox = signal(false);
   readonly isIOS = signal(false);
+  readonly pwaPromptDisponivel = signal(false);
   private deferredPrompt: any = null;
 
   // Computed: Instrução de instalação baseada no navegador
+  // Mostra instruções quando NÃO temos o prompt nativo disponível
   readonly pwaInstrucao = computed(() => {
+    // Se o prompt nativo está disponível, não precisa de instruções
+    if (this.pwaPromptDisponivel()) {
+      return null;
+    }
+    // iOS/Safari NUNCA terão o prompt
     if (this.isIOS() || this.isSafari()) {
       return 'Toque em 📤 Compartilhar → "Adicionar à Tela Inicial"';
     }
+    // Firefox também não tem o prompt
     if (this.isFirefox()) {
       return 'Toque em ⋮ Menu → "Instalar"';
     }
-    return null; // Usa o botão padrão
+    // Outros browsers: aguarda o prompt ou mostra instrução genérica
+    return 'Aguarde o botão Instalar aparecer ou use o menu do navegador';
   });
 
   // Controle de polling e atualizações
@@ -965,7 +974,11 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     const ua = navigator.userAgent;
     const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(ua);
-    const isFirefoxBrowser = /firefox/i.test(ua);
+    // Firefox detection: must have 'Firefox' but NOT 'Chrome'
+    const isChrome = /chrome/i.test(ua) && !/edg/i.test(ua);
+    const isFirefoxBrowser = /firefox/i.test(ua) && !isChrome;
+
+    console.log('[PWA Motoboy] Browser detection:', { ua, isIOSDevice, isSafariBrowser, isChrome, isFirefoxBrowser });
 
     this.isIOS.set(isIOSDevice);
     this.isSafari.set(isSafariBrowser);
@@ -1006,6 +1019,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
+      this.pwaPromptDisponivel.set(true);
       // Mantém o banner visível se não estiver em standalone
       if (!this.isStandalone()) {
         this.mostrarBannerPwa.set(true);
