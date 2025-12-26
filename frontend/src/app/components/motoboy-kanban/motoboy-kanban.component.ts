@@ -54,12 +54,8 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   private deferredPrompt: any = null;
 
   // Computed: Instrução de instalação baseada no navegador
-  // Mostra instruções quando NÃO temos o prompt nativo disponível
+  // Retorna instrução APENAS para browsers que NUNCA terão beforeinstallprompt
   readonly pwaInstrucao = computed(() => {
-    // Se o prompt nativo está disponível, não precisa de instruções
-    if (this.pwaPromptDisponivel()) {
-      return null;
-    }
     // iOS/Safari NUNCA terão o prompt
     if (this.isIOS() || this.isSafari()) {
       return 'Toque em 📤 Compartilhar → "Adicionar à Tela Inicial"';
@@ -68,8 +64,19 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     if (this.isFirefox()) {
       return 'Toque em ⋮ Menu → "Instalar"';
     }
-    // Outros browsers: aguarda o prompt ou mostra instrução genérica
-    return 'Aguarde o botão Instalar aparecer ou use o menu do navegador';
+    // Chrome/Edge/Samsung: nunca retorna instrução, usa o botão
+    return null;
+  });
+
+  // Computed: Deve mostrar o banner?
+  // Para Safari/iOS/Firefox: sempre (com instruções)
+  // Para Chrome/Edge/Samsung: só quando prompt está pronto
+  readonly deveMostrarBannerPwa = computed(() => {
+    if (this.isStandalone()) return false;
+    // Se tem instrução (Safari/iOS/Firefox), mostra o banner
+    if (this.pwaInstrucao()) return this.mostrarBannerPwa();
+    // Se não tem instrução (Chrome/Edge), só mostra se prompt pronto
+    return this.pwaPromptDisponivel() && this.mostrarBannerPwa();
   });
 
   // Controle de polling e atualizações

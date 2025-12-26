@@ -1,12 +1,10 @@
 <div class="motoboy-cadastro-container">
     <!-- PWA Install Banner -->
-    @if (mostrarBannerPwa()) {
+    @if (deveMostrarBannerPwa()) {
     <div class="pwa-install-banner">
         <div class="pwa-install-texto">
             <strong>Instale o app</strong>
-            @if (pwaPromptDisponivel()) {
-            <span>Atalho na tela inicial, experiência fullscreen e mais rápida.</span>
-            } @else if (pwaInstrucao()) {
+            @if (pwaInstrucao()) {
             <span>{{ pwaInstrucao() }}</span>
             } @else {
             <span>Atalho na tela inicial, experiência fullscreen e mais rápida.</span>
