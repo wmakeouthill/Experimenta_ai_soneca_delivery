@@ -253,11 +253,13 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     readonly isSafari = signal(false);
     readonly isFirefox = signal(false);
     readonly isIOS = signal(false);
+    readonly isSamsungBrowser = signal(false);
     readonly pwaPromptDisponivel = signal(false);
+    readonly mostrarInstrucaoManual = signal(false); // Ativado após timeout se prompt não dispara
     private deferredPrompt: any = null;
 
     // Computed: Instrução de instalação baseada no navegador
-    // Retorna instrução APENAS para browsers que NUNCA terão beforeinstallprompt
+    // Retorna instrução para browsers que não suportam beforeinstallprompt ou após timeout
     readonly pwaInstrucao = computed(() => {
         // iOS/Safari NUNCA terão o prompt
         if (this.isIOS() || this.isSafari()) {
@@ -267,18 +269,26 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         if (this.isFirefox()) {
             return 'Toque em ⋮ Menu → "Instalar"';
         }
-        // Chrome/Edge/Samsung: nunca retorna instrução, usa o botão
+        // Samsung Internet Browser
+        if (this.isSamsungBrowser()) {
+            return 'Toque em ⋮ Menu → "Adicionar à Tela Inicial"';
+        }
+        // Se prompt não disparou após timeout, mostra instrução genérica
+        if (this.mostrarInstrucaoManual() && !this.pwaPromptDisponivel()) {
+            return 'Use o menu do navegador → "Adicionar à tela inicial" ou "Instalar app"';
+        }
+        // Chrome/Edge com prompt: não mostra instrução, usa o botão
         return null;
     });
 
     // Computed: Deve mostrar o banner?
-    // Para Safari/iOS/Firefox: sempre (com instruções)
-    // Para Chrome/Edge/Samsung: só quando prompt está pronto
+    // Para Safari/iOS/Firefox/Samsung: sempre (com instruções)
+    // Para Chrome/Edge: quando prompt está pronto OU após timeout com instrução manual
     readonly deveMostrarBannerPwa = computed(() => {
         if (this.isStandalone()) return false;
-        // Se tem instrução (Safari/iOS/Firefox), mostra o banner
+        // Se tem instrução (Safari/iOS/Firefox/Samsung/timeout), mostra o banner
         if (this.pwaInstrucao()) return this.mostrarBannerPwa();
-        // Se não tem instrução (Chrome/Edge), só mostra se prompt pronto
+        // Se não tem instrução (Chrome/Edge antes do timeout), só mostra se prompt pronto
         return this.pwaPromptDisponivel() && this.mostrarBannerPwa();
     });
 
@@ -535,17 +545,29 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             // Firefox detection: must have 'Firefox' but NOT 'Chrome' (Chrome never has Firefox in UA)
             const isChrome = /chrome/i.test(ua) && !/edg/i.test(ua); // Chrome but not Edge
             const isFirefoxBrowser = /firefox/i.test(ua) && !isChrome;
+            // Samsung Internet Browser detection
+            const isSamsungInternetBrowser = /samsungbrowser/i.test(ua);
 
-            console.log('[PWA] Browser detection:', { ua, isIOSDevice, isSafariBrowser, isChrome, isFirefoxBrowser });
+            console.log('[PWA] Browser detection:', { ua, isIOSDevice, isSafariBrowser, isChrome, isFirefoxBrowser, isSamsungInternetBrowser });
 
             this.isIOS.set(isIOSDevice);
             this.isSafari.set(isSafariBrowser);
             this.isFirefox.set(isFirefoxBrowser);
+            this.isSamsungBrowser.set(isSamsungInternetBrowser);
 
             // PWA Install Prompt: Mostra banner se não estiver em modo standalone
             if (!isStandaloneMode) {
                 // Sempre mostra o banner quando está no navegador
                 this.mostrarBannerPwa.set(true);
+
+                // Timeout: Se após 3s o beforeinstallprompt não disparou, mostra instrução manual
+                // Isso ajuda usuários em browsers que não suportam o evento
+                setTimeout(() => {
+                    if (!this.pwaPromptDisponivel() && !this.isStandalone()) {
+                        console.log('[PWA] Ativando instrução manual após timeout');
+                        this.mostrarInstrucaoManual.set(true);
+                    }
+                }, 3000);
             }
 
             // Captura o evento beforeinstallprompt para poder instalar depois
@@ -553,6 +575,8 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                 e.preventDefault();
                 this.deferredPrompt = e;
                 this.pwaPromptDisponivel.set(true);
+                // Desativa instrução manual já que temos o prompt nativo
+                this.mostrarInstrucaoManual.set(false);
                 // Mantém o banner visível se não estiver em standalone
                 if (!this.isStandalone()) {
                     this.mostrarBannerPwa.set(true);
@@ -896,10 +920,18 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         this.erro.set(null);
 
         const form = this.formCadastro();
+        const clienteLogado = this.cliente();
+
+        console.debug('[Cadastro] finalizarCadastro chamado:', {
+            clienteNoSignal: !!clienteLogado,
+            clienteId: clienteLogado?.id,
+            clienteAuthServiceLogado: this.clienteAuthService.estaLogado,
+            hasToken: !!this.clienteAuthService.token
+        });
 
         try {
             // Se cliente já está logado, apenas atualizar endereço
-            if (this.cliente()) {
+            if (clienteLogado) {
                 const enderecoRequest: AtualizarEnderecoRequest = {
                     logradouro: form.logradouro.trim(),
                     numero: form.numero.trim(),
@@ -913,7 +945,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
                     longitude: form.longitude
                 };
 
-                const clienteAtualizado = await firstValueFrom(this.clienteAuthService.atualizarEndereco(enderecoRequest));
+                const clienteAtualizado = await this.atualizarEnderecoComRetry(enderecoRequest);
                 this.cliente.set(clienteAtualizado);
                 if (clienteAtualizado.enderecoFormatado) {
                     this.enderecoEntrega.set(clienteAtualizado.enderecoFormatado);
@@ -950,6 +982,42 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             this.erro.set(e?.error?.message || 'Erro ao cadastrar. Tente novamente.');
         } finally {
             this.cadastroCarregando.set(false);
+        }
+    }
+
+    // ========== ATUALIZAÇÃO DE ENDEREÇO COM RETRY ==========
+
+    /**
+     * Atualiza endereço com retry e aguardando token.
+     * Resolve problema de timing após login via Google onde o token pode não estar disponível imediatamente.
+     */
+    private async atualizarEnderecoComRetry(enderecoRequest: AtualizarEnderecoRequest): Promise<ClienteAuth> {
+        // Aguarda token estar disponível (máx 500ms)
+        if (!this.clienteAuthService.token) {
+            console.debug('[Cadastro] Token não disponível, aguardando 500ms...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        // Primeira tentativa
+        try {
+            return await firstValueFrom(this.clienteAuthService.atualizarEndereco(enderecoRequest));
+        } catch (firstError: any) {
+            // Se falhou com erro de auth, aguarda e tenta novamente
+            const isAuthError = firstError?.status === 401 ||
+                firstError?.status === 403 ||
+                firstError?.message?.includes('não está logado');
+
+            if (isAuthError) {
+                console.warn('[Cadastro] Primeira tentativa falhou com erro de auth, retry em 500ms...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Retry - se falhar novamente, deixa o erro propagar
+                const result = await firstValueFrom(this.clienteAuthService.atualizarEndereco(enderecoRequest));
+                console.debug('[Cadastro] Retry bem sucedido!');
+                return result;
+            }
+
+            throw firstError;
         }
     }
 

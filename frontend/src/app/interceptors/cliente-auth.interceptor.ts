@@ -24,11 +24,21 @@ export const clienteAuthInterceptor: HttpInterceptorFn = (req, next) => {
 
     let token: string | null = authService.token;
     let clienteId: string | null = authService.clienteLogado?.id ?? null;
+    let tokenSource = 'service';
+
+    // Debug: Log inicial do estado do serviço
+    console.debug('[ClienteAuth Interceptor] Estado inicial:', {
+        url: req.url,
+        tokenFromService: !!token,
+        clienteIdFromService: !!clienteId,
+        serviceEstaLogado: authService.estaLogado
+    });
 
     // Fallback: tenta obter do sessionStorage se o serviço não tiver
     if ((!token || !clienteId) && typeof sessionStorage !== 'undefined') {
         if (!token) {
             token = sessionStorage.getItem(TOKEN_KEY);
+            if (token) tokenSource = 'sessionStorage';
         }
         if (!clienteId) {
             const clienteStr = sessionStorage.getItem(CLIENTE_KEY);
@@ -41,18 +51,35 @@ export const clienteAuthInterceptor: HttpInterceptorFn = (req, next) => {
                 }
             }
         }
+
+        // Debug: Log após fallback
+        if (tokenSource === 'sessionStorage') {
+            console.debug('[ClienteAuth Interceptor] Usando fallback sessionStorage:', {
+                url: req.url,
+                hasToken: !!token,
+                hasClienteId: !!clienteId
+            });
+        }
     }
 
     // Se não tiver token ou clienteId, deixa passar (vai falhar no backend)
     if (!token || !clienteId) {
-        console.warn('Cliente não autenticado para:', req.url);
+        console.warn('[ClienteAuth Interceptor] ⚠️ Cliente não autenticado para:', req.url, {
+            tokenFromService: !!authService.token,
+            clienteIdFromService: !!authService.clienteLogado?.id,
+            tokenFromSessionStorage: typeof sessionStorage !== 'undefined' ? !!sessionStorage.getItem(TOKEN_KEY) : 'N/A',
+            clienteFromSessionStorage: typeof sessionStorage !== 'undefined' ? !!sessionStorage.getItem(CLIENTE_KEY) : 'N/A'
+        });
         return next(req);
     }
 
-    // Log de debug em desenvolvimento
-    if (typeof process !== 'undefined' && process.env?.['NODE_ENV'] !== 'production') {
-        console.debug('[ClienteAuth] Interceptando requisição:', req.url, { hasToken: !!token, clienteId });
-    }
+    // Log de debug com fonte do token
+    console.debug('[ClienteAuth Interceptor] ✅ Autenticando requisição:', {
+        url: req.url,
+        tokenSource,
+        clienteId: clienteId.substring(0, 8) + '...',
+        tokenLength: token.length
+    });
 
     // Clona a requisição adicionando os headers
     const clonedReq = req.clone({

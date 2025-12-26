@@ -155,7 +155,12 @@ export class ClienteAuthService {
    * Atualiza endereço do cliente
    */
   atualizarEndereco(request: AtualizarEnderecoRequest): Observable<ClienteAuth> {
+    console.debug('[ClienteAuth] atualizarEndereco chamado:', {
+      clienteId: this._clienteLogado.value?.id,
+      hasToken: !!this._token.value
+    });
     if (!this._clienteLogado.value?.id) {
+      console.error('[ClienteAuth] Cliente não está logado para atualizar endereço');
       return throwError(() => new Error('Cliente não está logado'));
     }
     return this.http.put<ClienteAuth>(`${this.contaUrl}/endereco`, request)
@@ -237,6 +242,7 @@ export class ClienteAuthService {
    * Salva sessão no sessionStorage (persiste apenas na aba atual)
    */
   private salvarSessao(response: ClienteLoginResponse): void {
+    console.debug('[ClienteAuth] Salvando sessão:', { clienteId: response.cliente.id, hasToken: !!response.token });
     this._token.next(response.token);
     this._clienteLogado.next(response.cliente);
 
