@@ -403,14 +403,58 @@
                 }
             </div>
             } @else {
-            <p class="carrossel-vazio">Carregando produtos...</p>
+            <div class="carrossel-vazio-container">
+                <span class="vazio-icon">📊</span>
+                <p class="carrossel-vazio">Ainda não temos dados de pedidos para exibir os mais populares</p>
+            </div>
+            }
+        </div>
+
+        <!-- Meus Favoritos (produtos favoritados pelo cliente logado) -->
+        <div class="inicio-section">
+            <h2 class="section-titulo">💜 Meus Favoritos</h2>
+            @if (favoritos.carregando()) {
+            <div class="carrossel-vazio-container">
+                <div class="loading-spinner-mini"></div>
+                <p class="carrossel-vazio">Carregando seus favoritos...</p>
+            </div>
+            } @else if (favoritos.produtosFavoritos().length > 0) {
+            <div class="carrossel-horizontal" appDraggableScroll>
+                @for (produto of favoritos.produtosFavoritos(); track produto.id) {
+                <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
+                    <button class="btn-favorito ativo" (click)="toggleFavorito(produto.id, $event)"
+                        title="Remover dos favoritos">
+                        ❤️
+                    </button>
+                    @if (produto.foto) {
+                    <div class="produto-imagem-mini">
+                        <img [src]="produto.foto" [alt]="produto.nome" loading="lazy">
+                    </div>
+                    } @else {
+                    <div class="produto-imagem-mini produto-sem-foto">
+                        <span>🍽️</span>
+                    </div>
+                    }
+                    <div class="produto-info-mini">
+                        <span class="produto-nome-mini">{{ produto.nome }}</span>
+                        <span class="produto-preco-mini">{{ produto.preco | currency:'BRL' }}</span>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else {
+            <div class="carrossel-vazio-container">
+                <span class="vazio-icon">🤍</span>
+                <p class="carrossel-vazio">Você ainda não favoritou nenhum produto</p>
+                <small class="carrossel-dica">Toque no ❤️ dos produtos para adicionar aos favoritos</small>
+            </div>
             }
         </div>
 
         <!-- Favoritos da Galera -->
-        @if (inicio.produtosMaisFavoritados().length > 0) {
         <div class="inicio-section">
             <h2 class="section-titulo">❤️ Favoritos da Galera</h2>
+            @if (inicio.produtosMaisFavoritados().length > 0) {
             <div class="carrossel-horizontal" appDraggableScroll>
                 @for (produto of inicio.produtosMaisFavoritados(); track produto.id) {
                 <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
@@ -438,13 +482,18 @@
                 </div>
                 }
             </div>
+            } @else {
+            <div class="carrossel-vazio-container">
+                <span class="vazio-icon">❤️</span>
+                <p class="carrossel-vazio">Ainda não há produtos favoritados pela comunidade</p>
+            </div>
+            }
         </div>
-        }
 
         <!-- Bem Avaliados -->
-        @if (inicio.produtosBemAvaliados().length > 0) {
         <div class="inicio-section">
             <h2 class="section-titulo">⭐ Bem Avaliados</h2>
+            @if (inicio.produtosBemAvaliados().length > 0) {
             <div class="carrossel-horizontal" appDraggableScroll>
                 @for (produto of inicio.produtosBemAvaliados(); track produto.id) {
                 <div class="produto-card-mini" (click)="abrirDetalhesProduto(produto)">
@@ -472,8 +521,14 @@
                 </div>
                 }
             </div>
+            } @else {
+            <div class="carrossel-vazio-container">
+                <span class="vazio-icon">⭐</span>
+                <p class="carrossel-vazio">Ainda não há produtos avaliados</p>
+                <small class="carrossel-dica">Avalie seus pedidos para ajudar outros clientes!</small>
+            </div>
+            }
         </div>
-        }
 
         <!-- Categorias Rápidas -->
         <div class="inicio-section">
@@ -800,7 +855,8 @@
                     <span class="pedido-total">{{ pedido.total | currency:'BRL' }}</span>
                     <div class="pedido-footer-right">
                         @if (pedido.tipoPedido) {
-                        <span class="pedido-tipo">{{ pedido.tipoPedido === 'DELIVERY' ? '🛵 Delivery' : '🏪 Retirada'
+                        <span class="pedido-tipo">{{ pedido.tipoPedido === 'DELIVERY' ? '🛵 Delivery' : '🏪
+                            Retirada'
                             }}</span>
                         }
                         @if (meusPedidos.isPedidoEmAndamento(pedido)) {
@@ -839,7 +895,8 @@
                     <div class="detalhes-info">
                         <div class="info-row">
                             <span class="info-label">Data:</span>
-                            <span class="info-value">{{ meusPedidos.pedidoSelecionado()?.createdAt | date:'dd/MM/yyyy
+                            <span class="info-value">{{ meusPedidos.pedidoSelecionado()?.createdAt |
+                                date:'dd/MM/yyyy
                                 HH:mm' }}</span>
                         </div>
                         <div class="info-row">
@@ -852,7 +909,8 @@
                         @if (meusPedidos.pedidoSelecionado()?.tipoPedido) {
                         <div class="info-row">
                             <span class="info-label">Tipo:</span>
-                            <span class="info-value">{{ meusPedidos.pedidoSelecionado()?.tipoPedido === 'DELIVERY' ? '🛵
+                            <span class="info-value">{{ meusPedidos.pedidoSelecionado()?.tipoPedido === 'DELIVERY' ?
+                                '🛵
                                 Delivery' : '🏪 Retirada' }}</span>
                         </div>
                         }
@@ -867,7 +925,8 @@
                                     <span class="item-qtd">{{ item.quantidade }}x</span>
                                     <span class="item-nome">{{ item.produtoNome }}</span>
                                 </div>
-                                <span class="item-preco">{{ (item.preco * item.quantidade) | currency:'BRL' }}</span>
+                                <span class="item-preco">{{ (item.preco * item.quantidade) | currency:'BRL'
+                                    }}</span>
                             </div>
                         </div>
                         }
@@ -927,7 +986,8 @@
                                         <button class="estrela-btn"
                                             [class.ativa]="avaliacao.getAvaliacaoProduto(item.produtoNome) >= estrela"
                                             (click)="avaliacao.avaliarProduto(item.produtoNome, estrela)">
-                                            {{ avaliacao.getAvaliacaoProduto(item.produtoNome) >= estrela ? '★' : '☆' }}
+                                            {{ avaliacao.getAvaliacaoProduto(item.produtoNome) >= estrela ? '★' :
+                                            '☆' }}
                                         </button>
                                         }
                                     </div>
@@ -1038,7 +1098,8 @@
         <div class="cta-acompanhar-float" (click)="acompanharPedidoEmAndamento()">
             <button class="cta-close" (click)="fecharCtaAcompanhamento(); $event.stopPropagation()">✕</button>
             <span class="cta-icon">🛵</span>
-            <span class="cta-texto">Você tem <strong>{{ meusPedidos.pedidosEmAndamento().length }} pedido(s)</strong> em
+            <span class="cta-texto">Você tem <strong>{{ meusPedidos.pedidosEmAndamento().length }}
+                    pedido(s)</strong> em
                 andamento</span>
             <span class="cta-seta">›</span>
         </div>
