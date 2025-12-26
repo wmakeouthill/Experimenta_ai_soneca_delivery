@@ -116,13 +116,15 @@ export class ProdutoModalComponent {
         disponivel: produtoEdit.disponivel ?? true,
         foto: produtoEdit.foto || ''
       });
+      // Usar foto do produto para edição
       this.fotoBase64.set(produtoEdit.foto || null);
 
       // Carregar adicionais vinculados ao produto
       this.carregarAdicionaisDoProduto(produtoEdit.id);
     } else {
-      // Criação: resetar formulário
+      // Criação: resetar formulário completamente
       this.formulario.resetar();
+      // Garantir que fotoBase64 está null para novo produto
       this.fotoBase64.set(null);
       this.adicionaisSelecionados.set([]);
     }
@@ -190,6 +192,7 @@ export class ProdutoModalComponent {
   fechar(): void {
     this.formulario.resetar();
     this.fotoBase64.set(null);
+    this.adicionaisSelecionados.set([]);
     this.onFechar.emit();
   }
 

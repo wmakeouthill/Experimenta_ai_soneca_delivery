@@ -7,7 +7,7 @@
   <form (ngSubmit)="salvar()">
     <div class="formulario-grupo">
       <app-image-upload
-        [imagemAtual]="produto()?.foto || null"
+        [imagemAtual]="fotoBase64() || produto()?.foto || null"
         [tamanhoMaximoMB]="5"
         [larguraMaxima]="800"
         [alturaMaxima]="800"

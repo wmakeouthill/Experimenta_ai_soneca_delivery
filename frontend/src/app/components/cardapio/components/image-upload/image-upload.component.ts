@@ -45,23 +45,41 @@ export class ImageUploadComponent {
     effect(() => {
       const imagemAtual = this.imagemAtual();
       
-      // Só atualizar se a imagemAtual mudou e usuário não definiu preview
+      // Só atualizar se a imagemAtual mudou
       if (imagemAtual !== this.ultimaImagemAtual) {
+        const imagemAnterior = this.ultimaImagemAtual;
         this.ultimaImagemAtual = imagemAtual;
         
-        if (imagemAtual && !this.usuarioDefiniuPreview) {
+        // Se imagemAtual mudou para null (novo produto ou limpeza), resetar estado interno
+        if (!imagemAtual) {
+          // Resetar flag e limpar preview quando imagemAtual for null
+          setTimeout(() => {
+            this.usuarioDefiniuPreview = false;
+            if (!this.carregando()) {
+              this.imagemPreview.set(null);
+            }
+            // Resetar input file também
+            const input = document.getElementById('image-upload-input') as HTMLInputElement;
+            if (input) {
+              input.value = '';
+            }
+          }, 0);
+        } else if (imagemAtual && !this.usuarioDefiniuPreview) {
           // Atualizar preview apenas se usuário não definiu um próprio
           // Usar setTimeout para evitar mutação durante effect
           setTimeout(() => {
             this.imagemPreview.set(imagemAtual);
           }, 0);
-        } else if (!imagemAtual && !this.usuarioDefiniuPreview) {
-          // Só limpar se não houver imagem atual e usuário não definiu preview
-          // Usar setTimeout para evitar mutação durante effect
+        } else if (imagemAtual && imagemAnterior && imagemAtual !== imagemAnterior) {
+          // Se imagemAtual mudou de um valor para outro (edição de produto diferente)
+          // Resetar flag e atualizar preview
           setTimeout(() => {
-            // Verificar se não está carregando antes de limpar (fora do effect)
-            if (!this.carregando()) {
-              this.imagemPreview.set(null);
+            this.usuarioDefiniuPreview = false;
+            this.imagemPreview.set(imagemAtual);
+            // Reset input file
+            const input = document.getElementById('image-upload-input') as HTMLInputElement;
+            if (input) {
+              input.value = '';
             }
           }, 0);
         }
