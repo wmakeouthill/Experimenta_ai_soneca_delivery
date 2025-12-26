@@ -4,11 +4,17 @@
     <div class="pwa-install-banner">
         <div class="pwa-install-texto">
             <strong>Instale o app</strong>
+            @if (pwaInstrucao()) {
+            <span>{{ pwaInstrucao() }}</span>
+            } @else {
             <span>Atalho na tela inicial, experiência fullscreen e mais rápida.</span>
+            }
         </div>
         <div class="pwa-install-botoes">
-            <button class="pwa-btn-secundario" (click)="fecharBannerPwa()">Agora não</button>
+            <button class="pwa-btn-secundario" (click)="fecharBannerPwa()">Fechar</button>
+            @if (!pwaInstrucao()) {
             <button class="pwa-btn-primario" (click)="instalarPwa()">Instalar</button>
+            }
         </div>
     </div>
     }

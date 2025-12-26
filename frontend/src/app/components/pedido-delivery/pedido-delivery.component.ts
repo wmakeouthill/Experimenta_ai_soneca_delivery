@@ -250,7 +250,21 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     // PWA
     readonly mostrarBannerPwa = signal(false);
     readonly isStandalone = signal(false);
+    readonly isSafari = signal(false);
+    readonly isFirefox = signal(false);
+    readonly isIOS = signal(false);
     private deferredPrompt: any = null;
+
+    // Computed: Instrução de instalação baseada no navegador
+    readonly pwaInstrucao = computed(() => {
+        if (this.isIOS() || this.isSafari()) {
+            return 'Toque em 📤 Compartilhar → "Adicionar à Tela Inicial"';
+        }
+        if (this.isFirefox()) {
+            return 'Toque em ⋮ Menu → "Instalar"';
+        }
+        return null; // Usa o botão padrão
+    });
 
     // Pagamento
     // Pagamento
@@ -497,6 +511,16 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
                 || (navigator as any).standalone === true;
             this.isStandalone.set(isStandaloneMode);
+
+            // Detecta navegador para instruções personalizadas
+            const ua = navigator.userAgent;
+            const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(ua);
+            const isFirefoxBrowser = /firefox/i.test(ua);
+
+            this.isIOS.set(isIOSDevice);
+            this.isSafari.set(isSafariBrowser);
+            this.isFirefox.set(isFirefoxBrowser);
 
             // PWA Install Prompt: Mostra banner se não estiver em modo standalone
             if (!isStandaloneMode) {
