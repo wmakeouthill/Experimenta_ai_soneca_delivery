@@ -162,38 +162,26 @@ async function processarBase64ParaArquivo(base64Data, filename = 'logo', maxWidt
         let image = await JimpLib.read(imageBuffer);
 
         const paperWidth = maxWidth; // 384px para 48mm
-        let imgWidth = image.width || 384;
-        const imgHeight = image.height || 100;
+        const maxLogoWidth = 320; // Máximo para deixar margem de centralização (32px cada lado)
+        let imgWidth = image.width || 100;
+        let imgHeight = image.height || 100;
 
-        // Só redimensiona se maior que o papel
-        if (imgWidth > paperWidth) {
-            image.resize({ w: paperWidth });
-            imgWidth = paperWidth;
-            console.log(`📐 Logo redimensionado para caber no papel: ${paperWidth}px`);
+        console.log(`📊 Imagem original: ${imgWidth}x${imgHeight}px, papel: ${paperWidth}px`);
+
+        // Só redimensiona se MAIOR que o máximo permitido (320px)
+        // Imagens pequenas mantêm tamanho original!
+        if (imgWidth > maxLogoWidth) {
+            image.resize({ w: maxLogoWidth });
+            imgWidth = image.width || maxLogoWidth;
+            imgHeight = image.height || 100;
+            console.log(`📐 Logo redimensionado para ${maxLogoWidth}px (era ${image.width}px)`);
         }
 
-        // === CENTRALIZAÇÃO FÍSICA ===
-        // ESC a 1 NÃO funciona na Diebold para imagens raster
-        // Adicionamos padding branco à ESQUERDA para centralizar
-        if (imgWidth < paperWidth) {
-            const leftPadding = Math.floor((paperWidth - imgWidth) / 2);
+        // Nota: Centralização será feita pelo ESC a 1 no node-thermal-printer
+        // Não fazemos padding manual porque Jimp v1.x composite não está funcionando corretamente
 
-            if (leftPadding > 0) {
-                // Cria canvas branco com largura do papel
-                const { Jimp } = require('jimp');
-                const centered = new Jimp({
-                    width: paperWidth,
-                    height: imgHeight,
-                    color: 0xFFFFFFFF // Branco
-                });
+        console.log(`✅ Logo pronto: ${imgWidth}x${imgHeight}px`);
 
-                // Posiciona a imagem no centro do canvas
-                centered.composite(image, leftPadding, 0);
-                image = centered;
-
-                console.log(`🎯 Logo centralizado fisicamente: padding=${leftPadding}px, largura final=${paperWidth}px`);
-            }
-        }
 
         // Salva como PNG temporário
         const filePath = path.join(TEMP_DIR, `${filename}_${Date.now()}.png`);
