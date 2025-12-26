@@ -63,11 +63,19 @@ public class SecurityConfig {
                         .requestMatchers("/@vite/**", "/@fs/**", "/@id/**", "/@react-refresh", "/node_modules/**")
                         .permitAll()
 
-                        // Rotas do Angular Router (SPA) - PÚBLICO para frontend routing
-                        // Apenas rotas de auto-atendimento do cliente (QR Code) e login
-                        // A autenticação do cliente é feita via header X-Cliente-Id após o login na
-                        // tela
-                        .requestMatchers("/pedido-mesa/**", "/mesa/**", "/login").permitAll()
+                        // Rotas do Angular Router (SPA) - Servem index.html
+                        // A autenticação é feita pelos Guards do Angular no frontend
+                        // O backend só protege os endpoints de API, não as rotas do SPA
+                        .requestMatchers(
+                                "/pedido-mesa/**", "/mesa/**", "/login",
+                                "/politica-privacidade", "/termos-uso",
+                                // Rotas protegidas do Angular (guards verificam auth no frontend)
+                                "/cardapio", "/pedidos", "/sessoes", "/historico-sessoes",
+                                "/gestao-caixa", "/relatorios", "/relatorio-financeiro",
+                                "/gestao-estoque", "/administracao", "/gestao-motoboys",
+                                "/delivery", "/lobby-pedidos", "/autoatendimento",
+                                "/cadastro-motoboy", "/motoboy/**")
+                        .permitAll()
                         // Rota de fallback para erros (tratada pelo SpaFallbackConfig)
                         .requestMatchers("/error").permitAll()
 
@@ -85,7 +93,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/publico/cliente/imagem/**").permitAll()
                         // Endpoints públicos de autenticação de motoboy (login, Google OAuth)
                         .requestMatchers(PUBLIC_MOTOBOY_AUTH_PATTERN).permitAll()
-                        // Endpoints de conta do motoboy (pedidos, perfil, localização) - usa header X-Motoboy-Id
+                        // Endpoints de conta do motoboy (pedidos, perfil, localização) - usa header
+                        // X-Motoboy-Id
                         .requestMatchers(MOTOBOY_CONTA_PATTERN).permitAll()
                         .requestMatchers(MOTOBOYS_CONTA_PATTERN).permitAll()
                         // Endpoints de conta do cliente (favoritos, perfil, etc.) - usa header

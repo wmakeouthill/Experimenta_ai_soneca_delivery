@@ -49,6 +49,11 @@ export const clienteAuthInterceptor: HttpInterceptorFn = (req, next) => {
         return next(req);
     }
 
+    // Log de debug em desenvolvimento
+    if (typeof process !== 'undefined' && process.env?.['NODE_ENV'] !== 'production') {
+        console.debug('[ClienteAuth] Interceptando requisição:', req.url, { hasToken: !!token, clienteId });
+    }
+
     // Clona a requisição adicionando os headers
     const clonedReq = req.clone({
         setHeaders: {

@@ -22,14 +22,19 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
       const isRotaPublica = typeof window !== 'undefined' &&
         ROTAS_PUBLICAS.some(rota => window.location.pathname.includes(rota));
 
+      // Verificar se a REQUISIÇÃO HTTP é para endpoint público ou de cliente
+      // (importante: verifica a URL da requisição, não só o pathname do navegador)
+      const isUrlPublicaOuCliente = ROTAS_PUBLICAS.some(rota => req.url.includes(rota));
+
       // Verificar se a requisição é para endpoint público, de cliente ou de motoboy
-      const isEndpointPublicoOuCliente = req.url.includes('/api/public/') || 
-                                         req.url.includes('/api/publico/') || 
-                                         req.url.includes('/api/cliente/') ||
-                                         req.url.includes('/api/motoboy/');
+      const isEndpointPublicoOuCliente = req.url.includes('/api/public/') ||
+        req.url.includes('/api/publico/') ||
+        req.url.includes('/api/cliente/') ||
+        req.url.includes('/api/motoboy/');
 
       // Tratar apenas erros de autenticação/autorização em rotas protegidas
-      if ((error.status === 401 || error.status === 403) && !isRotaPublica && !isEndpointPublicoOuCliente) {
+      // NÃO redirecionar se a URL da requisição for para cliente/público (mesmo que pathname seja diferente)
+      if ((error.status === 401 || error.status === 403) && !isRotaPublica && !isEndpointPublicoOuCliente && !isUrlPublicaOuCliente) {
         // Limpar dados de autenticação
         authService.logout();
 
