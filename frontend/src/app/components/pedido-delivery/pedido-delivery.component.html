@@ -718,6 +718,16 @@
                 <span class="item-arrow">›</span>
             </button>
 
+            <!-- Instalar App (só aparece quando no navegador, não no PWA instalado) -->
+            @if (!isStandalone()) {
+            <button class="perfil-item instalar" (click)="instalarPwa()">
+                <span class="item-icon">📲</span>
+                <span class="item-texto">Instalar o App</span>
+                <span class="item-badge destaque">Recomendado</span>
+                <span class="item-arrow">›</span>
+            </button>
+            }
+
             <!-- Sair -->
             <button class="perfil-item sair" (click)="logout()">
                 <span class="item-icon">🚪</span>
@@ -1479,21 +1489,19 @@
                     @if (sucessoPedido.passoAtual() === 4) {
                     <span class="timeline-sublabel">Seu pedido está a caminho!</span>
                     @if (sucessoPedido.tipoPedido() === 'DELIVERY') {
-                        <button 
-                            class="btn-rastrear"
-                            (click)="abrirRastreamento()"
-                            [disabled]="rastreamento.carregando()">
-                            @if (rastreamento.carregando()) {
-                                <span class="spinner-small"></span> Carregando...
-                            } @else {
-                                📍 Rastrear pedido
-                            }
-                        </button>
-                        @if (rastreamento.temLocalizacaoMotoboy()) {
-                            <div class="info-rastreamento">
-                                <small>Última atualização: {{ rastreamento.calcularTempoDesde(rastreamento.localizacaoMotoboy()?.timestamp) }}</small>
-                            </div>
+                    <button class="btn-rastrear" (click)="abrirRastreamento()" [disabled]="rastreamento.carregando()">
+                        @if (rastreamento.carregando()) {
+                        <span class="spinner-small"></span> Carregando...
+                        } @else {
+                        📍 Rastrear pedido
                         }
+                    </button>
+                    @if (rastreamento.temLocalizacaoMotoboy()) {
+                    <div class="info-rastreamento">
+                        <small>Última atualização: {{
+                            rastreamento.calcularTempoDesde(rastreamento.localizacaoMotoboy()?.timestamp) }}</small>
+                    </div>
+                    }
                     }
                     }
                 </div>
@@ -1592,8 +1600,6 @@
 </div>
 
 <!-- Modal de Rastreamento -->
-<app-modal-rastreamento
-    [aberto]="modalRastreamentoAberto()"
-    [rastreamento]="rastreamento.rastreamento()"
+<app-modal-rastreamento [aberto]="modalRastreamentoAberto()" [rastreamento]="rastreamento.rastreamento()"
     (onFechar)="fecharModalRastreamento()">
 </app-modal-rastreamento>

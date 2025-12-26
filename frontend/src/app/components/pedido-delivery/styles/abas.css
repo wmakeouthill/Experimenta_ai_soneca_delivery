@@ -272,6 +272,20 @@
     color: #0369A1;
 }
 
+.item-badge.destaque {
+    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+    color: white;
+    font-weight: 600;
+}
+
+.perfil-item.instalar {
+    background: linear-gradient(to right, #FFF7ED, #FFEDD5);
+}
+
+.perfil-item.instalar:active {
+    background: linear-gradient(to right, #FFEDD5, #FED7AA);
+}
+
 .perfil-info {
     text-align: center;
     color: #999;

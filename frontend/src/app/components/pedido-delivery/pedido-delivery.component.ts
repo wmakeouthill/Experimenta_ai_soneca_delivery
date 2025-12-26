@@ -249,6 +249,7 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     // PWA
     readonly mostrarBannerPwa = signal(false);
+    readonly isStandalone = signal(false);
     private deferredPrompt: any = null;
 
     // Pagamento
@@ -492,11 +493,25 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
             this.chatIA.inicializar(); // Inicializa o chat e histórico
 
-            // PWA Install Prompt
+            // PWA: Detecta se está rodando como app instalado (standalone)
+            const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
+                || (navigator as any).standalone === true;
+            this.isStandalone.set(isStandaloneMode);
+
+            // PWA Install Prompt: Mostra banner se não estiver em modo standalone
+            if (!isStandaloneMode) {
+                // Sempre mostra o banner quando está no navegador
+                this.mostrarBannerPwa.set(true);
+            }
+
+            // Captura o evento beforeinstallprompt para poder instalar depois
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 this.deferredPrompt = e;
-                this.mostrarBannerPwa.set(true);
+                // Mantém o banner visível se não estiver em standalone
+                if (!this.isStandalone()) {
+                    this.mostrarBannerPwa.set(true);
+                }
             });
 
             // Verificar se já está logado

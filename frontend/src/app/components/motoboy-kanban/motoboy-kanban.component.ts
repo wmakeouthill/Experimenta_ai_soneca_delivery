@@ -46,6 +46,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
 
   // PWA
   readonly mostrarBannerPwa = signal(false);
+  readonly isStandalone = signal(false);
   private deferredPrompt: any = null;
 
   // Controle de polling e atualizações
@@ -941,6 +942,17 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     // Adiciona o manifest dinamicamente se não existir
     this.adicionarManifestMotoboy();
 
+    // Detecta se está rodando como app instalado (standalone)
+    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
+      || (navigator as any).standalone === true;
+    this.isStandalone.set(isStandaloneMode);
+
+    // PWA Install Prompt: Mostra banner se não estiver em modo standalone
+    if (!isStandaloneMode) {
+      // Sempre mostra o banner quando está no navegador
+      this.mostrarBannerPwa.set(true);
+    }
+
     // Registra o service worker específico do motoboy
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -966,11 +978,14 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       });
     }
 
-    // Listener para o prompt de instalação
+    // Captura o evento beforeinstallprompt para poder instalar depois
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
-      this.mostrarBannerPwa.set(true);
+      // Mantém o banner visível se não estiver em standalone
+      if (!this.isStandalone()) {
+        this.mostrarBannerPwa.set(true);
+      }
     });
 
     // Detecta quando o app é instalado
@@ -978,6 +993,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       console.log('[PWA Motoboy] App instalado com sucesso');
       this.mostrarBannerPwa.set(false);
       this.deferredPrompt = null;
+      this.isStandalone.set(true);
     });
   }
 
@@ -1034,15 +1050,6 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
    */
   fecharBannerPwa(): void {
     this.mostrarBannerPwa.set(false);
-  }
-
-  /**
-   * Verifica se o app está rodando em modo standalone (instalado).
-   */
-  isStandalone(): boolean {
-    if (!isPlatformBrowser(this.platformId)) return false;
-    return window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as any).standalone === true;
   }
 }
 

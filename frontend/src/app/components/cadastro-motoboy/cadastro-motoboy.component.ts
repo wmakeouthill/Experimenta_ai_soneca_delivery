@@ -30,6 +30,11 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
     readonly erro = signal<string | null>(null);
     readonly googleIniciado = signal(false);
 
+    // PWA
+    readonly mostrarBannerPwa = signal(false);
+    readonly isStandalone = signal(false);
+    private deferredPrompt: any = null;
+
     constructor() {
         // Verifica se já está autenticado
         if (this.isBrowser && this.motoboyAuthService.isAuthenticated()) {
@@ -43,6 +48,10 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
 
     async ngAfterViewInit(): Promise<void> {
         if (!this.isBrowser) return;
+
+        // Inicializa PWA detection
+        this.inicializarPWA();
+
         // Segue o mesmo padrão da tela /delivery: inicializa e depois renderiza
         await this.inicializarGoogle();
         // Aguarda um ciclo para garantir que o DOM está totalmente renderizado
@@ -71,7 +80,7 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
      */
     private async inicializarGoogle(): Promise<void> {
         if (!this.isBrowser) return;
-        
+
         try {
             console.log('🔄 Inicializando Google Sign-In...');
             await this.googleSignInService.initialize();
@@ -100,7 +109,7 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
         if (!this.isBrowser) return;
 
         const element = this.googleButtonRef?.nativeElement;
-        
+
         // Debug: verifica estado atual
         if (!element) {
             console.debug('⏳ Elemento do botão Google ainda não disponível');
@@ -136,10 +145,10 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
                 shape: 'rectangular',
                 width: 300
             });
-            
+
             this.googleButtonRendered = true;
             this.cdr.markForCheck();
-            
+
             console.log('✅ Botão Google renderizado com sucesso');
         } catch (e) {
             console.error('❌ Erro ao renderizar botão Google:', e);
@@ -158,16 +167,16 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
 
         try {
             const response = await firstValueFrom(this.motoboyAuthService.loginGoogle(googleToken));
-            
+
             if (response && response.token && response.motoboy) {
                 // Aguarda um pouco para garantir que o sessionStorage foi persistido
                 // O método salvarSessao já foi chamado pelo tap() no pipe
                 await new Promise(resolve => setTimeout(resolve, 300));
-                
+
                 // Verifica se a sessão foi salva corretamente
                 let tokenSalvo = this.motoboyAuthService.getToken();
                 let motoboySalvo = this.motoboyAuthService.motoboyLogado;
-                
+
                 // Se ainda não foi salvo, tenta salvar manualmente
                 if (!tokenSalvo || !motoboySalvo) {
                     console.warn('⚠️ Sessão não foi salva automaticamente. Tentando salvar manualmente...');
@@ -175,7 +184,7 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
                         try {
                             sessionStorage.setItem('motoboy-auth-token', response.token);
                             sessionStorage.setItem('motoboy-auth-data', JSON.stringify(response.motoboy));
-                            
+
                             // Verifica novamente
                             tokenSalvo = this.motoboyAuthService.getToken();
                             motoboySalvo = this.motoboyAuthService.motoboyLogado;
@@ -184,7 +193,7 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
                         }
                     }
                 }
-                
+
                 // Verifica novamente após tentativa manual
                 if (!tokenSalvo || !motoboySalvo) {
                     console.error('❌ Sessão não foi salva corretamente após login');
@@ -193,16 +202,16 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
                     this.cdr.detectChanges();
                     return;
                 }
-                
+
                 console.log('✅ Login realizado com sucesso. Sessão salva. Redirecionando...', {
                     tokenLength: tokenSalvo.length,
                     motoboyId: motoboySalvo.id
                 });
-                
+
                 // Aguarda mais um pouco para garantir que o sessionStorage foi totalmente persistido
                 // Especialmente importante em mobile
                 await new Promise(resolve => setTimeout(resolve, 200));
-                
+
                 // Redireciona para o kanban do motoboy usando window.location para garantir persistência
                 // window.location.href força um reload completo, garantindo que o Angular reinicialize
                 // e leia o sessionStorage corretamente
@@ -220,6 +229,77 @@ export class CadastroMotoboyComponent implements OnInit, AfterViewInit, AfterVie
             this.carregando.set(false);
             this.cdr.detectChanges();
         }
+    }
+
+    // ========== PWA ==========
+
+    /**
+     * Inicializa a detecção de modo PWA e configura o banner de instalação.
+     */
+    private inicializarPWA(): void {
+        if (!this.isBrowser) return;
+
+        // Detecta se está rodando como app instalado (standalone)
+        const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
+            || (navigator as any).standalone === true;
+        this.isStandalone.set(isStandaloneMode);
+
+        // Mostra banner se não estiver em modo standalone
+        if (!isStandaloneMode) {
+            this.mostrarBannerPwa.set(true);
+        }
+
+        // Captura o evento beforeinstallprompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            this.deferredPrompt = e;
+            if (!this.isStandalone()) {
+                this.mostrarBannerPwa.set(true);
+                this.cdr.markForCheck();
+            }
+        });
+
+        // Detecta quando o app é instalado
+        window.addEventListener('appinstalled', () => {
+            console.log('[PWA] App instalado com sucesso');
+            this.mostrarBannerPwa.set(false);
+            this.deferredPrompt = null;
+            this.isStandalone.set(true);
+            this.cdr.markForCheck();
+        });
+    }
+
+    /**
+     * Instala o PWA quando o usuário clicar no botão.
+     */
+    async instalarPwa(): Promise<void> {
+        if (!this.deferredPrompt) {
+            console.warn('[PWA] Prompt de instalação não disponível');
+            return;
+        }
+
+        try {
+            this.deferredPrompt.prompt();
+            const { outcome } = await this.deferredPrompt.userChoice;
+
+            console.log(`[PWA] Usuário ${outcome === 'accepted' ? 'aceitou' : 'rejeitou'} a instalação`);
+
+            if (outcome === 'accepted') {
+                this.deferredPrompt = null;
+            }
+
+            this.mostrarBannerPwa.set(false);
+            this.cdr.markForCheck();
+        } catch (error) {
+            console.error('[PWA] Erro ao instalar:', error);
+        }
+    }
+
+    /**
+     * Fecha o banner de instalação PWA.
+     */
+    fecharBannerPwa(): void {
+        this.mostrarBannerPwa.set(false);
     }
 }
 
