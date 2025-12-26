@@ -89,7 +89,9 @@
     }
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "jimp": "^1.6.0",
+    "node-thermal-printer": "^4.5.0"
   },
   "devDependencies": {
     "electron": "^28.0.0",

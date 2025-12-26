@@ -7,7 +7,13 @@
 const { inicializar, cortarPapel, linhaEmBranco, setCodePage850 } = require('./escpos-commands');
 
 /**
- * Remove comandos que sabidamente causam problemas em algumas impressoras
+ * Sanitiza comandos que podem causar problemas em algumas impressoras
+ * 
+ * NOTA: O filtro de bitmap (GS v 0) foi REMOVIDO conforme solicitação.
+ * A impressão de imagens deve funcionar em qualquer impressora com
+ * configuração correta. Use node-thermal-printer para garantir
+ * compatibilidade com diferentes modelos.
+ * 
  * @param {Buffer} buffer - Buffer original
  * @param {string} tipoImpressora - Tipo da impressora
  * @returns {Buffer} - Buffer sanitizado
@@ -16,57 +22,25 @@ function sanitizarComandosProblematicos(buffer, tipoImpressora) {
   const listaBytes = [];
   let i = 0;
 
-  // Normaliza o tipo para comparação
+  // Normaliza o tipo para comparação (não mais usado para filtro de imagem)
   const tipo = (tipoImpressora || '').toUpperCase();
 
-  // Define se deve aplicar filtros agressivos (para Diebold/Genéricas)
-  // Se for EPSON ou DARUMA explicitamente, evitamos filtrar imagens
-  const aplicarFiltroImagem = tipo.includes('DIEBOLD') || tipo.includes('GENERICA') || !tipo;
-
   while (i < buffer.length) {
-    // 1. Detecta ESC a (0x1B 0x61 n) - Alinhamento
-    // A impressora Diebold rejeita este comando e trava
-    // Este filtro mantemos para todos por segurança, pois não costuma fazer falta crítica
+    // Detecta ESC a (0x1B 0x61 n) - Alinhamento
+    // Algumas impressoras (ex: Diebold) podem ter problemas com este comando
+    // Mantemos o filtro apenas para o comando de alinhamento
     if (i + 2 < buffer.length &&
       buffer[i] === 0x1B &&
       buffer[i + 1] === 0x61) {
 
-      console.log(`⚠️ Removendo comando problemático: ESC a ${buffer[i + 2]} (Alinhamento) na posição ${i}`);
+      console.log(`⚠️ Removendo comando ESC a ${buffer[i + 2]} (Alinhamento) na posição ${i}`);
       i += 3; // Pula os 3 bytes (1B 61 n)
       continue;
     }
 
-    // 2. Detecta GS v 0 (0x1D 0x76 0x30) - Bitmap Raster
-    // SÓ APLICAMOS SE FOR IMPRESSORA PROBLEMÁTICA
-    if (aplicarFiltroImagem && i + 6 < buffer.length &&
-      buffer[i] === 0x1D &&
-      buffer[i + 1] === 0x76) {
-
-      const m = buffer[i + 2];
-      // Modos válidos: 0, 1, 2, 3, 48('0'), 49('1'), 50('2'), 51('3')
-      const isValidMode = (m >= 0 && m <= 3) || (m >= 48 && m <= 51);
-
-      if (isValidMode) {
-
-        const xL = buffer[i + 3];
-        const xH = buffer[i + 4];
-        const yL = buffer[i + 5];
-        const yH = buffer[i + 6];
-
-        // Calcula tamanho dos dados do bitmap
-        // xL e xH já representam a largura em BYTES (não pixels)
-        const widthBytes = xL + xH * 256;
-        const height = yL + yH * 256;
-        const dataSize = widthBytes * height;
-
-        console.log(`⚠️ Removendo comando de BITMAP (GS v 0 m=${m}) na posição ${i}`);
-        console.log(`   Dimensões: Largura=${widthBytes} bytes, Altura=${height} linhas`);
-        console.log(`   Tamanho total a pular: 7 (header) + ${dataSize} (dados) = ${7 + dataSize} bytes`);
-
-        i += 7 + dataSize; // Pula cabeçalho (7 bytes) + dados
-        continue;
-      }
-    }
+    // NOTA: Filtro de bitmap (GS v 0) foi REMOVIDO
+    // Imagens agora são passadas diretamente para a impressora
+    // Use node-thermal-printer para melhor compatibilidade
 
     listaBytes.push(buffer[i]);
     i++;
@@ -74,6 +48,7 @@ function sanitizarComandosProblematicos(buffer, tipoImpressora) {
 
   return Buffer.from(listaBytes);
 }
+
 
 /**
  * Converte dados do cupom para formato ESC/POS completo

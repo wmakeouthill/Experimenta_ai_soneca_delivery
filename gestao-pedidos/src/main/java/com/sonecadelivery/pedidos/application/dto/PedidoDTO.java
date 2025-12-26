@@ -40,6 +40,8 @@ public class PedidoDTO {
         private String enderecoEntrega;
         private String motoboyId;
         private String motoboyNome;
+        private String motoboyApelido; // Apelido (nome exibido) do motoboy
+        private String motoboyTelefone; // Telefone do motoboy para contato
         private BigDecimal taxaEntrega;
         private BigDecimal valorMotoboy; // Valor pago ao motoboy por esta entrega (padrão R$ 5,00)
         private LocalDateTime previsaoEntrega;
@@ -111,6 +113,24 @@ public class PedidoDTO {
         public static PedidoDTO de(Pedido pedido, String motoboyNome) {
                 PedidoDTO dto = de(pedido);
                 dto.setMotoboyNome(motoboyNome);
+                return dto;
+        }
+
+        /**
+         * Converte um Pedido de domínio para DTO, incluindo informações completas do
+         * motoboy.
+         * Use este método para impressão de cupom de delivery com dados do motoboy.
+         * 
+         * @param pedido          Pedido de domínio
+         * @param motoboyNome     Nome do motoboy (nome Google)
+         * @param motoboyApelido  Apelido do motoboy (nome exibido)
+         * @param motoboyTelefone Telefone do motoboy para contato
+         */
+        public static PedidoDTO de(Pedido pedido, String motoboyNome, String motoboyApelido, String motoboyTelefone) {
+                PedidoDTO dto = de(pedido);
+                dto.setMotoboyNome(motoboyNome);
+                dto.setMotoboyApelido(motoboyApelido);
+                dto.setMotoboyTelefone(motoboyTelefone);
                 return dto;
         }
 }
