@@ -102,10 +102,11 @@ router.post('/imprimir/cupom-fiscal', async (req, res) => {
       const logoResult = await converterLogoParaBuffer(logoBase64, tipoImpressora);
       if (logoResult.success && logoResult.buffer) {
         // Centraliza o raster no papel
-        // Detecta largura do papel baseado no tipo de impressora
+        // Detecta largura IMPRIMÍVEL do papel (não largura total)
+        // 80mm papel = ~72mm área imprimível = 576px = 72 bytes
         let paperWidthBytes;
         if (tipoImpressora && tipoImpressora.includes('DIEBOLD')) {
-          paperWidthBytes = 80; // 80mm = 640px = 80 bytes (full width)
+          paperWidthBytes = 72; // 80mm papel, ~72mm imprimível = 576px
         } else if (tipoImpressora && tipoImpressora.includes('58')) {
           paperWidthBytes = 48; // 58mm = 384px = 48 bytes
         } else {
