@@ -159,17 +159,37 @@ async function processarBase64ParaArquivo(base64Data, filename = 'logo', maxWidt
         const imageBuffer = Buffer.from(base64Clean, 'base64');
 
         // Carrega imagem com Jimp
-        const image = await JimpLib.read(imageBuffer);
+        let image = await JimpLib.read(imageBuffer);
 
         // Redimensiona se necessário (mantendo proporção)
-        const currentWidth = image.width || image.getWidth?.() || 384;
+        let currentWidth = image.width || 384;
         if (currentWidth > maxWidth) {
             // Jimp v1.x usa { w } em vez de (width, AUTO)
             image.resize({ w: maxWidth });
+            currentWidth = image.width;
         }
 
-        // Nota: Em Jimp v1.x, grayscale/contrast são plugins separados
-        // node-thermal-printer faz a conversão automaticamente
+        // === CENTRALIZAÇÃO DINÂMICA ===
+        // Calcula padding para centralizar a imagem no papel
+        const paperWidth = maxWidth; // 384px para 48mm
+        const imgWidth = image.width || currentWidth;
+        const imgHeight = image.height || 100;
+
+        if (imgWidth < paperWidth) {
+            const leftPadding = Math.floor((paperWidth - imgWidth) / 2);
+
+            if (leftPadding > 5) { // Só adiciona padding se for significativo
+                // Cria canvas branco com a largura do papel
+                const { Jimp } = require('jimp');
+                const centered = new Jimp({ width: paperWidth, height: imgHeight, color: 0xFFFFFFFF });
+
+                // Posiciona a imagem no centro
+                centered.composite(image, leftPadding, 0);
+                image = centered;
+
+                console.log(`🎯 Imagem centralizada dinamicamente: padding=${leftPadding}px, largura final=${paperWidth}px`);
+            }
+        }
 
         // Salva como PNG temporário
         const filePath = path.join(TEMP_DIR, `${filename}_${Date.now()}.png`);
