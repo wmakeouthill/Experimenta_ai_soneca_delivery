@@ -168,10 +168,8 @@ async function processarBase64ParaArquivo(base64Data, filename = 'logo', maxWidt
             image.resize({ w: maxWidth });
         }
 
-        // Converte para escala de cinza e aumenta contraste (melhor para impressoras térmicas)
-        image
-            .grayscale()
-            .contrast(0.2);
+        // Nota: Em Jimp v1.x, grayscale/contrast são plugins separados
+        // node-thermal-printer faz a conversão automaticamente
 
         // Salva como PNG temporário
         const filePath = path.join(TEMP_DIR, `${filename}_${Date.now()}.png`);
