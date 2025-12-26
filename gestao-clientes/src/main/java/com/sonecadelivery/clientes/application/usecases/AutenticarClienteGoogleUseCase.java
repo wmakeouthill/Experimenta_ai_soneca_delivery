@@ -34,7 +34,7 @@ public class AutenticarClienteGoogleUseCase {
             // Cliente já existe com este googleId - fazer login
             cliente = clienteExistente.get();
             cliente.registrarAcesso();
-            clienteRepository.salvar(cliente);
+            cliente = clienteRepository.salvar(cliente); // Usa o cliente retornado
         } else {
             // Verificar se existe cliente com mesmo email
             Optional<Cliente> clientePorEmail = clienteRepository.buscarPorEmail(googleUser.email());
@@ -44,19 +44,20 @@ public class AutenticarClienteGoogleUseCase {
                 cliente = clientePorEmail.get();
                 cliente.vincularGoogle(googleUser.googleId(), googleUser.fotoUrl());
                 cliente.registrarAcesso();
-                clienteRepository.salvar(cliente);
+                cliente = clienteRepository.salvar(cliente); // Usa o cliente retornado
             } else {
                 // Criar novo cliente via Google
-                cliente = Cliente.criarViaGoogle(
+                Cliente novoCliente = Cliente.criarViaGoogle(
                         googleUser.nome(),
                         googleUser.email(),
                         googleUser.googleId(),
                         googleUser.fotoUrl());
-                clienteRepository.salvar(cliente);
+                // IMPORTANTE: Usar o cliente retornado do repositório com o ID correto do banco
+                cliente = clienteRepository.salvar(novoCliente);
             }
         }
 
-        // Gerar token
+        // Gerar token com o cliente que tem o ID correto do banco de dados
         String token = jwtService.gerarToken(cliente);
 
         return ClienteLoginResponse.of(token, ClienteDTO.de(cliente));
