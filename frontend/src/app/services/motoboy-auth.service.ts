@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, BehaviorSubject, tap } from 'rxjs';
 
 export interface MotoboyAuth {
   id: string;
@@ -35,10 +35,37 @@ export class MotoboyAuthService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = '/api/publico/motoboy/auth';
 
+  // BehaviorSubjects para estado síncrono (resolve timing issues após login OAuth)
+  private readonly _token = new BehaviorSubject<string | null>(null);
+  private readonly _motoboyLogado = new BehaviorSubject<MotoboyAuth | null>(null);
+
+  // Observables expostos
+  readonly token$ = this._token.asObservable();
+  readonly motoboyLogado$ = this._motoboyLogado.asObservable();
+
+  constructor() {
+    this.restaurarSessao();
+  }
+
   /**
-   * Obtém o motoboy logado do sessionStorage.
+   * Getter síncrono do token (prioridade para interceptors).
+   */
+  get token(): string | null {
+    return this._token.value;
+  }
+
+  /**
+   * Getter síncrono do motoboy logado.
+   * Prioriza BehaviorSubject, com fallback para sessionStorage.
    */
   get motoboyLogado(): MotoboyAuth | null {
+    // Prioriza o BehaviorSubject (síncrono, atualizado imediatamente após login)
+    const fromSubject = this._motoboyLogado.value;
+    if (fromSubject) {
+      return fromSubject;
+    }
+
+    // Fallback: sessionStorage (para casos de reload de página)
     if (typeof sessionStorage === 'undefined') {
       return null;
     }
@@ -53,6 +80,13 @@ export class MotoboyAuthService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Verifica se está autenticado.
+   */
+  get estaLogado(): boolean {
+    return !!this._token.value && !!this._motoboyLogado.value?.id;
   }
 
   /**
@@ -120,15 +154,11 @@ export class MotoboyAuthService {
   }
 
   /**
-   * Salva a sessão do motoboy no sessionStorage.
-   * Em mobile, garante que os dados sejam persistidos corretamente.
+   * Salva a sessão do motoboy.
+   * IMPORTANTE: Atualiza BehaviorSubjects PRIMEIRO (síncrono) para que interceptors
+   * tenham acesso imediato ao token, depois persiste no sessionStorage.
    */
   private salvarSessao(response: MotoboyLoginResponse): void {
-    if (typeof sessionStorage === 'undefined') {
-      console.error('❌ sessionStorage não está disponível');
-      return;
-    }
-
     if (!response.token) {
       console.error('❌ Token não recebido na resposta de login');
       return;
@@ -139,60 +169,77 @@ export class MotoboyAuthService {
       return;
     }
 
-    try {
-      // Salva token e dados do motoboy
-      sessionStorage.setItem(TOKEN_KEY, response.token);
-      sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
+    // 1. Atualiza BehaviorSubjects PRIMEIRO (síncrono - resolve timing issues)
+    this._token.next(response.token);
+    this._motoboyLogado.next(response.motoboy);
 
-      // Verifica se foi salvo corretamente (importante em mobile)
-      const tokenVerificado = sessionStorage.getItem(TOKEN_KEY);
-      const motoboyVerificado = sessionStorage.getItem(MOTOBOY_KEY);
+    console.log('[MotoboyAuth] BehaviorSubjects atualizados:', {
+      tokenLength: response.token.length,
+      motoboyId: response.motoboy.id
+    });
 
-      if (!tokenVerificado || !motoboyVerificado) {
-        console.error('❌ Falha ao persistir sessão no sessionStorage');
-        // Tenta novamente
-        sessionStorage.setItem(TOKEN_KEY, response.token);
-        sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
-      }
-
-      // Verifica novamente após segunda tentativa
-      const tokenVerificado2 = sessionStorage.getItem(TOKEN_KEY);
-      const motoboyVerificado2 = sessionStorage.getItem(MOTOBOY_KEY);
-
-      if (tokenVerificado2 && motoboyVerificado2) {
-        console.log('✅ Sessão do motoboy salva com sucesso:', {
-          tokenLength: response.token.length,
-          motoboyId: response.motoboy.id,
-          motoboyNome: response.motoboy.nome,
-          tokenSalvo: tokenVerificado2.substring(0, 20) + '...',
-          motoboySalvo: JSON.parse(motoboyVerificado2).id
-        });
-      } else {
-        console.error('❌ Falha crítica ao salvar sessão. sessionStorage pode estar bloqueado.');
-        throw new Error('Falha ao salvar sessão no sessionStorage');
-      }
-    } catch (error) {
-      console.error('❌ Erro ao salvar sessão:', error);
-      // Em caso de erro, tenta usar try-catch para evitar quebrar o fluxo
+    // 2. Depois persiste no sessionStorage (para sobreviver a refreshes)
+    if (typeof sessionStorage !== 'undefined') {
       try {
         sessionStorage.setItem(TOKEN_KEY, response.token);
         sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
-      } catch (e) {
-        console.error('❌ Erro crítico ao salvar sessão:', e);
+
+        // Verifica se foi salvo corretamente
+        const tokenVerificado = sessionStorage.getItem(TOKEN_KEY);
+        const motoboyVerificado = sessionStorage.getItem(MOTOBOY_KEY);
+
+        if (!tokenVerificado || !motoboyVerificado) {
+          console.warn('⚠️ Falha na primeira tentativa de persistir no sessionStorage. Tentando novamente...');
+          sessionStorage.setItem(TOKEN_KEY, response.token);
+          sessionStorage.setItem(MOTOBOY_KEY, JSON.stringify(response.motoboy));
+        }
+
+        console.log('✅ Sessão do motoboy salva com sucesso:', {
+          tokenLength: response.token.length,
+          motoboyId: response.motoboy.id,
+          motoboyNome: response.motoboy.nome
+        });
+      } catch (error) {
+        console.error('❌ Erro ao salvar no sessionStorage:', error);
       }
     }
   }
 
   /**
-   * Faz logout do motoboy, removendo dados do sessionStorage.
+   * Restaura sessão do sessionStorage para os BehaviorSubjects.
+   * Chamado no construtor para hidratar o estado após refresh de página.
+   */
+  private restaurarSessao(): void {
+    if (typeof sessionStorage === 'undefined') return;
+
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    const motoboyStr = sessionStorage.getItem(MOTOBOY_KEY);
+
+    if (token && motoboyStr) {
+      try {
+        const motoboy = JSON.parse(motoboyStr) as MotoboyAuth;
+        this._token.next(token);
+        this._motoboyLogado.next(motoboy);
+        console.debug('[MotoboyAuth] Sessão restaurada do sessionStorage');
+      } catch {
+        this.logout();
+      }
+    }
+  }
+
+  /**
+   * Faz logout do motoboy, limpando BehaviorSubjects e sessionStorage.
    */
   logout(): void {
-    if (typeof sessionStorage === 'undefined') {
-      return;
-    }
+    // Limpa BehaviorSubjects
+    this._token.next(null);
+    this._motoboyLogado.next(null);
 
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(MOTOBOY_KEY);
+    // Limpa sessionStorage
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(MOTOBOY_KEY);
+    }
   }
 }
 

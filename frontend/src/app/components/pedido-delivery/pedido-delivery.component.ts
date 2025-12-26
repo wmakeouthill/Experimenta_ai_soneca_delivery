@@ -1005,26 +1005,49 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
 
     /**
      * Atualiza endereço com retry e aguardando token.
-     * Resolve problema de timing após login via Google onde o token pode não estar disponível imediatamente.
+     * Com as correções no ClienteAuthService (BehaviorSubjects), o token agora
+     * está disponível sincronamente após o login. O retry permanece como fallback.
      */
     private async atualizarEnderecoComRetry(enderecoRequest: AtualizarEnderecoRequest): Promise<ClienteAuth> {
-        // Aguarda token estar disponível (máx 500ms)
-        if (!this.clienteAuthService.token) {
-            console.debug('[Cadastro] Token não disponível, aguardando 500ms...');
-            await new Promise(resolve => setTimeout(resolve, 500));
+        // Verifica se o token está disponível no serviço (prioridade - síncrono)
+        const temTokenServico = !!this.clienteAuthService.token && !!this.clienteAuthService.clienteLogado?.id;
+
+        if (temTokenServico) {
+            console.debug('[Cadastro] Token disponível no serviço imediatamente');
+        } else {
+            // Fallback: aguarda até 2 segundos pelo token (casos edge)
+            console.debug('[Cadastro] Token não disponível imediatamente, aguardando...');
+            let tentativas = 0;
+            const maxTentativas = 20; // 20 x 100ms = 2 segundos
+
+            while (tentativas < maxTentativas) {
+                if (!!this.clienteAuthService.token && !!this.clienteAuthService.clienteLogado?.id) {
+                    console.log('[Cadastro] Token disponível no serviço após', tentativas * 100, 'ms');
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+                tentativas++;
+            }
+
+            if (tentativas >= maxTentativas) {
+                console.warn('[Cadastro] Token não disponível após 2 segundos!');
+            }
         }
 
         // Primeira tentativa
         try {
             return await firstValueFrom(this.clienteAuthService.atualizarEndereco(enderecoRequest));
         } catch (firstError: any) {
-            // Se falhou com erro de auth, aguarda e tenta novamente
-            const isAuthError = firstError?.status === 401 ||
+            console.error('[Cadastro] Primeira tentativa falhou:', firstError?.status, firstError?.message);
+
+            // Se falhou com erro de auth/bad request, aguarda mais e tenta novamente
+            const isAuthError = firstError?.status === 400 ||
+                firstError?.status === 401 ||
                 firstError?.status === 403 ||
                 firstError?.message?.includes('não está logado');
 
             if (isAuthError) {
-                console.warn('[Cadastro] Primeira tentativa falhou com erro de auth, retry em 500ms...');
+                console.warn('[Cadastro] Erro de auth detectado, aguardando 500ms e tentando novamente...');
                 await new Promise(resolve => setTimeout(resolve, 500));
 
                 // Retry - se falhar novamente, deixa o erro propagar

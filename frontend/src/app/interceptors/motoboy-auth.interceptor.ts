@@ -1,4 +1,6 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { MotoboyAuthService } from '../services/motoboy-auth.service';
 
 const TOKEN_KEY = 'motoboy-auth-token';
 const MOTOBOY_KEY = 'motoboy-auth-data';
@@ -7,8 +9,9 @@ const MOTOBOY_KEY = 'motoboy-auth-data';
  * Interceptor que adiciona automaticamente o token JWT e o X-Motoboy-Id
  * em todas as requisições para /api/motoboy/ e /api/motoboys/
  *
- * Isso garante que todas as ações do motoboy (listar pedidos, enviar localização, etc.)
- * sejam autenticadas corretamente.
+ * Prioriza o token do serviço (BehaviorSubject) que é atualizado sincronamente
+ * após o login, garantindo que requisições imediatas funcionem.
+ * Usa sessionStorage apenas como fallback.
  */
 export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
     // Intercepta requisições para /api/motoboy/ e /api/motoboys/ (mas não /api/motoboys-kanban)
@@ -19,45 +22,70 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
         return next(req);
     }
 
-    // Tenta obter dados do sessionStorage
-    // Em mobile ou após redirect, pode levar um pouco para o sessionStorage estar disponível
-    let token: string | null = null;
-    let motoboyId: string | null = null;
+    // Obtém token e motoboyId preferencialmente do serviço (BehaviorSubject - síncrono)
+    const authService = inject(MotoboyAuthService);
 
-    if (typeof sessionStorage !== 'undefined') {
+    let token: string | null = authService.token;
+    let motoboyId: string | null = authService.motoboyLogado?.id ?? null;
+    let tokenSource = 'service';
+
+    // Debug: Log inicial do estado do serviço
+    console.debug('[MotoboyAuth Interceptor] Estado inicial:', {
+        url: req.url,
+        tokenFromService: !!token,
+        motoboyIdFromService: !!motoboyId,
+        serviceEstaLogado: authService.estaLogado
+    });
+
+    // Fallback: tenta obter do sessionStorage se o serviço não tiver
+    if ((!token || !motoboyId) && typeof sessionStorage !== 'undefined') {
         try {
-            token = sessionStorage.getItem(TOKEN_KEY);
-            const motoboyStr = sessionStorage.getItem(MOTOBOY_KEY);
-
-            if (motoboyStr) {
-                try {
-                    const motoboy = JSON.parse(motoboyStr);
-                    motoboyId = motoboy?.id || null;
-                } catch (e) {
-                    console.error('❌ Erro ao parsear dados do motoboy:', e);
+            if (!token) {
+                token = sessionStorage.getItem(TOKEN_KEY);
+                if (token) tokenSource = 'sessionStorage';
+            }
+            if (!motoboyId) {
+                const motoboyStr = sessionStorage.getItem(MOTOBOY_KEY);
+                if (motoboyStr) {
+                    try {
+                        const motoboy = JSON.parse(motoboyStr);
+                        motoboyId = motoboy?.id || null;
+                    } catch {
+                        // Ignora erro de parse
+                    }
                 }
+            }
+
+            // Debug: Log após fallback
+            if (tokenSource === 'sessionStorage') {
+                console.debug('[MotoboyAuth Interceptor] Usando fallback sessionStorage:', {
+                    url: req.url,
+                    hasToken: !!token,
+                    hasMotoboyId: !!motoboyId
+                });
             }
         } catch (e) {
             console.warn('⚠️ Erro ao acessar sessionStorage:', e);
         }
     }
 
-    // Se não tiver token ou motoboyId, tenta novamente após um pequeno delay
-    // Isso ajuda em casos onde o sessionStorage ainda não foi totalmente carregado após redirect
+    // Se não tiver token ou motoboyId, deixa passar (vai falhar no backend)
     if (!token || !motoboyId) {
-        console.warn('⚠️ Motoboy não autenticado para:', req.url, {
-            temToken: !!token,
-            temMotoboyId: !!motoboyId,
-            tokenLength: token?.length || 0,
-            motoboyIdLength: motoboyId?.length || 0,
-            sessionStorageDisponivel: typeof sessionStorage !== 'undefined'
+        console.warn('[MotoboyAuth Interceptor] ⚠️ Motoboy não autenticado para:', req.url, {
+            tokenFromService: !!authService.token,
+            motoboyIdFromService: !!authService.motoboyLogado?.id,
+            tokenFromSessionStorage: typeof sessionStorage !== 'undefined' ? !!sessionStorage.getItem(TOKEN_KEY) : 'N/A'
         });
-
-        // Se sessionStorage está disponível mas não encontrou os dados,
-        // pode ser que ainda não foram salvos após o login
-        // Nesse caso, deixa passar e o backend vai retornar 401
         return next(req);
     }
+
+    // Log de debug com fonte do token
+    console.debug('[MotoboyAuth Interceptor] ✅ Autenticando requisição:', {
+        url: req.url,
+        tokenSource,
+        motoboyId: motoboyId.substring(0, 8) + '...',
+        tokenLength: token.length
+    });
 
     // Clona a requisição adicionando os headers
     const clonedReq = req.clone({
@@ -79,15 +107,6 @@ export const motoboyAuthInterceptor: HttpInterceptorFn = (req, next) => {
             });
         }
     }
-
-    // Log detalhado em desenvolvimento
-    console.debug('✅ Headers adicionados para motoboy:', {
-        url: req.url,
-        motoboyId: motoboyId.substring(0, 8) + '...',
-        tokenLength: token.length,
-        temAuthorization: true,
-        temMotoboyId: true
-    });
 
     return next(clonedReq);
 };

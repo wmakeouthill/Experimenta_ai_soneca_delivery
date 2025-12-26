@@ -56,7 +56,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Recursos estáticos e frontend Angular (PÚBLICO - sem autenticação)
                         .requestMatchers("/", "/index.html", "/favicon.ico", "/*.js", "/*.css", "/*.ico", "/*.png",
-                                "/*.jpg", "/*.svg", "/*.woff", "/*.woff2", "/*.ttf", "/*.eot")
+                                "/*.jpg", "/*.svg", "/*.woff", "/*.woff2", "/*.ttf", "/*.eot",
+                                // PWA files
+                                "/manifest.webmanifest", "/pwa-sw.js", "/ngsw.json", "/ngsw-worker.js")
                         .permitAll()
                         .requestMatchers("/assets/**", "/styles/**").permitAll()
                         // ✅ Caminhos especiais do Vite (dev server) - necessário para hot reload

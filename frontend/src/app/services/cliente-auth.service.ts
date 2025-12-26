@@ -242,13 +242,28 @@ export class ClienteAuthService {
    * Salva sessão no sessionStorage (persiste apenas na aba atual)
    */
   private salvarSessao(response: ClienteLoginResponse): void {
-    console.debug('[ClienteAuth] Salvando sessão:', { clienteId: response.cliente.id, hasToken: !!response.token });
+    console.log('[ClienteAuth] Salvando sessão:', {
+      clienteId: response.cliente?.id,
+      clienteNome: response.cliente?.nome,
+      hasToken: !!response.token,
+      tokenLength: response.token?.length
+    });
+
     this._token.next(response.token);
     this._clienteLogado.next(response.cliente);
 
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem(TOKEN_KEY, response.token);
       sessionStorage.setItem(CLIENTE_KEY, JSON.stringify(response.cliente));
+
+      // Verificação: confirma que foi salvo
+      const savedToken = sessionStorage.getItem(TOKEN_KEY);
+      const savedCliente = sessionStorage.getItem(CLIENTE_KEY);
+      console.log('[ClienteAuth] Sessão salva em sessionStorage:', {
+        tokenSalvo: !!savedToken,
+        tokenLength: savedToken?.length,
+        clienteSalvo: !!savedCliente
+      });
     }
   }
 
