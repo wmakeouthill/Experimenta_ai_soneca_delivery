@@ -162,6 +162,8 @@ export class PedidosComponent implements OnInit, OnDestroy {
           if (pedidos.length > pedidosAnteriores.length) {
             const novos = pedidos.length - pedidosAnteriores.length;
             this.notificationService.info(`🍽️ ${novos} novo(s) pedido(s) de mesa aguardando aceitação!`);
+            // Auto-switch: mudar automaticamente para visão de pedidos aguardando
+            this.filtroFilaMesa.set(true);
           }
         });
       });
