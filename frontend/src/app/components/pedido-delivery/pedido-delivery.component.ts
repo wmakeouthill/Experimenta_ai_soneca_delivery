@@ -254,6 +254,8 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
     readonly isFirefox = signal(false);
     readonly isIOS = signal(false);
     readonly isSamsungBrowser = signal(false);
+    readonly isMiBrowser = signal(false); // Xiaomi Mi Browser
+    readonly isUCBrowser = signal(false); // UC Browser
     readonly pwaPromptDisponivel = signal(false);
     readonly mostrarInstrucaoManual = signal(false); // Ativado após timeout se prompt não dispara
     private deferredPrompt: any = null;
@@ -272,6 +274,14 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
         // Samsung Internet Browser
         if (this.isSamsungBrowser()) {
             return 'Toque em ⋮ Menu → "Adicionar à Tela Inicial"';
+        }
+        // Xiaomi Mi Browser
+        if (this.isMiBrowser()) {
+            return 'Toque em ⋮ Menu → "Adicionar à Tela Inicial"';
+        }
+        // UC Browser
+        if (this.isUCBrowser()) {
+            return 'Toque em ☰ Menu → "Adicionar à Tela Inicial"';
         }
         // Se prompt não disparou após timeout, mostra instrução genérica
         if (this.mostrarInstrucaoManual() && !this.pwaPromptDisponivel()) {
@@ -547,13 +557,19 @@ export class PedidoDeliveryComponent implements OnInit, OnDestroy, AfterViewInit
             const isFirefoxBrowser = /firefox/i.test(ua) && !isChrome;
             // Samsung Internet Browser detection
             const isSamsungInternetBrowser = /samsungbrowser/i.test(ua);
+            // Xiaomi Mi Browser detection
+            const isMiuiBrowser = /MiuiBrowser/i.test(ua);
+            // UC Browser detection
+            const isUCBrowserDetected = /UCBrowser/i.test(ua);
 
-            console.log('[PWA] Browser detection:', { ua, isIOSDevice, isSafariBrowser, isChrome, isFirefoxBrowser, isSamsungInternetBrowser });
+            console.log('[PWA] Browser detection:', { ua, isIOSDevice, isSafariBrowser, isChrome, isFirefoxBrowser, isSamsungInternetBrowser, isMiuiBrowser, isUCBrowserDetected });
 
             this.isIOS.set(isIOSDevice);
             this.isSafari.set(isSafariBrowser);
             this.isFirefox.set(isFirefoxBrowser);
             this.isSamsungBrowser.set(isSamsungInternetBrowser);
+            this.isMiBrowser.set(isMiuiBrowser);
+            this.isUCBrowser.set(isUCBrowserDetected);
 
             // PWA Install Prompt: Mostra banner se não estiver em modo standalone
             if (!isStandaloneMode) {
