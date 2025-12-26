@@ -421,16 +421,9 @@ export class ConfigImpressoraComponent implements OnInit {
         this.impressorasDisponiveis.set([]);
       } else {
         this.impressorasDisponiveis.set(impressoras);
-
-        // Verifica se precisa selecionar impressora padrão automaticamente
-        const devicePathAtual = this.formImpressora.get('devicePath')?.value;
-        if (!devicePathAtual || devicePathAtual.trim().length === 0) {
-          // Seleciona automaticamente a impressora padrão
-          await this.selecionarImpressoraPadraoSeNecessario();
-        } else {
-          // Já tem impressora configurada, apenas mostra mensagem
-          this.mensagemImpressao.set(`✅ ${impressoras.length} impressora(s) detectada(s).`);
-        }
+        // NÃO seleciona automaticamente aqui - deixa carregarConfiguracao() fazer isso
+        // para não sobrescrever configurações salvas
+        this.mensagemImpressao.set(`✅ ${impressoras.length} impressora(s) detectada(s).`);
       }
 
       // Remove mensagem após 5 segundos

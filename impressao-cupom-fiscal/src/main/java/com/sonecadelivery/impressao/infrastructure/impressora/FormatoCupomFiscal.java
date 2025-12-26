@@ -60,8 +60,8 @@ public class FormatoCupomFiscal {
     private static byte[] formatarCabecalho(CupomFiscal cupomFiscal) {
         byte[] cabecalho = new byte[0];
 
-        // Nome do estabelecimento: negrito apenas (sem dobrar tamanho)
-        cabecalho = concatenar(cabecalho, EscPosComandos.textoNegrito());
+        // Nome do estabelecimento: altura dupla + negrito (mais evidente)
+        cabecalho = concatenar(cabecalho, EscPosComandos.textoDuploAltura());
         String nome = cupomFiscal.getNomeEstabelecimento() + "\n";
         cabecalho = concatenar(cabecalho, nome.getBytes(StandardCharsets.UTF_8));
 
