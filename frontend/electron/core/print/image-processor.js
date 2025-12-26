@@ -161,33 +161,37 @@ async function processarBase64ParaArquivo(base64Data, filename = 'logo', maxWidt
         // Carrega imagem com Jimp
         let image = await JimpLib.read(imageBuffer);
 
-        // Redimensiona se necessário (mantendo proporção)
-        let currentWidth = image.width || 384;
-        if (currentWidth > maxWidth) {
-            // Jimp v1.x usa { w } em vez de (width, AUTO)
-            image.resize({ w: maxWidth });
-            currentWidth = image.width;
-        }
-
-        // === CENTRALIZAÇÃO DINÂMICA ===
-        // Calcula padding para centralizar a imagem no papel
         const paperWidth = maxWidth; // 384px para 48mm
-        const imgWidth = image.width || currentWidth;
+        let imgWidth = image.width || 384;
         const imgHeight = image.height || 100;
 
+        // Só redimensiona se maior que o papel
+        if (imgWidth > paperWidth) {
+            image.resize({ w: paperWidth });
+            imgWidth = paperWidth;
+            console.log(`📐 Logo redimensionado para caber no papel: ${paperWidth}px`);
+        }
+
+        // === CENTRALIZAÇÃO FÍSICA ===
+        // ESC a 1 NÃO funciona na Diebold para imagens raster
+        // Adicionamos padding branco à ESQUERDA para centralizar
         if (imgWidth < paperWidth) {
             const leftPadding = Math.floor((paperWidth - imgWidth) / 2);
 
-            if (leftPadding > 5) { // Só adiciona padding se for significativo
-                // Cria canvas branco com a largura do papel
+            if (leftPadding > 0) {
+                // Cria canvas branco com largura do papel
                 const { Jimp } = require('jimp');
-                const centered = new Jimp({ width: paperWidth, height: imgHeight, color: 0xFFFFFFFF });
+                const centered = new Jimp({
+                    width: paperWidth,
+                    height: imgHeight,
+                    color: 0xFFFFFFFF // Branco
+                });
 
-                // Posiciona a imagem no centro
+                // Posiciona a imagem no centro do canvas
                 centered.composite(image, leftPadding, 0);
                 image = centered;
 
-                console.log(`🎯 Imagem centralizada dinamicamente: padding=${leftPadding}px, largura final=${paperWidth}px`);
+                console.log(`🎯 Logo centralizado fisicamente: padding=${leftPadding}px, largura final=${paperWidth}px`);
             }
         }
 

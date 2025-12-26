@@ -338,10 +338,19 @@ async function converterLogoParaBuffer(logoBase64, tipoImpressora = 'EPSON') {
 
         console.log(`✅ Logo convertido via node-thermal-printer: ${buffer.length} bytes`);
 
-        // Debug: mostra últimos bytes para verificar se há comandos problemáticos
-        if (buffer.length > 10) {
+        // Debug: mostra primeiro e últimos bytes para verificar estrutura
+        if (buffer.length > 20) {
+            const firstBytes = buffer.slice(0, 20);
             const lastBytes = buffer.slice(-10);
+            console.log(`🔍 Primeiros 20 bytes do logo: ${Buffer.from(firstBytes).toString('hex')}`);
             console.log(`🔍 Últimos 10 bytes do logo: ${Buffer.from(lastBytes).toString('hex')}`);
+
+            // Verifica se ESC a 1 (1b6101) está no início
+            if (firstBytes[0] === 0x1B && firstBytes[1] === 0x61 && firstBytes[2] === 0x01) {
+                console.log(`✅ ESC a 1 (center) encontrado na posição correta`);
+            } else {
+                console.log(`⚠️ ESC a 1 NÃO está no início do buffer. Primeiro comando: ${firstBytes.slice(0, 3).toString('hex')}`);
+            }
         }
 
         // 5. Limpa o buffer interno da instância
