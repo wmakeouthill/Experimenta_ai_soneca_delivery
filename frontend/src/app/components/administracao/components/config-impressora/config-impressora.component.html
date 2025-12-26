@@ -11,30 +11,25 @@
   @if (estaExpandido()) {
     <div class="config-impressora-content">
       <form [formGroup]="formImpressora" class="config-impressora-form">
-        @if (!estaNoElectron()) {
-          <!-- Apenas mostra o tipo quando NÃO está no Electron (modo Web) -->
-          <div class="form-row">
-            <label for="tipoImpressora">
-              Tipo de Impressora:
-            </label>
-            <select 
-              id="tipoImpressora" 
-              formControlName="tipoImpressora" 
-              class="form-input-compact"
-            >
-              @for (tipo of tiposImpressora; track tipo.value) {
-                <option [value]="tipo.value">{{ tipo.label }}</option>
-              }
-            </select>
-            <small class="form-help-text">
-              💡 Escolha o tipo de impressora que você está usando
-            </small>
-          </div>
-        } @else {
-          <!-- No Electron, tipo é definido automaticamente (GENERICA_ESCPOS) -->
-          <!-- Campo hidden para manter o valor no formulário -->
-          <input type="hidden" formControlName="tipoImpressora" />
-        }
+        <!-- Tipo de impressora - sempre visível para seleção manual -->
+        <div class="form-row">
+          <label for="tipoImpressora">
+            Marca/Modelo da Impressora:
+          </label>
+          <select 
+            id="tipoImpressora" 
+            formControlName="tipoImpressora" 
+            class="form-input-compact"
+          >
+            @for (tipo of tiposImpressora; track tipo.value) {
+              <option [value]="tipo.value">{{ tipo.label }}</option>
+            }
+          </select>
+          <small class="form-help-text">
+            💡 Selecione o modelo mais próximo para garantir compatibilidade de comandos ESC/POS
+          </small>
+        </div>
+
 
         <div class="form-row">
           <label for="devicePath">
