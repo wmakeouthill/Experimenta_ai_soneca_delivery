@@ -5,8 +5,9 @@ const CACHE_NAME = 'experimenta-ai-delivery-v1';
 const STATIC_ASSETS = [
   '/',
   '/delivery',
-  '/assets/manifest.webmanifest',
-  '/assets/experimenta_ai_banner_circular.webp'
+  '/manifest.webmanifest',
+  '/assets/experimenta_ai_banner_circular.webp',
+  '/assets/experimenta_ai_banner_circular.png'
 ];
 
 // Instala o Service Worker e faz cache dos recursos estáticos

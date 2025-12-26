@@ -17,33 +17,39 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "src": "/assets/experimenta_ai_banner_circular.png",
       "sizes": "192x192",
-      "type": "image/webp",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "src": "/assets/experimenta_ai_banner_circular.png",
       "sizes": "512x512",
-      "type": "image/webp",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "src": "/assets/experimenta_ai_banner_circular.png",
       "sizes": "192x192",
-      "type": "image/webp",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/assets/experimenta_ai_banner_circular.webp",
-      "sizes": "512x512",
-      "type": "image/webp",
+      "type": "image/png",
       "purpose": "maskable"
     },
     {
       "src": "/assets/experimenta_ai_banner_circular.png",
       "sizes": "512x512",
       "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/experimenta_ai_banner_circular.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
       "purpose": "any"
     }
   ],

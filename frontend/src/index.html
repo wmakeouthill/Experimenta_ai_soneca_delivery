@@ -23,9 +23,13 @@
 
   <!-- Favicons e Ícones -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="/assets/experimenta_ai_banner_circular.webp">
-  <link rel="apple-touch-icon" sizes="192x192" href="/assets/experimenta_ai_banner_circular.webp">
-  <link rel="manifest" href="/assets/manifest.webmanifest">
+  <!-- iOS requer PNG para apple-touch-icon (WebP não é suportado para ícones da home screen) -->
+  <link rel="apple-touch-icon" href="/assets/experimenta_ai_banner_circular.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/experimenta_ai_banner_circular.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/assets/experimenta_ai_banner_circular.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/assets/experimenta_ai_banner_circular.png">
+  <!-- Manifest do PWA (usa WebP para Android que suporta) -->
+  <link rel="manifest" href="/manifest.webmanifest">
 
   <!-- DNS Prefetch para APIs externas -->
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">

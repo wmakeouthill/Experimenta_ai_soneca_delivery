@@ -43,11 +43,11 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   readonly reconectando = signal(false);
   readonly modalMapaAberto = signal(false);
   readonly pedidoSelecionado = signal<Pedido | null>(null);
-  
+
   // PWA
   readonly mostrarBannerPwa = signal(false);
   private deferredPrompt: any = null;
-  
+
   // Controle de polling e atualizações
   private pollingAtivo = false;
   private pollingSubscription: any = null;
@@ -56,14 +56,14 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   private sseReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   private sseAbortController: AbortController | null = null;
   private readonly atualizacaoForcada$ = new Subject<void>(); // Para forçar atualização manual
-  
+
   // Cache no sessionStorage para manter dados ao atualizar página
   private readonly CACHE_KEY = 'motoboy-pedidos-cache';
 
   // Computed: Pedidos agrupados por status (otimizado - uma única passagem)
   readonly pedidosPorStatus = computed(() => {
     const todosPedidos = this.pedidos();
-    
+
     // Debug: log dos pedidos recebidos
     if (todosPedidos.length > 0) {
       console.debug('📊 Computed pedidosPorStatus - Total pedidos:', todosPedidos.length);
@@ -77,18 +77,18 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
         statusEnum3: StatusPedido.FINALIZADO
       });
     }
-    
+
     // Filtra e agrupa em uma única passagem para melhor performance
     const saiuParaEntrega: Pedido[] = [];
     const pronto: Pedido[] = [];
     const finalizados: Pedido[] = [];
-    
+
     for (const pedido of todosPedidos) {
       // Apenas pedidos de delivery com status relevante
       // Compara com enum (que é string enum, então funciona com strings do backend)
       const tipoPedidoStr = String(pedido.tipoPedido);
       const isDelivery = tipoPedidoStr === TipoPedido.DELIVERY;
-      
+
       if (!isDelivery) {
         console.debug('⏭️ Pedido ignorado (não é DELIVERY):', {
           id: pedido.id,
@@ -97,13 +97,13 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
         });
         continue;
       }
-      
+
       // Compara status (converte para string para garantir compatibilidade)
       const statusStr = String(pedido.status);
       const isSaiuParaEntrega = statusStr === StatusPedido.SAIU_PARA_ENTREGA;
       const isPronto = statusStr === StatusPedido.PRONTO;
       const isFinalizado = statusStr === StatusPedido.FINALIZADO;
-      
+
       if (isSaiuParaEntrega) {
         saiuParaEntrega.push(pedido);
       } else if (isPronto) {
@@ -118,25 +118,25 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
         });
       }
     }
-    
+
     // Ordena por data de criação (mais recentes primeiro)
     const ordenarPorData = (a: Pedido, b: Pedido): number => {
       const dataA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dataB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dataB - dataA;
     };
-    
+
     saiuParaEntrega.sort(ordenarPorData);
     pronto.sort(ordenarPorData);
     finalizados.sort(ordenarPorData);
-    
+
     console.debug('✅ Pedidos agrupados:', {
       saiuParaEntrega: saiuParaEntrega.length,
       pronto: pronto.length,
       finalizados: finalizados.length,
       total: saiuParaEntrega.length + pronto.length + finalizados.length
     });
-    
+
     return { saiuParaEntrega, pronto, finalizados };
   });
 
@@ -155,13 +155,13 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   constructor() {
     afterNextRender(() => {
       if (!isPlatformBrowser(this.platformId)) return;
-      
+
       // Inicializa PWA para motoboy
       this.inicializarPWA();
-      
+
       // Restaura cache do sessionStorage se existir
       this.restaurarCache();
-      
+
       // Verifica autenticação antes de carregar dados
       // Aguarda um pouco para garantir que o sessionStorage foi carregado após o redirect
       // Em mobile ou após refresh, pode levar mais tempo para o sessionStorage estar disponível
@@ -179,7 +179,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
    */
   private restaurarCache(): void {
     if (typeof sessionStorage === 'undefined') return;
-    
+
     try {
       const cacheStr = sessionStorage.getItem(this.CACHE_KEY);
       if (cacheStr) {
@@ -187,7 +187,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
         const pedidosCache: Pedido[] = cache.pedidos || [];
         const timestamp = cache.timestamp || 0;
         const agora = Date.now();
-        
+
         // Cache válido por 5 minutos
         if (pedidosCache.length > 0 && (agora - timestamp) < 5 * 60 * 1000) {
           console.debug('📋 Restaurando cache de pedidos:', pedidosCache.length, 'pedidos');
@@ -209,7 +209,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
    */
   private salvarCache(): void {
     if (typeof sessionStorage === 'undefined') return;
-    
+
     try {
       const cache = {
         pedidos: this.ultimaRespostaValida,
@@ -230,7 +230,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     const delayEntreTentativas = 300; // Aumentado para dar mais tempo
 
     const isAuth = this.motoboyAuthService.isAuthenticated();
-    
+
     if (!isAuth) {
       if (tentativa < maxTentativas) {
         // Log apenas nas primeiras tentativas para não poluir o console
@@ -346,7 +346,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       console.debug('⏸️ Carregamento de pedidos já em andamento. Ignorando chamada duplicada.');
       return;
     }
-    
+
     if (!this.motoboyAuthService.isAuthenticated()) {
       console.warn('⚠️ Tentativa de carregar pedidos sem autenticação. Redirecionando...');
       this.motoboyAuthService.logout();
@@ -356,7 +356,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
 
     const token = this.motoboyAuthService.getToken();
     const motoboyId = this.motoboyAuthService.motoboyLogado?.id;
-    
+
     if (!token || !motoboyId) {
       console.warn('⚠️ Token ou motoboyId não encontrado:', {
         temToken: !!token,
@@ -365,7 +365,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       });
       this.erro.set('Erro ao identificar motoboy. Tente fazer login novamente.');
       this.estaCarregando.set(false);
-      
+
       // Tenta novamente após delay maior
       setTimeout(() => {
         if (this.motoboyAuthService.isAuthenticated()) {
@@ -396,29 +396,29 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
           this.estaCarregando.set(false);
           this.erro.set(null);
           this.reconectando.set(false);
-          
+
           console.debug('✅ Pedidos carregados com sucesso:', {
             total: novosPedidos.length,
-            pedidos: novosPedidos.map(p => ({ 
-              id: p.id, 
-              status: p.status, 
+            pedidos: novosPedidos.map(p => ({
+              id: p.id,
+              status: p.status,
               tipoPedido: p.tipoPedido,
               statusType: typeof p.status,
               tipoPedidoType: typeof p.tipoPedido
             }))
           });
-          
+
           // Força detecção de mudanças (útil em modo OnPush)
           // O signal já deve disparar, mas garantimos aqui
           this.cdr.markForCheck();
-          
+
           console.debug('📊 Signal pedidos atualizado. Total:', this.pedidos().length);
           console.debug('📊 Computed totalEntregas:', this.totalEntregas());
           console.debug('📊 Computed pedidosPorStatus:', {
             saiuParaEntrega: this.pedidosPorStatus().saiuParaEntrega.length,
             pronto: this.pedidosPorStatus().pronto.length
           });
-          
+
           // Inicia SSE e polling apenas uma vez, após carregamento inicial bem-sucedido
           if (!this.pollingAtivo) {
             this.iniciarPolling();
@@ -427,9 +427,9 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.carregandoPedidos = false;
           this.estaCarregando.set(false);
-          
+
           console.error('❌ Erro ao carregar pedidos:', err);
-          
+
           // Mantém última resposta válida para não deixar tela vazia
           if (this.ultimaRespostaValida.length > 0) {
             // ✅ Cria nova referência do array (imutabilidade)
@@ -441,7 +441,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
             this.erro.set('Erro ao carregar pedidos. Tente recarregar a página.');
             console.warn('⚠️ Nenhum pedido em cache. Tela ficará vazia.');
           }
-          
+
           // Inicia polling mesmo com erro para continuar tentando
           if (!this.pollingAtivo) {
             this.iniciarPolling();
@@ -462,24 +462,24 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
           delay: (error: HttpErrorResponse, retryCount: number) => {
             // Backoff exponencial: 1s, 2s, 4s
             const delayMs = Math.min(1000 * Math.pow(2, retryCount - 1), 4000);
-            
+
             // Não retry em erros 401/403 (autenticação)
             if (error.status === 401 || error.status === 403) {
               this.motoboyAuthService.logout();
               window.location.href = '/cadastro-motoboy';
               return EMPTY;
             }
-            
+
             this.reconectando.set(true);
             return timer(delayMs);
           }
         }),
         catchError((err: unknown) => {
           this.reconectando.set(false);
-          
+
           // Verifica se é TimeoutError (do RxJS timeout operator)
           const isTimeoutError = err && typeof err === 'object' && 'name' in err && err.name === 'TimeoutError';
-          
+
           // Verifica se é HttpErrorResponse
           if (err instanceof HttpErrorResponse) {
             if (err.status === 401 || err.status === 403) {
@@ -487,7 +487,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
               window.location.href = '/cadastro-motoboy';
               return of([]);
             }
-            
+
             if (err.status === 0) {
               this.erro.set('Sem conexão com o servidor. Verifique sua internet.');
             } else {
@@ -498,7 +498,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
           } else {
             this.erro.set('Erro ao carregar pedidos. Tente novamente.');
           }
-          
+
           // Retorna última resposta válida ou array vazio
           return of(this.ultimaRespostaValida.length > 0 ? this.ultimaRespostaValida : []);
         })
@@ -507,9 +507,9 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
 
   iniciarPolling(): void {
     if (this.pollingAtivo) return;
-    
+
     this.pollingAtivo = true;
-    
+
     // Limpa subscription anterior se existir
     if (this.pollingSubscription) {
       this.pollingSubscription.unsubscribe();
@@ -521,11 +521,11 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.tentarConectarSSE();
     }, 500); // Pequeno delay para garantir que carregamento inicial terminou
-    
+
     // Combina polling periódico com atualizações forçadas
     const polling$ = timer(8000, 10000); // Primeira chamada após 8s, depois a cada 10s
     const atualizacoesForcadas$ = this.atualizacaoForcada$.pipe(switchMap(() => timer(0)));
-    
+
     this.pollingSubscription = merge(polling$, atualizacoesForcadas$)
       .pipe(
         switchMap(() => {
@@ -533,12 +533,12 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
             this.pararPolling();
             return EMPTY;
           }
-          
+
           // Evita requisições simultâneas
           if (this.carregandoPedidos) {
             return EMPTY;
           }
-          
+
           // Usa buscarPedidosSemRetry para polling (retry já está no timer)
           return this.http.get<Pedido[]>('/api/motoboy/pedidos')
             .pipe(
@@ -546,7 +546,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
               catchError((err: unknown) => {
                 // No polling, apenas loga o erro mas continua tentando
                 const isTimeoutError = err && typeof err === 'object' && 'name' in err && err.name === 'TimeoutError';
-                
+
                 if (err instanceof HttpErrorResponse) {
                   if (err.status === 401 || err.status === 403) {
                     this.pararPolling();
@@ -555,7 +555,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
                     return EMPTY;
                   }
                 }
-                
+
                 // Retorna última resposta válida para não perder dados
                 return of(this.ultimaRespostaValida.length > 0 ? this.ultimaRespostaValida : []);
               })
@@ -585,7 +585,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
 
     const token = this.motoboyAuthService.getToken();
     const motoboyId = this.motoboyAuthService.motoboyLogado?.id;
-    
+
     if (!token || !motoboyId) {
       return; // Não pode conectar sem autenticação
     }
@@ -599,14 +599,14 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
    */
   private conectarSSEComFetch(token: string, motoboyId: string): void {
     const url = `/api/motoboy/pedidos/stream`;
-    
+
     // Aborta conexão anterior se existir
     if (this.sseAbortController) {
       this.sseAbortController.abort();
     }
-    
+
     this.sseAbortController = new AbortController();
-    
+
     fetch(url, {
       method: 'GET',
       headers: {
@@ -618,35 +618,35 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       credentials: 'include',
       signal: this.sseAbortController.signal
     })
-    .then(response => {
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          this.motoboyAuthService.logout();
-          window.location.href = '/cadastro-motoboy';
+      .then(response => {
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            this.motoboyAuthService.logout();
+            window.location.href = '/cadastro-motoboy';
+          }
+          throw new Error(`SSE connection failed: ${response.status}`);
         }
-        throw new Error(`SSE connection failed: ${response.status}`);
-      }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
 
-      if (!reader) {
-        throw new Error('Response body is not readable');
-      }
+        if (!reader) {
+          throw new Error('Response body is not readable');
+        }
 
-      this.sseReader = reader;
-      this.processarStreamSSE(reader, decoder);
-    })
-    .catch(error => {
-      if (error.name === 'AbortError') {
-        // Conexão abortada intencionalmente
-        return;
-      }
-      // Erro ao conectar - continua com polling apenas
-      this.sseReader = null;
-      this.sseAbortController = null;
-      // Não loga erro aqui, é esperado que SSE possa falhar e usar polling
-    });
+        this.sseReader = reader;
+        this.processarStreamSSE(reader, decoder);
+      })
+      .catch(error => {
+        if (error.name === 'AbortError') {
+          // Conexão abortada intencionalmente
+          return;
+        }
+        // Erro ao conectar - continua com polling apenas
+        this.sseReader = null;
+        this.sseAbortController = null;
+        // Não loga erro aqui, é esperado que SSE possa falhar e usar polling
+      });
   }
 
   /**
@@ -663,7 +663,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     try {
       while (true) {
         const { done, value } = await reader.read();
-        
+
         if (done) {
           // Stream terminado - tenta reconectar após delay
           this.sseReader = null;
@@ -749,7 +749,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
    */
   private atualizarPedidosSeMudou(pedidos: Pedido[]): void {
     const pedidosAtuais = this.pedidos();
-    
+
     // Comparação otimizada: verifica se houve mudanças antes de atualizar
     if (pedidos.length !== pedidosAtuais.length) {
       // ✅ Cria nova referência do array (imutabilidade)
@@ -761,14 +761,14 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       this.salvarCache(); // Salva no sessionStorage
       return;
     }
-    
+
     // Cria map para comparação O(n) ao invés de O(n²)
     const mapAtuais = new Map(pedidosAtuais.map(p => [p.id, p]));
     const temMudancas = pedidos.some(p => {
       const atual = mapAtuais.get(p.id);
       return !atual || atual.status !== p.status || atual.updatedAt !== p.updatedAt;
     });
-    
+
     if (temMudancas) {
       // ✅ Cria nova referência do array (imutabilidade)
       const novosPedidos = [...pedidos];
@@ -776,7 +776,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
       this.pedidos.set(novosPedidos);
       this.erro.set(null);
       this.reconectando.set(false);
-      
+
       // Atualiza cache
       this.salvarCache();
     }
@@ -801,13 +801,13 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
   atualizarStatusPedido(pedidoId: string, novoStatus: StatusPedido): void {
     // Obtém motoboyId para validação de segurança no backend
     const motoboyId = this.motoboyAuthService.motoboyLogado?.id;
-    
+
     // Chama o service com headers customizados se for motoboy
     let headers = new HttpHeaders();
     if (motoboyId) {
       headers = headers.set('X-Motoboy-Id', motoboyId);
     }
-    
+
     this.http.put<Pedido>(`/api/pedidos/${pedidoId}/status`, { status: novoStatus }, { headers })
       .pipe(
         timeout(10000),
@@ -825,7 +825,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
           if (pedidoAtualizado) {
             // ✅ Usa update() com map() que cria nova referência (imutabilidade)
             this.pedidos.update(pedidos => {
-              const novosPedidos = pedidos.map(p => 
+              const novosPedidos = pedidos.map(p =>
                 p.id === pedidoId ? { ...pedidoAtualizado } : { ...p }
               );
               return novosPedidos;
@@ -834,7 +834,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
             this.ultimaRespostaValida = [...this.pedidos()];
             this.salvarCache(); // Salva no sessionStorage
             this.erro.set(null);
-            
+
             // Força atualização imediata para sincronizar
             this.forcarAtualizacao();
           }
@@ -892,7 +892,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
    */
   abrirRotaParaEntrega(pedido: Pedido): void {
     console.log('Abrir rota chamado para pedido:', pedido.numeroPedido, 'Coordenadas:', pedido.latitude, pedido.longitude);
-    
+
     if (!pedido.latitude || !pedido.longitude) {
       this.erro.set(`Pedido #${pedido.numeroPedido}: Endereço de entrega não possui coordenadas. Não é possível abrir a rota.`);
       console.warn('Pedido sem coordenadas:', pedido);
@@ -947,7 +947,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
         navigator.serviceWorker.register('/pwa-sw-motoboy.js')
           .then((registration) => {
             console.log('[PWA Motoboy] Service Worker registrado com sucesso:', registration.scope);
-            
+
             // Verifica atualizações periodicamente
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
@@ -992,7 +992,7 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     }
 
     // Remove o manifest do delivery se existir (para evitar conflito)
-    const deliveryManifest = document.querySelector('link[rel="manifest"][href="/assets/manifest.webmanifest"]');
+    const deliveryManifest = document.querySelector('link[rel="manifest"][href="/manifest.webmanifest"]');
     if (deliveryManifest) {
       deliveryManifest.remove();
     }
@@ -1016,13 +1016,13 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
     try {
       this.deferredPrompt.prompt();
       const { outcome } = await this.deferredPrompt.userChoice;
-      
+
       console.log(`[PWA Motoboy] Usuário ${outcome === 'accepted' ? 'aceitou' : 'rejeitou'} a instalação`);
-      
+
       if (outcome === 'accepted') {
         this.deferredPrompt = null;
       }
-      
+
       this.mostrarBannerPwa.set(false);
     } catch (error) {
       console.error('[PWA Motoboy] Erro ao instalar PWA:', error);
@@ -1041,8 +1041,8 @@ export class MotoboyKanbanComponent implements OnInit, OnDestroy {
    */
   isStandalone(): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
-    return window.matchMedia('(display-mode: standalone)').matches || 
-           (navigator as any).standalone === true;
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true;
   }
 }
 

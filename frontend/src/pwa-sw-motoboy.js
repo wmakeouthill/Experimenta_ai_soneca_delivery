@@ -7,8 +7,9 @@ const STATIC_ASSETS = [
   '/',
   '/motoboy/kanban',
   '/cadastro-motoboy',
-  '/assets/manifest-motoboy.webmanifest',
-  '/assets/experimenta_ai_banner_circular.webp'
+  '/manifest-motoboy.webmanifest',
+  '/assets/experimenta_ai_banner_circular.webp',
+  '/assets/experimenta_ai_banner_circular.png'
 ];
 
 // Instala o Service Worker e faz cache dos recursos estáticos
@@ -113,7 +114,7 @@ self.addEventListener('message', (event) => {
   if (event.data === 'skipWaiting') {
     self.skipWaiting();
   }
-  
+
   // Suporta sincronização em background quando o app está fechado
   if (event.data && event.data.type === 'SYNC_PEDIDOS') {
     // Quando o app é instalado como PWA, pode receber mensagens mesmo em background
