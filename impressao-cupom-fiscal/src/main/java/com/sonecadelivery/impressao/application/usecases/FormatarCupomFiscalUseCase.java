@@ -46,10 +46,15 @@ public class FormatarCupomFiscalUseCase {
                 // Codifica em base64 para envio via HTTP
                 String dadosEscPosBase64 = Base64.getEncoder().encodeToString(dadosEscPos);
 
+                // Logo base64 é passado separadamente para o Electron
+                // O Electron usa node-thermal-printer para converter e imprimir o logo
+                String logoBase64 = cupomFiscal.getLogoBase64();
+
                 return FormatarCupomResponse.builder()
                                 .sucesso(true)
                                 .mensagem("Cupom formatado com sucesso")
                                 .dadosEscPosBase64(dadosEscPosBase64)
+                                .logoBase64(logoBase64)
                                 .tipoImpressora(configuracao.getTipoImpressora().name())
                                 .pedidoId(pedido.getId())
                                 .build();

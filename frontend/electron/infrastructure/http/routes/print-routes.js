@@ -7,6 +7,7 @@ const express = require('express');
 const { validarEMapearDevicePath } = require('../../../core/printer/printer-validator');
 const { converterParaEscPos } = require('../../../core/print/escpos-converter');
 const { imprimirLocalmente } = require('../../../core/print/print-executor');
+const { converterLogoParaBuffer } = require('../../../core/print/thermal-printer-service');
 
 const router = express.Router();
 
@@ -34,8 +35,8 @@ function validarRequest(body) {
 
   // Valida formato básico do devicePath (segurança)
   const devicePathSanitizado = body.devicePath.trim();
-  if (devicePathSanitizado.includes('..') || 
-      (devicePathSanitizado.startsWith('/') && !devicePathSanitizado.startsWith('/dev/'))) {
+  if (devicePathSanitizado.includes('..') ||
+    (devicePathSanitizado.startsWith('/') && !devicePathSanitizado.startsWith('/dev/'))) {
     return { valido: false, erro: 'devicePath inválido' };
   }
 
@@ -53,7 +54,8 @@ router.post('/imprimir/cupom-fiscal', async (req, res) => {
       pedidoId: req.body?.pedidoId,
       tipoImpressora: req.body?.tipoImpressora,
       devicePath: req.body?.devicePath,
-      dadosCupomLength: req.body?.dadosCupom?.length || 0
+      dadosCupomLength: req.body?.dadosCupom?.length || 0,
+      logoBase64Length: req.body?.logoBase64?.length || 0
     }));
 
     // Validação
@@ -92,17 +94,44 @@ router.post('/imprimir/cupom-fiscal', async (req, res) => {
 
     console.log(`✅ Impressora validada: "${devicePathSanitizado}" → "${devicePathReal}"${nomeImpressora ? ` (nome: "${nomeImpressora}")` : ''}`);
 
-    // Converte dados para ESC/POS
+    // Processa logo se presente (usa node-thermal-printer para conversão confiável)
+    let logoEscPos = null;
+    const logoBase64 = req.body.logoBase64;
+    if (logoBase64 && logoBase64.length > 0) {
+      console.log(`🖼️ Processando logo para impressão (${logoBase64.length} chars)...`);
+      const logoResult = await converterLogoParaBuffer(logoBase64, tipoImpressora);
+      if (logoResult.success && logoResult.buffer) {
+        logoEscPos = logoResult.buffer;
+        console.log(`✅ Logo convertido via node-thermal-printer: ${logoEscPos.length} bytes`);
+      } else {
+        console.warn(`⚠️ Falha ao processar logo: ${logoResult.error}`);
+      }
+    } else {
+      console.log('ℹ️ Sem logo para imprimir (logoBase64 vazio ou não enviado)');
+    }
+
+    // Converte dados do cupom para ESC/POS
     console.log('🔄 Convertendo dados para ESC/POS...');
     const dadosEscPos = converterParaEscPos(dadosCupom, tipoImpressora);
     console.log(`✅ Dados convertidos: ${dadosEscPos.length} bytes`);
+
+    // Monta buffer final: Logo (se houver) + Dados do cupom
+    let bufferFinal;
+    if (logoEscPos) {
+      // Reset + Logo + Dados do cupom (que já tem inicialização mas será sobrescrita)
+      const resetCmd = Buffer.from([0x1B, 0x40]); // ESC @
+      bufferFinal = Buffer.concat([resetCmd, logoEscPos, dadosEscPos]);
+      console.log(`✅ Buffer final com logo: ${bufferFinal.length} bytes`);
+    } else {
+      bufferFinal = dadosEscPos;
+    }
 
     // Imprime
     console.log(`🖨️ Iniciando impressão em: "${devicePathReal}"${nomeImpressora ? ` (nome: "${nomeImpressora}")` : ''}`);
 
     let resultado;
     try {
-      resultado = await imprimirLocalmente(dadosEscPos, devicePathReal, tipoImpressora, nomeImpressora);
+      resultado = await imprimirLocalmente(bufferFinal, devicePathReal, tipoImpressora, nomeImpressora);
     } catch (error) {
       console.error('❌ Exceção ao imprimir:', error);
       console.error('❌ Stack trace:', error.stack);
@@ -155,11 +184,11 @@ router.get('/health', (req, res) => {
 router.post('/teste/imprimir-simples', async (req, res) => {
   try {
     const { devicePath, nomeImpressora } = req.body;
-    
+
     // Se nomeImpressora foi fornecido, usa diretamente (mais rápido e confiável)
     // Caso contrário, usa devicePath
     const nomeParaUsar = nomeImpressora || devicePath;
-    
+
     if (!nomeParaUsar) {
       return res.status(400).json({
         sucesso: false,
@@ -168,7 +197,7 @@ router.post('/teste/imprimir-simples', async (req, res) => {
     }
 
     const devicePathParaUsar = devicePath || 'USB001';
-    
+
     console.log(`🧪 TESTE: Enviando para impressora "${nomeParaUsar}" (devicePath: ${devicePathParaUsar})`);
 
     const path = require('path');
@@ -197,10 +226,10 @@ router.post('/teste/imprimir-simples', async (req, res) => {
 router.post('/teste/cupom-completo', async (req, res) => {
   try {
     const { devicePath, nomeImpressora } = req.body;
-    
+
     const nomeParaUsar = nomeImpressora || devicePath || 'DIABO';
     const devicePathParaUsar = devicePath || 'USB001';
-    
+
     console.log(`🧪 TESTE CUPOM COMPLETO: Enviando para impressora "${nomeParaUsar}" (devicePath: ${devicePathParaUsar})`);
 
     const path = require('path');

@@ -290,10 +290,75 @@ async function imprimirTeste(devicePath, tipoImpressora, nomeImpressora, logoBas
     }
 }
 
+/**
+ * Converte logo base64 para buffer ESC/POS usando node-thermal-printer
+ * Esta função usa a biblioteca node-thermal-printer para conversão confiável
+ * @param {string} logoBase64 - Logo em base64
+ * @param {string} tipoImpressora - Tipo da impressora
+ * @returns {Promise<{success: boolean, buffer?: Buffer, error?: string}>}
+ */
+async function converterLogoParaBuffer(logoBase64, tipoImpressora = 'EPSON') {
+    let logoPath = null;
+
+    try {
+        if (!logoBase64 || logoBase64.length === 0) {
+            return { success: false, error: 'logoBase64 é obrigatório' };
+        }
+
+        console.log('🖼️ Convertendo logo usando node-thermal-printer...');
+
+        // 1. Processa imagem base64 para arquivo temporário
+        const resultado = await processarBase64ParaArquivo(logoBase64, 'logo_convert', 384);
+        if (!resultado.success) {
+            return { success: false, error: resultado.error };
+        }
+        logoPath = resultado.filePath;
+        console.log(`✅ Logo salvo temporariamente: ${logoPath}`);
+
+        // 2. Cria instância da impressora (apenas para pegar os bytes, não vai imprimir)
+        const tipo = obterTipoImpressora(tipoImpressora);
+        const { ThermalPrinter, PrinterTypes, CharacterSet } = require('node-thermal-printer');
+
+        const printer = new ThermalPrinter({
+            type: tipo,
+            interface: 'tcp://127.0.0.1:0', // Não vai conectar, só queremos o buffer
+            characterSet: CharacterSet.PC850_LATIN1,
+            width: 48,
+            removeSpecialCharacters: false
+        });
+
+        // 3. Adiciona comandos ao buffer interno
+        printer.alignCenter();
+        await printer.printImage(logoPath);
+        printer.newLine();
+        printer.newLine();
+
+        // 4. Obtém o buffer acumulado (sem enviar para impressora)
+        const buffer = printer.getBuffer();
+
+        console.log(`✅ Logo convertido via node-thermal-printer: ${buffer.length} bytes`);
+
+        // 5. Limpa o buffer interno da instância
+        printer.clear();
+
+        return { success: true, buffer: Buffer.from(buffer) };
+
+    } catch (error) {
+        console.error('❌ Erro ao converter logo:', error);
+        return { success: false, error: error.message };
+    } finally {
+        // Limpa arquivo temporário
+        if (logoPath) {
+            removerArquivoTemporario(logoPath);
+        }
+    }
+}
+
 module.exports = {
     imprimirCupom,
     testarConexao,
     imprimirTeste,
     criarInstanciaPrinter,
-    obterTipoImpressora
+    obterTipoImpressora,
+    converterLogoParaBuffer
 };

@@ -54,6 +54,7 @@ export interface FormatarCupomResponse {
   sucesso: boolean;
   mensagem: string;
   dadosEscPosBase64: string; // Dados do cupom formatados em ESC/POS (base64)
+  logoBase64?: string; // Logo em base64 (PNG) para impressão separada pelo Electron
   tipoImpressora: string;
   pedidoId: string;
 }
@@ -177,7 +178,8 @@ export class ImpressaoService {
                 porta,
                 pedidoId: request.pedidoId,
                 devicePath: request.devicePath,
-                dadosCupomLength: formatarResponse.dadosEscPosBase64?.length
+                dadosCupomLength: formatarResponse.dadosEscPosBase64?.length,
+                hasLogo: !!formatarResponse.logoBase64
               });
 
               return this.http.post<ImprimirCupomResponse>(
@@ -186,7 +188,8 @@ export class ImpressaoService {
                   pedidoId: request.pedidoId,
                   tipoImpressora: formatarResponse.tipoImpressora,
                   devicePath: request.devicePath,
-                  dadosCupom: formatarResponse.dadosEscPosBase64
+                  dadosCupom: formatarResponse.dadosEscPosBase64,
+                  logoBase64: formatarResponse.logoBase64 // Logo PNG para impressão
                 }
               ).pipe(
                 tap({

@@ -17,7 +17,7 @@ public class FormatarCupomResponse {
     private boolean sucesso;
     private String mensagem;
     private String dadosEscPosBase64; // Dados do cupom formatados em ESC/POS (base64)
+    private String logoBase64; // Logo em base64 (PNG) para impressão separada pelo Electron
     private String tipoImpressora;
     private String pedidoId;
 }
-
