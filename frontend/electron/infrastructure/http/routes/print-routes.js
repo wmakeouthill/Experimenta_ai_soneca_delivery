@@ -118,10 +118,38 @@ router.post('/imprimir/cupom-fiscal', async (req, res) => {
     // Monta buffer final: Logo (se houver) + Dados do cupom
     let bufferFinal;
     if (logoEscPos) {
-      // Reset + Logo + Dados do cupom (que já tem inicialização mas será sobrescrita)
-      const resetCmd = Buffer.from([0x1B, 0x40]); // ESC @
-      bufferFinal = Buffer.concat([resetCmd, logoEscPos, dadosEscPos]);
-      console.log(`✅ Buffer final com logo: ${bufferFinal.length} bytes`);
+      // Comandos iniciais
+      const resetCmd = Buffer.from([0x1B, 0x40]); // ESC @ - Reset
+
+      // Remove comandos de inicialização do início dos dados do cupom
+      // A sequência típica é: ESC @ (reset) + ESC t 02 (code page 850)
+      // Precisamos remover ambos para não conflitar com o logo já impresso
+      let dadosLimpos = dadosEscPos;
+
+      // Remove Reset (ESC @ = 1B 40) se presente
+      if (dadosLimpos.length >= 2 && dadosLimpos[0] === 0x1B && dadosLimpos[1] === 0x40) {
+        dadosLimpos = dadosLimpos.slice(2);
+        console.log('🔧 Removido Reset (ESC @) do início dos dados');
+      }
+
+      // Remove Code Page (ESC t n = 1B 74 xx) se presente
+      if (dadosLimpos.length >= 3 && dadosLimpos[0] === 0x1B && dadosLimpos[1] === 0x74) {
+        dadosLimpos = dadosLimpos.slice(3);
+        console.log('🔧 Removido Code Page (ESC t) do início dos dados');
+      }
+
+      // Comandos de transição após o logo:
+      // Garantem que a impressora saia do modo gráfico e esteja pronta para texto
+      const transicao = Buffer.from([
+        0x1B, 0x21, 0x00,  // ESC ! 0 - Reset modo de texto (cancela double height/width)
+        0x1B, 0x61, 0x00,  // ESC a 0 - Alinhamento à esquerda
+        0x1B, 0x74, 0x02,  // ESC t 2 - Code page CP850
+        0x0A               // LF - Nova linha
+      ]);
+
+      // Reset → Logo → Transição → Dados do cupom (limpos)
+      bufferFinal = Buffer.concat([resetCmd, logoEscPos, transicao, dadosLimpos]);
+      console.log(`✅ Buffer final com logo: ${bufferFinal.length} bytes (logo: ${logoEscPos.length}, transição: ${transicao.length}, dados: ${dadosLimpos.length})`);
     } else {
       bufferFinal = dadosEscPos;
     }
