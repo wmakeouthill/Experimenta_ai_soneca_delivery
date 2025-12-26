@@ -120,6 +120,7 @@ router.post('/imprimir/cupom-fiscal', async (req, res) => {
     if (logoEscPos) {
       // Comandos iniciais
       const resetCmd = Buffer.from([0x1B, 0x40]); // ESC @ - Reset
+      const centerCmd = Buffer.from([0x1B, 0x61, 0x01]); // ESC a 1 - Centralizar (teste)
 
       // Remove comandos de inicialização do início dos dados do cupom
       // A sequência típica é: ESC @ (reset) + ESC t 02 (code page 850)
@@ -147,8 +148,8 @@ router.post('/imprimir/cupom-fiscal', async (req, res) => {
         0x0A               // LF - Nova linha
       ]);
 
-      // Reset → Logo → Transição → Dados do cupom (limpos)
-      bufferFinal = Buffer.concat([resetCmd, logoEscPos, transicao, dadosLimpos]);
+      // Reset → Center → Logo → Transição → Dados do cupom (limpos)
+      bufferFinal = Buffer.concat([resetCmd, centerCmd, logoEscPos, transicao, dadosLimpos]);
       console.log(`✅ Buffer final com logo: ${bufferFinal.length} bytes (logo: ${logoEscPos.length}, transição: ${transicao.length}, dados: ${dadosLimpos.length})`);
     } else {
       bufferFinal = dadosEscPos;
