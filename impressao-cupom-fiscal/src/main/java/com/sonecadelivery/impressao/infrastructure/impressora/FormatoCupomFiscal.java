@@ -1,6 +1,7 @@
 package com.sonecadelivery.impressao.infrastructure.impressora;
 
 import com.sonecadelivery.impressao.domain.entities.CupomFiscal;
+import com.sonecadelivery.pedidos.application.dto.ItemPedidoAdicionalDTO;
 import com.sonecadelivery.pedidos.application.dto.ItemPedidoDTO;
 import com.sonecadelivery.pedidos.application.dto.MeioPagamentoDTO;
 
@@ -197,6 +198,17 @@ public class FormatoCupomFiscal {
                     item.getSubtotal().doubleValue());
 
             itensFormatados.append(linha);
+
+            // Adicionais do item (se houver)
+            if (item.getAdicionais() != null && !item.getAdicionais().isEmpty()) {
+                for (ItemPedidoAdicionalDTO adicional : item.getAdicionais()) {
+                    String nomeAdicional = truncarTexto(adicional.getAdicionalNome(), 16);
+                    itensFormatados.append(String.format("       + %-16s x%d  R$%5.2f\n",
+                            nomeAdicional,
+                            adicional.getQuantidade(),
+                            adicional.getSubtotal() != null ? adicional.getSubtotal().doubleValue() : 0.0));
+                }
+            }
 
             // Observações do item (se houver)
             if (item.getObservacoes() != null && !item.getObservacoes().trim().isEmpty()) {
@@ -400,6 +412,18 @@ public class FormatoCupomFiscal {
 
             itensFormatados.append(linha);
 
+            // Adicionais do item (se houver)
+            if (item.getAdicionais() != null && !item.getAdicionais().isEmpty()) {
+                for (ItemPedidoAdicionalDTO adicional : item.getAdicionais()) {
+                    String nomeAdicional = truncarTexto(adicional.getAdicionalNome(), 18);
+                    itensFormatados.append(String.format("     + %-18s x%d  R$%5.2f\n",
+                            nomeAdicional,
+                            adicional.getQuantidade(),
+                            adicional.getSubtotal() != null ? adicional.getSubtotal().doubleValue() : 0.0));
+                }
+            }
+
+            // Observações do item (se houver)
             if (item.getObservacoes() != null && !item.getObservacoes().trim().isEmpty()) {
                 itensFormatados.append("     * ").append(item.getObservacoes()).append("\n");
             }
